@@ -1,0 +1,6 @@
+{
+  "name": "Remix: WarDos - Sistem Rebutan Pembimbing",
+  "description": "Sistem pemilihan dosen pembimbing real-time dengan fitur kelompok, countdown, dan race condition protection.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

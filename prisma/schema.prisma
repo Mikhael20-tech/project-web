@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STUDENT
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique // NIM for student, or admin username
+  email     String?  @unique // For Google SSO
+  password  String
+  foto      String?
+  role      Role     @default(STUDENT)
+  mahasiswa Mahasiswa?
+  createdAt DateTime @default(now())
+}
+
+model Mahasiswa {
+  id           String    @id @default(uuid())
+  nim          String    @unique
+  nama         String
+  foto         String?   @default("https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&h=400&fit=crop")
+  kontak       String?
+  peminatan    String?
+  bio          String?
+  ipk          Float?
+  userId       String    @unique
+  user         User      @relation(fields: [userId], references: [id])
+  kelompokId   String?
+  kelompok     Kelompok? @relation(fields: [kelompokId], references: [id])
+  isLeader     Boolean   @default(false)
+  sentInvites  Invitation[] @relation("SentInvites")
+  receivedInvites Invitation[] @relation("ReceivedInvites")
+}
+
+model Kelompok {
+  id           String    @id @default(uuid())
+  nama         String?
+  mahasiswa    Mahasiswa[]
+  dosenId      String?
+  dosen        Dosen?    @relation(fields: [dosenId], references: [id])
+  invitations  Invitation[]
+  createdAt    DateTime  @default(now())
+}
+
+model Invitation {
+  id           String           @id @default(uuid())
+  kelompokId   String
+  kelompok     Kelompok         @relation(fields: [kelompokId], references: [id])
+  fromId       String
+  from         Mahasiswa        @relation("SentInvites", fields: [fromId], references: [id])
+  toId         String
+  to           Mahasiswa        @relation("ReceivedInvites", fields: [toId], references: [id])
+  status       InvitationStatus @default(PENDING)
+  createdAt    DateTime         @default(now())
+}
+
+model Dosen {
+  id        String   @id @default(uuid())
+  nama      String
+  foto      String?  @default("https://images.unsplash.com/photo-1544717297-fa154da09f9b?w=400&h=400&fit=crop")
+  nip       String
+  kuotaMax  Int      @default(5)
+  kelompok  Kelompok[]
+  createdAt DateTime @default(now())
+}
+
+model WarConfig {
+  id        String   @id @default("global_config")
+  startTime DateTime
+  endTime   DateTime
+}
