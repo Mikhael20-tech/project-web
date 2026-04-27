@@ -96,7 +96,7 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } }
 };
 
 const LandingPage = ({ user }: { user: any }) => {
@@ -270,7 +270,7 @@ const LandingPage = ({ user }: { user: any }) => {
             <button onClick={() => navigate('/portfolio')} className="flex items-center gap-2 text-teal-500 font-black text-[10px] uppercase tracking-widest hover:text-teal-700 transition-colors group px-6 py-3 rounded-full hover:bg-teal-50">
               Jelajahi Profil Dosen <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
-          </div>
+          </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
