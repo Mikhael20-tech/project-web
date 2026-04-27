@@ -101,6 +101,7 @@ const itemVariants = {
 
 const LandingPage = ({ user }: { user: any }) => {
   const navigate = useNavigate();
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#F0FAF8]">
@@ -157,33 +158,57 @@ const LandingPage = ({ user }: { user: any }) => {
                   Mulai Pemilihan <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
               )}
-              <button className="w-full sm:w-auto px-10 py-5 bg-white text-teal-950 border border-teal-100 rounded-[1.25rem] font-black text-sm uppercase tracking-widest hover:bg-teal-50 hover:border-teal-200 transition-all flex items-center justify-center gap-3">
+              <button 
+                onClick={() => setIsVideoModalOpen(true)}
+                className="w-full sm:w-auto px-10 py-5 bg-white text-teal-950 border border-teal-100 rounded-[1.25rem] font-black text-sm uppercase tracking-widest hover:bg-teal-50 hover:border-teal-200 transition-all flex items-center justify-center gap-3"
+              >
                 <Play className="w-4 h-4 text-teal-500" /> Lihat Panduan
               </button>
             </motion.div>
           </motion.div>
 
-          {/* Social Proof Stats */}
+          {/* Visi Misi Section */}
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1, duration: 0.8, ease: "easeOut" }}
-            className="w-full max-w-5xl mt-32 grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-0 bg-white p-10 rounded-[2.5rem] border border-teal-50 shadow-[0_20px_40px_-20px_rgba(0,0,0,0.05)] relative overflow-hidden"
+            className="w-full max-w-5xl mt-32 grid grid-cols-1 md:grid-cols-2 gap-12 bg-white p-12 rounded-[3rem] border border-teal-50 shadow-[0_20px_40px_-20px_rgba(0,0,0,0.05)] relative overflow-hidden text-left"
           >
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-teal-500 to-transparent opacity-20" />
-            <div className="flex flex-col items-center justify-center relative">
-              <span className="text-4xl lg:text-5xl font-black text-teal-950 tracking-tighter mb-2">2,500<span className="text-teal-500">+</span></span>
-              <span className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">Mahasiswa Aktif</span>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500 via-orange-400 to-teal-500 opacity-30" />
+            
+            <div className="flex flex-col relative z-10">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-teal-50 rounded-full w-fit mb-4">
+                <Globe className="w-4 h-4 text-teal-500" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-teal-800">Visi 2025</span>
+              </div>
+              <h3 className="text-2xl lg:text-3xl font-black text-teal-950 tracking-tighter mb-4 leading-tight">
+                Menjadi Program Studi bertaraf Nasional yang Tangguh, Adaptif, dan Inovatif.
+              </h3>
+              <p className="text-teal-800/60 font-medium text-sm leading-relaxed">
+                “Pada tahun 2025, menjadi Program Studi Pendidikan Teknologi Informasi bertaraf Nasional yang Tangguh, Adaptif, dan Inovatif dalam Keilmuan bidang Multimedia, Teknik Komputer dan Jaringan, serta Rekayasa Perangkat Lunak Berorientasi Kewirausahaan.”
+              </p>
             </div>
-            <div className="hidden md:block absolute left-1/3 top-1/2 -translate-y-1/2 w-px h-16 bg-teal-50" />
-            <div className="flex flex-col items-center justify-center relative">
-              <span className="text-4xl lg:text-5xl font-black text-teal-950 tracking-tighter mb-2">45<span className="text-orange-400">+</span></span>
-              <span className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">Dosen Ahli Tersedia</span>
-            </div>
-            <div className="hidden md:block absolute right-1/3 top-1/2 -translate-y-1/2 w-px h-16 bg-teal-50" />
-            <div className="flex flex-col items-center justify-center relative">
-              <span className="text-4xl lg:text-5xl font-black text-teal-950 tracking-tighter mb-2">100<span className="text-yellow-500">%</span></span>
-              <span className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">Transparansi Sistem</span>
+            
+            <div className="hidden md:block absolute left-1/2 top-1/2 -translate-y-1/2 w-px h-3/4 bg-teal-50" />
+            
+            <div className="flex flex-col relative z-10 md:pl-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-50 rounded-full w-fit mb-4">
+                <Award className="w-4 h-4 text-orange-500" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-orange-800">Misi Utama</span>
+              </div>
+              <ul className="space-y-4">
+                {[
+                  "Menyelenggarakan pendidikan yang tangguh, adaptif, dan inovatif berorientasi kewirausahaan.",
+                  "Meningkatkan kualitas penelitian dalam keilmuan TI dan multimedia.",
+                  "Menyelenggarakan pengabdian masyarakat dan menyebarluaskan inovasi teknologi.",
+                  "Mewujudkan tata kelola berkelanjutan dan kolaborasi tridharma internasional."
+                ].map((item, i) => (
+                  <li key={i} className="flex gap-3 items-start">
+                    <CheckCircle2 className="w-5 h-5 text-teal-500 shrink-0 mt-0.5" />
+                    <span className="text-teal-800/70 font-medium text-sm leading-relaxed">{item}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
 
           </motion.div>
@@ -239,20 +264,20 @@ const LandingPage = ({ user }: { user: any }) => {
             className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20"
           >
             <div className="max-w-2xl">
-              <h2 className="text-4xl md:text-5xl font-black text-teal-950 tracking-tighter mb-6">Pakar Multi-Disiplin</h2>
-              <p className="text-teal-800/60 font-medium text-lg">Pilih dari puluhan dosen berpengalaman dengan spesialisasi industri terkini untuk membimbing riset skripsi Anda.</p>
+              <h2 className="text-4xl md:text-5xl font-black text-teal-950 tracking-tighter mb-6">Pakar Pendidikan TI UNESA</h2>
+              <p className="text-teal-800/60 font-medium text-lg">Pilih dari dosen-dosen pakar di bidang kependidikan dan teknologi informasi untuk membimbing riset skripsi Anda di PTI UNESA.</p>
             </div>
-            <button className="flex items-center gap-2 text-teal-500 font-black text-[10px] uppercase tracking-widest hover:text-teal-700 transition-colors group px-6 py-3 rounded-full hover:bg-teal-50">
+            <button onClick={() => navigate('/portfolio')} className="flex items-center gap-2 text-teal-500 font-black text-[10px] uppercase tracking-widest hover:text-teal-700 transition-colors group px-6 py-3 rounded-full hover:bg-teal-50">
               Jelajahi Profil Dosen <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { title: "Artificial Intelligence", count: "12 Dosen Ahli", icon: Globe, color: "bg-yellow-50 text-yellow-500 border-yellow-100 hover:shadow-yellow-500/10" },
-              { title: "Software Engineering", count: "15 Dosen Ahli", icon: Smartphone, color: "bg-teal-50 text-teal-500 border-teal-100 hover:shadow-teal-500/10" },
-              { title: "Data Science & Big Data", count: "8 Dosen Ahli", icon: TrendingUp, color: "bg-emerald-50 text-emerald-600 border-emerald-100 hover:shadow-emerald-500/10" },
-              { title: "Cyber Sec & Networks", count: "10 Dosen Ahli", icon: Lock, color: "bg-amber-50 text-amber-600 border-amber-100 hover:shadow-amber-500/10" }
+              { title: "Guru Pendidikan TI", count: "Pengajar IT Vokasi", icon: BookOpen, color: "bg-yellow-50 text-yellow-500 border-yellow-100 hover:shadow-yellow-500/10" },
+              { title: "Programmer Edukasi", count: "Kreator Modul IT", icon: Smartphone, color: "bg-teal-50 text-teal-500 border-teal-100 hover:shadow-teal-500/10" },
+              { title: "Edu-Media Preneur", count: "Wirausaha Sistem", icon: TrendingUp, color: "bg-emerald-50 text-emerald-600 border-emerald-100 hover:shadow-emerald-500/10" },
+              { title: "Pakar TKJ & RPL", count: "Jaringan & Software", icon: Award, color: "bg-amber-50 text-amber-600 border-amber-100 hover:shadow-amber-500/10" }
             ].map((cat, i) => (
               <motion.div 
                 key={i} 
@@ -306,26 +331,84 @@ const LandingPage = ({ user }: { user: any }) => {
       </section>
 
       {/* Footer */}
-      <footer className="py-20 bg-white border-t border-teal-50 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12 text-center md:text-left">
-          <div className="space-y-4">
-            <div className="flex items-center justify-center md:justify-start gap-3">
+      <footer className="py-16 bg-white border-t border-teal-50 px-6 text-teal-950">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8 mb-12">
+          <div className="space-y-4 text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start gap-3 mb-6">
               <div className="w-10 h-10 bg-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/20">
                 <GraduationCap className="text-white w-6 h-6" />
               </div>
               <span className="text-2xl font-black text-teal-950 tracking-tighter">WarDosen<span className="text-teal-500">.</span></span>
             </div>
-            <p className="text-teal-800/60 text-sm font-medium">© 2026 University Academic System. All rights reserved.</p>
+            <p className="text-teal-800/70 text-sm font-bold">Prodi S1 Pend. Teknologi Informasi<br/>Fakultas Teknik<br/>Universitas Negeri Surabaya</p>
+            <p className="text-teal-800/60 text-xs font-medium leading-relaxed">Kampus Unesa Ketintang<br/>Gedung A10 Surabaya 60231</p>
           </div>
           
-          <div className="flex flex-wrap justify-center gap-8 text-[10px] font-black uppercase tracking-widest text-teal-800/40">
-            <a href="#" className="hover:text-teal-500 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-teal-500 transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-teal-500 transition-colors">Security</a>
-            <a href="#" className="hover:text-teal-500 transition-colors">Support</a>
+          <div className="space-y-4 text-center md:text-left">
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-teal-500 mb-4">Tautan Penting</h4>
+            <div className="flex flex-col gap-3 text-xs font-bold text-teal-800/70">
+              <a href="https://unesa.ac.id/" target="_blank" rel="noreferrer" className="hover:text-teal-500 transition-colors flex items-center justify-center md:justify-start gap-2"><Globe className="w-4 h-4" /> Website UNESA</a>
+              <a href="https://ft.unesa.ac.id/" target="_blank" rel="noreferrer" className="hover:text-teal-500 transition-colors flex items-center justify-center md:justify-start gap-2"><Globe className="w-4 h-4" /> Fakultas Teknik</a>
+              <a href="http://ti.ft.unesa.ac.id" target="_blank" rel="noreferrer" className="hover:text-teal-500 transition-colors flex items-center justify-center md:justify-start gap-2"><Globe className="w-4 h-4" /> Teknik Informatika</a>
+              <a href="https://si.ft.unesa.ac.id/" target="_blank" rel="noreferrer" className="hover:text-teal-500 transition-colors flex items-center justify-center md:justify-start gap-2"><Globe className="w-4 h-4" /> Sistem Informasi</a>
+            </div>
+          </div>
+          
+          <div className="space-y-4 text-center md:text-left">
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-teal-500 mb-4">Sosial Media</h4>
+            <div className="flex flex-col gap-3 text-xs font-bold text-teal-800/70">
+              <a href="https://www.instagram.com/hmppti.unesa" target="_blank" rel="noreferrer" className="hover:text-orange-500 transition-colors flex items-center justify-center md:justify-start gap-2">
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                Instagram @hmppti.unesa
+              </a>
+            </div>
+          </div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto pt-8 border-t border-teal-50 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
+          <p className="text-[10px] font-black uppercase tracking-widest text-teal-800/40">Copyright © 2026 Pendidikan Teknologi Informasi | Universitas Negeri Surabaya.</p>
+          <div className="flex gap-6 text-[10px] font-black uppercase tracking-widest text-teal-800/30">
+             <span>Supported By PPTI UNESA</span>
           </div>
         </div>
       </footer>
+
+      {/* Video Tutorial Modal */}
+      <AnimatePresence>
+        {isVideoModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              onClick={() => setIsVideoModalOpen(false)}
+              className="absolute inset-0 bg-teal-950/90 backdrop-blur-sm cursor-pointer"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-5xl aspect-video bg-black rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(20,184,166,0.2)] z-10 border border-white/10"
+            >
+              <button 
+                onClick={() => setIsVideoModalOpen(false)}
+                className="absolute top-4 right-4 w-12 h-12 bg-black/40 hover:bg-rose-500 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all z-20 group border border-white/20"
+              >
+                <XCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              </button>
+              <iframe 
+                width="100%" 
+                height="100%" 
+                src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" 
+                title="Panduan Penggunaan Aplikasi" 
+                frameBorder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                allowFullScreen
+              ></iframe>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -552,6 +635,7 @@ const LoginPage = ({ onLogin }: { onLogin: (token: string, user: any) => void })
 };
 
 const Dashboard = ({ user: initialUser, token, onProfileUpdate }: { user: any; token: string; onProfileUpdate: (s: any) => void }) => {
+  const navigate = useNavigate();
   const [dosenList, setDosenList] = useState<any[]>([]);
   const [config, setConfig] = useState<any>(null);
   const [studentData, setStudentData] = useState<any>(null);
@@ -966,171 +1050,206 @@ const Dashboard = ({ user: initialUser, token, onProfileUpdate }: { user: any; t
              >
                Profile Settings
              </button>
+             <button 
+               onClick={() => navigate('/portfolio')}
+               className="w-full mt-3 py-3 bg-teal-600 text-white border border-teal-400 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 hover:border-slate-900 transition-all shadow-lg"
+             >
+               Portofolio Dosen
+             </button>
           </div>
         </div>
 
           {/* Group Status Feature */}
           <div className="lg:col-span-1">
             {studentData?.kelompok ? (
-              <div className="bg-teal-950 rounded-[2.5rem] p-8 shadow-xl text-white h-full flex flex-col justify-between border border-teal-900">
-                <div className="flex justify-between items-start mb-6">
-                  <div>
-                    <h3 className="text-xs font-black uppercase tracking-widest text-teal-400 mb-1">Group Details</h3>
-                    {isEditingTeam ? (
-                      <form onSubmit={handleRenameGroup} className="flex items-center gap-2 mt-1">
-                        <input 
-                          autoFocus
-                          value={teamNameForm}
-                          onChange={e => setTeamNameForm(e.target.value)}
-                          placeholder="Nama Kelompok..."
-                          className="bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-teal-500 w-32"
-                        />
-                        <button type="submit" className="p-1 bg-teal-500 rounded-lg"><CheckCircle2 className="w-4 h-4" /></button>
-                        <button type="button" onClick={() => { setIsEditingTeam(false); setTeamNameForm(""); }} className="p-1 bg-teal-800 rounded-lg"><XCircle className="w-4 h-4" /></button>
-                      </form>
-                    ) : (
-                      <div className="flex items-center gap-2 group/title">
-                        <p className="text-xl font-bold italic truncate max-w-[150px]">
-                          {studentData.kelompok.nama || `Group #${studentData.kelompok.id.substring(0,5)}`}
-                        </p>
-                        {studentData.isLeader && (
-                          <button 
-                            onClick={() => { setIsEditingTeam(true); setTeamNameForm(studentData.kelompok.nama || ""); }}
-                            className="opacity-0 group-hover/title:opacity-100 transition-opacity p-1 hover:text-teal-400"
-                          >
-                            <Edit className="w-3 h-3" />
-                          </button>
-                        )}
+              <div className="bg-gradient-to-br from-teal-900 to-[#022c22] rounded-[2.5rem] p-8 shadow-2xl shadow-teal-900/20 text-white h-full flex flex-col justify-between border border-teal-800 relative overflow-hidden">
+                {/* Decorative glowing orb */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+                
+                <div className="relative z-10">
+                  <div className="flex justify-between items-start mb-8">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                         <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-300">My Squad</h3>
                       </div>
-                    )}
+                      {isEditingTeam ? (
+                        <form onSubmit={handleRenameGroup} className="flex items-center gap-2 mt-1">
+                          <input 
+                            autoFocus
+                            value={teamNameForm}
+                            onChange={e => setTeamNameForm(e.target.value)}
+                            placeholder="Nama Kelompok..."
+                            className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-3 py-1.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-teal-400 w-40 placeholder:text-teal-100/30"
+                          />
+                          <button type="submit" className="p-1.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl transition-colors"><CheckCircle2 className="w-4 h-4" /></button>
+                          <button type="button" onClick={() => { setIsEditingTeam(false); setTeamNameForm(""); }} className="p-1.5 bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white rounded-xl transition-colors"><XCircle className="w-4 h-4" /></button>
+                        </form>
+                      ) : (
+                        <div className="flex items-center gap-3 group/title">
+                          <p className="text-2xl font-black italic truncate max-w-[180px] drop-shadow-md text-transparent bg-clip-text bg-gradient-to-r from-white to-teal-100">
+                            {studentData.kelompok.nama || `Team #${studentData.kelompok.id.substring(0,5)}`}
+                          </p>
+                          {studentData.isLeader && (
+                            <button 
+                              onClick={() => { setIsEditingTeam(true); setTeamNameForm(studentData.kelompok.nama || ""); }}
+                              className="opacity-0 group-hover/title:opacity-100 transition-all p-1.5 bg-white/10 hover:bg-white/20 rounded-xl text-teal-300 hover:text-white"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <div className="bg-gradient-to-r from-teal-500 to-emerald-500 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-teal-500/30 border border-teal-400/30 text-white">
+                      {studentData.isLeader ? "Leader" : "Member"}
+                    </div>
                   </div>
-                  <div className="bg-teal-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-lg shadow-teal-500/20">
-                    {studentData.isLeader ? "Leader" : "Member"}
-                  </div>
-                </div>
 
-                <div className="space-y-4">
-                  <div className="flex flex-wrap gap-2">
+                  <div className="space-y-3 mb-8">
                     {studentData.kelompok.mahasiswa.map((m: any) => (
-                      <div key={m.id} className="flex items-center gap-3 bg-white/5 border border-white/10 px-3 py-2 rounded-2xl relative group">
+                      <div key={m.id} className="flex items-center gap-4 bg-white/5 backdrop-blur-md border border-white/10 px-4 py-3 rounded-2xl hover:bg-white/10 transition-colors group">
                         <div className="relative">
-                           <div className="w-10 h-10 rounded-xl bg-teal-900 border border-white/10 overflow-hidden">
+                           <div className="w-12 h-12 rounded-xl bg-teal-950 border border-white/20 overflow-hidden shadow-inner">
                               <img 
                                 src={m.foto || "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=100&h=100&fit=crop" || undefined} 
                                 alt={m.nama} 
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                               />
                            </div>
-                           <div className={cn("absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-teal-950", m.isLeader ? "bg-teal-400" : "bg-teal-700")} />
+                           <div className={cn("absolute -bottom-1.5 -right-1.5 w-4 h-4 rounded-full border-[3px] border-[#022c22] flex items-center justify-center", m.isLeader ? "bg-emerald-400" : "bg-teal-600")}>
+                             {m.isLeader && <Star className="w-2 h-2 text-[#022c22]" />}
+                           </div>
                         </div>
                         <div className="flex flex-col">
-                           <span className="text-[10px] font-black text-white/90 truncate max-w-[80px]">{m.nama?.split(' ')[0] || "Student"}</span>
-                           <span className="text-[8px] font-bold font-mono text-white/40">{m.nim}</span>
+                           <span className="text-sm font-black text-white truncate max-w-[120px]">{m.nama?.split(' ')[0] || "Student"}</span>
+                           <span className="text-[10px] font-bold font-mono text-teal-300/60 tracking-wider">{m.nim}</span>
                         </div>
                       </div>
                     ))}
+                    
                     {studentData.kelompok.mahasiswa.length < 3 && studentData.isLeader && (
-                      <form onSubmit={handleInvite} className="flex-1 min-w-[120px]">
+                      <form onSubmit={handleInvite} className="mt-4 relative group">
                         <input 
                           value={inviteNim}
                           onChange={e => setInviteNim(e.target.value)}
-                          placeholder="Invite NIM..."
-                          className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-[10px] font-bold placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                          placeholder="Ketik NIM untuk mengundang..."
+                          className="w-full bg-black/20 backdrop-blur-xl border border-teal-500/30 rounded-2xl pl-10 pr-12 py-3.5 text-xs font-bold placeholder:text-teal-500/40 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-400 text-white transition-all shadow-inner"
                         />
+                        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-teal-500/50 group-focus-within:text-teal-400">
+                           <UserPlus className="w-4 h-4" />
+                        </div>
+                        <button type="submit" disabled={!inviteNim} className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 disabled:hover:bg-teal-500 rounded-xl text-white transition-colors shadow-md">
+                           <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
                       </form>
                     )}
                   </div>
+                </div>
 
-                  <div className="pt-4 border-t border-white/10">
-                    <p className="text-[10px] font-black uppercase text-teal-800/60 mb-2">Selected Prof</p>
-                    {studentData.kelompok.dosen ? (
-                       <div className="space-y-2">
-                         <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-2xl">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                            <span className="text-xs font-bold text-emerald-400">{studentData.kelompok.dosen.nama}</span>
-                         </div>
-                         {isWarActive && studentData.isLeader && (
-                           <button 
-                            type="button"
-                            onClick={handleCancelDosen}
-                            disabled={loading}
-                            className={cn(
-                               "w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-rose-500/10 hover:bg-rose-500 border border-rose-500/20 text-rose-500 hover:text-white text-[10px] font-black uppercase rounded-xl transition-all cursor-pointer shadow-sm relative z-10",
-                               loading && "opacity-50 cursor-wait"
-                            )}
-                           >
-                             <RefreshCcw className={cn("w-3 h-3", loading && "animate-spin")} /> 
-                             {loading ? "MEMBATALKAN..." : "Batalkan Pilihan"}
-                           </button>
-                         )}
+                <div className="relative z-10 pt-6 border-t border-white/10">
+                  <p className="text-[10px] font-black uppercase text-teal-400/60 mb-3 tracking-widest">Dosen Pembimbing Pilihan</p>
+                  {studentData.kelompok.dosen ? (
+                     <div className="space-y-3">
+                       <div className="flex items-center gap-4 bg-gradient-to-r from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 p-4 rounded-2xl backdrop-blur-md shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+                          <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/50">
+                             <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                          </div>
+                          <div className="flex flex-col">
+                             <span className="text-[10px] uppercase font-black text-emerald-400/70 tracking-widest">TERPILIH</span>
+                             <span className="text-sm font-black text-emerald-50 leading-tight">{studentData.kelompok.dosen.nama}</span>
+                          </div>
                        </div>
-                    ) : (
-                       <div className="flex items-center gap-3 bg-rose-500/10 border border-rose-500/20 p-3 rounded-2xl">
-                          <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                          <span className="text-xs font-bold text-rose-400 italic">Belum Memilih Dosen</span>
-                       </div>
-                    )}
-                  </div>
+                       {isWarActive && studentData.isLeader && (
+                         <button 
+                          type="button"
+                          onClick={handleCancelDosen}
+                          disabled={loading}
+                          className={cn(
+                             "w-full flex items-center justify-center gap-2 py-3 px-4 bg-rose-500/10 hover:bg-rose-500 border border-rose-500/30 hover:border-rose-500 text-rose-400 hover:text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer shadow-sm relative z-10 group",
+                             loading && "opacity-50 cursor-wait"
+                          )}
+                         >
+                           <RefreshCcw className={cn("w-3.5 h-3.5 group-hover:-rotate-180 transition-transform duration-500", loading && "animate-spin")} /> 
+                           {loading ? "MEMBATALKAN..." : "Batalkan Pilihan"}
+                         </button>
+                       )}
+                     </div>
+                  ) : (
+                     <div className="flex items-center gap-4 bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl backdrop-blur-sm">
+                        <div className="relative flex items-center justify-center w-10 h-10">
+                           <div className="absolute inset-0 bg-rose-500/20 rounded-full animate-ping" />
+                           <div className="w-3 h-3 rounded-full bg-rose-500" />
+                        </div>
+                        <div className="flex flex-col">
+                           <span className="text-xs font-black text-rose-400">Belum Memilih Dosen</span>
+                           <span className="text-[10px] font-bold text-rose-400/60">Ikuti war untuk mendapatkan slot</span>
+                        </div>
+                     </div>
+                  )}
                 </div>
               </div>
             ) : (
               <div className="space-y-6">
-                <div className="bg-white border-2 border-dashed border-teal-100 rounded-[2.5rem] p-8 flex flex-col items-center justify-center text-center space-y-6">
-                  <div className="w-16 h-16 bg-teal-50 rounded-3xl flex items-center justify-center text-teal-200">
-                    <Users className="w-8 h-8" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-black text-teal-950 uppercase tracking-tighter">Kelompok Belum Siap</h3>
-                    <p className="text-xs text-teal-800/50 font-medium px-4 mb-4">Pilih nama tim yang keren dan mulai perebutan dosen!</p>
-                    <form onSubmit={handleCreateGroup} className="space-y-4 px-4">
-                      <div className="space-y-1 text-left">
-                        <label className="text-[10px] font-black uppercase text-teal-800/50 ml-1">Nama Kelompok</label>
+                <div className="bg-gradient-to-br from-white to-[#f8fdfc] border border-teal-100 rounded-[2.5rem] p-10 flex flex-col items-center justify-center text-center shadow-[0_20px_40px_-15px_rgba(20,184,166,0.1)] relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-teal-50 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+                  
+                  <div className="relative z-10 w-full">
+                    <div className="w-20 h-20 bg-teal-50 rounded-[1.5rem] flex items-center justify-center text-teal-400 mx-auto mb-6 shadow-inner border border-teal-100/50">
+                      <Users className="w-10 h-10" />
+                    </div>
+                    <h3 className="text-xl font-black text-teal-950 uppercase tracking-tighter mb-2">Bentuk Skuad Anda</h3>
+                    <p className="text-xs text-teal-800/60 font-medium mb-8">Pilih nama tim yang unik dan bersiaplah memperebutkan dosen impian Anda!</p>
+                    
+                    <form onSubmit={handleCreateGroup} className="space-y-5">
+                      <div className="text-left relative group">
                         <input 
                           value={teamNameForm}
                           onChange={e => setTeamNameForm(e.target.value)}
-                          placeholder="Contoh: Tim Sukses Skripsi"
-                          className="w-full p-3 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm focus:ring-2 focus:ring-teal-500/20"
+                          placeholder="Ketik Nama Kelompok Anda..."
+                          className="w-full pl-10 pr-4 py-4 bg-white border border-teal-100 rounded-[1.25rem] text-teal-950 text-sm font-bold focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all placeholder:text-teal-800/30 shadow-sm"
                           required
                         />
+                        <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-teal-800/30 group-focus-within:text-teal-500 transition-colors" />
                       </div>
                       <button 
                         type="submit"
                         disabled={groupLoading}
-                        className="w-full py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-teal-100 hover:bg-teal-950 transition-all flex items-center justify-center gap-2"
+                        className="w-full py-4 bg-teal-500 text-white rounded-[1.25rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-teal-500/20 hover:bg-teal-950 hover:shadow-teal-950/20 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
                       >
-                        {groupLoading ? "PROSES..." : <><Plus className="w-4 h-4" /> Create Named Team</>}
+                        {groupLoading ? "MEMPROSES..." : <><Plus className="w-4 h-4" /> Buat Kelompok Sekarang</>}
                       </button>
                     </form>
                   </div>
                 </div>
 
                 {invitations.length > 0 && (
-                  <div className="bg-white border border-teal-100 rounded-[2.5rem] p-8 space-y-4 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4">
-                      <div className="px-2 py-1 bg-amber-100 text-amber-700 text-[8px] font-black uppercase rounded-lg animate-bounce">
-                        PENDING
+                  <div className="bg-gradient-to-br from-teal-50 to-white border border-teal-100 rounded-[2.5rem] p-8 relative overflow-hidden shadow-lg shadow-teal-100/20">
+                    <div className="absolute top-4 right-4">
+                      <div className="px-3 py-1 bg-amber-400 text-amber-950 text-[9px] font-black uppercase tracking-widest rounded-full animate-pulse shadow-md">
+                        {invitations.length} Menunggu
                       </div>
                     </div>
-                    <h4 className="text-[10px] font-black uppercase text-teal-500 tracking-widest flex items-center gap-2">
-                       <UserPlus className="w-3 h-3" /> Undangan Masuk ({invitations.length})
+                    <h4 className="text-xs font-black uppercase text-teal-950 tracking-[0.1em] flex items-center gap-2 mb-6">
+                       <UserPlus className="w-4 h-4 text-teal-500" /> Undangan Skuad
                     </h4>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                        {invitations.map(inv => (
-                         <div key={inv.id} className="flex items-center justify-between p-4 bg-[#F0FAF8] rounded-2xl border border-teal-50 group hover:border-teal-200 transition-all">
-                           <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center text-[10px] font-black text-teal-500 border shadow-sm group-hover:bg-teal-500 group-hover:text-white transition-all">
+                         <div key={inv.id} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-teal-50 shadow-sm hover:shadow-md hover:border-teal-200 transition-all hover:-translate-y-1">
+                           <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-emerald-400 rounded-[10px] flex items-center justify-center text-sm font-black text-white shadow-inner">
                                 {inv.from.nama[0]}
                               </div>
-                              <div>
-                                <p className="text-xs font-bold text-teal-950">{inv.from.nama}</p>
-                                <p className="text-[9px] font-mono text-teal-800/50">NIM: {inv.from.nim}</p>
+                              <div className="flex flex-col">
+                                <p className="text-sm font-black text-teal-950">{inv.from.nama}</p>
+                                <p className="text-[10px] font-mono font-bold text-teal-800/40 tracking-wider">{inv.from.nim}</p>
                               </div>
                            </div>
                            <div className="flex items-center gap-2">
                              <button 
                                onClick={() => handleRejectInvite(inv.id)}
                                disabled={groupLoading}
-                               className="p-2.5 bg-white border border-teal-50 text-teal-800/40 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                               className="p-2.5 bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl transition-all shadow-sm"
                                title="Tolak Undangan"
                              >
                                <XCircle className="w-4 h-4" />
@@ -1138,9 +1257,9 @@ const Dashboard = ({ user: initialUser, token, onProfileUpdate }: { user: any; t
                              <button 
                                onClick={() => handleAcceptInvite(inv.id)}
                                disabled={groupLoading}
-                               className="px-4 py-2.5 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-teal-950 transition-all shadow-md shadow-emerald-100"
+                               className="px-5 py-2.5 bg-teal-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg shadow-teal-500/20 flex items-center gap-2"
                              >
-                               Terima
+                               <CheckCircle2 className="w-3 h-3" /> Terima
                              </button>
                            </div>
                          </div>
@@ -1633,34 +1752,47 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
   };
 
   const exportToCSV = () => {
-    const headers = ["Nama Dosen", "NIP", "Kuota", "Okupansi", "NIM Ketua", "Nama Ketua"];
+    const headers = [
+      "Nama Dosen", "NIP", "Kuota Maksimal", "Terisi", 
+      "NIM Ketua", "Nama Ketua", 
+      "NIM Anggota 1", "Nama Anggota 1", 
+      "NIM Anggota 2", "Nama Anggota 2"
+    ];
+    
     const rows = reports.flatMap(dosen => {
       if (dosen.kelompok.length === 0) {
-        return [[dosen.nama, dosen.nip, dosen.kuotaMax, 0, "-", "-"]];
+        return [[dosen.nama, `'${dosen.nip}`, dosen.kuotaMax, 0, "-", "-", "-", "-", "-", "-"]];
       }
       return dosen.kelompok.map((k: any) => {
         const leader = k.mahasiswa.find((m: any) => m.isLeader);
+        const members = k.mahasiswa.filter((m: any) => !m.isLeader);
+        
         return [
           dosen.nama,
-          dosen.nip,
+          `'${dosen.nip}`,
           dosen.kuotaMax,
           dosen.kelompok.length,
-          leader?.nim || "N/A",
-          leader?.nama || "Unknown"
+          leader ? `'${leader.nim}` : "-",
+          leader?.nama || "-",
+          members[0] ? `'${members[0].nim}` : "-",
+          members[0]?.nama || "-",
+          members[1] ? `'${members[1].nim}` : "-",
+          members[1]?.nama || "-"
         ];
       });
     });
 
-    const csvContent = [
-      headers.join(","),
-      ...rows.map(e => e.join(","))
+    const BOM = "\uFEFF";
+    const csvContent = BOM + [
+      headers.join(";"),
+      ...rows.map(e => e.map(item => `"${String(item).replace(/"/g, '""')}"`).join(";"))
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `Laporan_WarDosen_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `Laporan_WarDosen_PTI_${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -2459,6 +2591,180 @@ const ProfileForm = ({ user, token, onComplete }: { user: any; token: string; on
   );
 };
 
+
+const PortfolioPage = () => {
+  const [dosenList, setDosenList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetch("/api/dosen")
+      .then(res => res.json())
+      .then(data => {
+        setDosenList(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
+
+  const filteredDosen = dosenList.filter(d => d.nama.toLowerCase().includes(searchQuery.toLowerCase()) || d.nip.includes(searchQuery));
+
+  return (
+    <div className="min-h-screen bg-[#F0FAF8] relative overflow-hidden pb-24">
+      {/* Background Orbs */}
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-teal-200/40 blur-[120px] rounded-full mix-blend-multiply pointer-events-none" />
+      <div className="absolute top-40 right-1/4 w-[500px] h-[500px] bg-orange-200/30 blur-[100px] rounded-full mix-blend-multiply pointer-events-none" />
+
+      {/* Hero Section */}
+      <div className="pt-32 pb-16 px-6 relative z-10 text-center flex flex-col items-center">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }} 
+          animate={{ opacity: 1, y: 0 }}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-md border border-teal-100 rounded-full mb-6 shadow-sm"
+        >
+          <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-teal-800">Direktori Pakar Akademik</span>
+        </motion.div>
+        
+        <motion.h1 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ delay: 0.1 }}
+          className="text-5xl md:text-7xl font-black text-teal-950 tracking-tighter leading-tight mb-6"
+        >
+          Eksplorasi <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-orange-400 italic pr-2 pb-1">Portofolio</span><br/>Dosen Ahli.
+        </motion.h1>
+        
+        <motion.p 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          transition={{ delay: 0.2 }}
+          className="text-teal-800/60 text-lg md:text-xl font-medium max-w-2xl mx-auto mb-10"
+        >
+          Temukan pembimbing skripsi yang paling tepat untuk riset Anda. Lihat profil, spesialisasi, dan ketersediaan kuota secara real-time.
+        </motion.p>
+
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }} 
+          animate={{ opacity: 1, scale: 1 }} 
+          transition={{ delay: 0.3 }}
+          className="w-full max-w-md relative"
+        >
+          <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-teal-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Cari nama atau NIP dosen..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-12 pr-6 py-4 bg-white/80 backdrop-blur-xl border border-teal-100 rounded-[2rem] text-teal-950 font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all placeholder:text-teal-800/30"
+          />
+        </motion.div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <button onClick={() => navigate(-1)} className="mb-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-teal-600 hover:text-teal-800 transition-colors bg-white/50 px-4 py-2 rounded-full backdrop-blur-sm border border-teal-100 w-fit group">
+          <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" /> Kembali
+        </button>
+
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="flex flex-col items-center gap-4">
+              <RefreshCcw className="w-8 h-8 text-teal-500 animate-spin" />
+              <p className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">Memuat Data Server...</p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <AnimatePresence>
+              {filteredDosen.map((dosen, index) => {
+                const kuotaTerpakai = dosen._count?.kelompok || 0;
+                const isFull = kuotaTerpakai >= dosen.kuotaMax;
+
+                return (
+                  <motion.div 
+                    layout
+                    key={dosen.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ delay: index * 0.05, type: "spring", stiffness: 300, damping: 25 }}
+                    className="bg-white rounded-[2.5rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_40px_-15px_rgba(20,184,166,0.2)] hover:-translate-y-2 transition-all duration-300 border border-teal-50 group flex flex-col h-full relative"
+                  >
+                    <div className="aspect-square w-full overflow-hidden relative">
+                      <div className="absolute inset-0 bg-gradient-to-t from-teal-950/90 via-teal-950/20 to-transparent opacity-70 group-hover:opacity-90 transition-opacity z-10" />
+                      <img src={dosen.foto || 'https://images.unsplash.com/photo-1544717297-fa154da09f9b?w=400&h=400&fit=crop'} alt={dosen.nama} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                      
+                      {/* Badge Top Right */}
+                      <div className="absolute top-4 right-4 z-20">
+                        {isFull ? (
+                          <span className="flex items-center gap-1 bg-rose-500/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
+                            <XCircle className="w-3 h-3" /> Penuh
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 bg-emerald-500/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
+                            <CheckCircle2 className="w-3 h-3" /> Tersedia
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Info on Image */}
+                      <div className="absolute bottom-4 left-4 right-4 z-20">
+                        <span className="inline-block px-2 py-1 bg-white/20 backdrop-blur-md text-white text-[8px] font-black uppercase tracking-widest rounded mb-2 border border-white/20">
+                          NIP: {dosen.nip}
+                        </span>
+                        <h3 className="font-black text-xl text-white leading-tight drop-shadow-md">{dosen.nama}</h3>
+                      </div>
+                    </div>
+
+                    <div className="p-6 flex flex-col flex-grow bg-white">
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        <span className="px-2 py-1 bg-teal-50 text-teal-600 text-[9px] font-bold uppercase tracking-widest rounded-md border border-teal-100">
+                          Dosen Ahli
+                        </span>
+                        <span className="px-2 py-1 bg-orange-50 text-orange-600 text-[9px] font-bold uppercase tracking-widest rounded-md border border-orange-100">
+                          Pembimbing
+                        </span>
+                      </div>
+                      
+                      <div className="mt-auto pt-4 border-t border-teal-50 flex items-center justify-between">
+                        <div className="flex flex-col">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-teal-800/40 mb-1">Status Kuota</span>
+                          <span className="text-sm font-black text-teal-950">
+                            {kuotaTerpakai} <span className="text-teal-800/40 text-xs font-bold">/ {dosen.kuotaMax} Terisi</span>
+                          </span>
+                        </div>
+                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shadow-inner", isFull ? "bg-rose-50 text-rose-500" : "bg-teal-50 text-teal-500")}>
+                          <Users className="w-5 h-5" />
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+            
+            {filteredDosen.length === 0 && !loading && (
+              <div className="col-span-full py-20 text-center">
+                <div className="w-20 h-20 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="w-8 h-8 text-teal-300" />
+                </div>
+                <h3 className="text-xl font-black text-teal-950 mb-2">Dosen Tidak Ditemukan</h3>
+                <p className="text-teal-800/60 font-medium text-sm">Coba sesuaikan kata kunci pencarian Anda.</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState<any>(JSON.parse(localStorage.getItem("user") || "null"));
@@ -2503,6 +2809,7 @@ export default function App() {
             ) : <Navigate to="/login" />
           } />
 
+          <Route path="/portfolio" element={<PortfolioPage />} />
           <Route path="/admin" element={token && user?.role === 'ADMIN' ? <AdminDashboard token={token} currentUser={user} onUserUpdate={(updated) => { const updatedUser = { ...user, ...updated }; localStorage.setItem("user", JSON.stringify(updatedUser)); setUser(updatedUser); }} /> : <Navigate to="/login" />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
