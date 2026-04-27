@@ -1,10 +1,16 @@
-import React, { useState, useEffect, ReactNode, FormEvent } from "react";
+import React, { useState, useEffect, ReactNode, FormEvent, useRef } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { LogIn, Users, Timer, GraduationCap, Lock, CheckCircle2, AlertCircle, Plus, Trash2, Edit, Save, Settings, Calendar, UserPlus, Info, Download, XCircle, RefreshCcw, Camera, Upload, TrendingUp, Smartphone, Globe, Award, Search, Menu, ArrowRight, ChevronRight, Play, BookOpen, Star } from "lucide-react";
 import { socket } from "@/src/lib/socket";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { Hero3D } from "./components/Hero3D";
+
+gsap.registerPlugin(ScrollTrigger);
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -102,17 +108,33 @@ const itemVariants = {
 const LandingPage = ({ user }: { user: any }) => {
   const navigate = useNavigate();
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const container = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    gsap.utils.toArray('.gsap-section').forEach((section: any) => {
+      gsap.from(section, {
+        scrollTrigger: {
+          trigger: section,
+          start: "top 85%",
+          toggleActions: "play none none reverse",
+        },
+        opacity: 0,
+        y: 40,
+        duration: 0.8,
+        ease: "power2.out"
+      });
+    });
+  }, { scope: container });
 
   return (
-    <div className="min-h-screen bg-[#F0FAF8]">
+    <div ref={container} className="min-h-screen bg-[#F0FAF8]">
       {/* Navbar space filler */}
       <div className="h-16 bg-[#F0FAF8] border-b border-white/50 backdrop-blur-md sticky top-0 z-40" />
 
       {/* Hero Section */}
-      <section className="relative pt-24 pb-28 px-6 overflow-hidden">
-        <div className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.5] z-0">
-          <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-br from-teal-100/40 to-orange-100/40 blur-[100px] rounded-full translate-x-1/3 -translate-y-1/3" />
-          <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-gradient-to-tr from-yellow-100/40 to-teal-100/40 blur-[100px] rounded-full -translate-x-1/3 translate-y-1/3" />
+      <section className="relative pt-24 pb-28 px-6 overflow-hidden min-h-[90vh] flex flex-col justify-center">
+        <div className="absolute inset-0 w-full h-full z-0">
+          <Hero3D />
         </div>
 
         <div className="max-w-7xl mx-auto text-center relative z-10 flex flex-col items-center">
@@ -169,10 +191,7 @@ const LandingPage = ({ user }: { user: any }) => {
 
           {/* Visi Misi Section */}
           <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1, duration: 0.8, ease: "easeOut" }}
-            className="w-full max-w-5xl mt-32 grid grid-cols-1 md:grid-cols-2 gap-12 bg-white p-12 rounded-[3rem] border border-teal-50 shadow-[0_20px_40px_-20px_rgba(0,0,0,0.05)] relative overflow-hidden text-left"
+            className="gsap-section w-full max-w-5xl mt-32 grid grid-cols-1 md:grid-cols-2 gap-12 bg-white/80 backdrop-blur-md p-12 rounded-[3rem] border border-teal-50 shadow-[0_20px_40px_-20px_rgba(0,0,0,0.05)] relative overflow-hidden text-left"
           >
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500 via-orange-400 to-teal-500 opacity-30" />
             
@@ -216,17 +235,12 @@ const LandingPage = ({ user }: { user: any }) => {
       </section>
 
       {/* Categories / Steps Section */}
-      <section className="py-32 px-6 flex flex-col items-center">
+      <section className="py-32 px-6 flex flex-col items-center relative z-10">
         <div className="max-w-7xl mx-auto w-full">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            className="text-center mb-20"
-          >
+          <div className="gsap-section text-center mb-20">
             <h2 className="text-4xl md:text-5xl font-black text-teal-950 tracking-tighter mb-6">Bagaimana Cara Kerjanya?</h2>
             <p className="text-teal-800/60 font-medium text-lg max-w-2xl mx-auto">Tiga langkah struktural untuk mengamankan dosen pembimbing pilihan tim Anda.</p>
-          </motion.div>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
@@ -255,14 +269,9 @@ const LandingPage = ({ user }: { user: any }) => {
       </section>
 
       {/* Featured Courses / Experts Section */}
-      <section className="py-32 px-6 overflow-hidden bg-white">
+      <section className="py-32 px-6 overflow-hidden bg-white/50 relative z-10 backdrop-blur-md">
         <div className="max-w-7xl mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20"
-          >
+          <div className="gsap-section flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20">
             <div className="max-w-2xl">
               <h2 className="text-4xl md:text-5xl font-black text-teal-950 tracking-tighter mb-6">Pakar Pendidikan TI UNESA</h2>
               <p className="text-teal-800/60 font-medium text-lg">Pilih dari dosen-dosen pakar di bidang kependidikan dan teknologi informasi untuk membimbing riset skripsi Anda di PTI UNESA.</p>
@@ -270,7 +279,7 @@ const LandingPage = ({ user }: { user: any }) => {
             <button onClick={() => navigate('/portfolio')} className="flex items-center gap-2 text-teal-500 font-black text-[10px] uppercase tracking-widest hover:text-teal-700 transition-colors group px-6 py-3 rounded-full hover:bg-teal-50">
               Jelajahi Profil Dosen <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
-          </motion.div>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
@@ -299,15 +308,9 @@ const LandingPage = ({ user }: { user: any }) => {
       </section>
 
       {/* Call to Action */}
-      <section className="py-32 px-6 relative">
+      <section className="py-32 px-6 relative z-10">
         <div className="max-w-7xl mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ type: "spring", stiffness: 200, damping: 30 }}
-            className="bg-teal-950 rounded-[3rem] p-12 md:p-24 text-center relative overflow-hidden shadow-2xl"
-          >
+          <div className="gsap-section bg-teal-950 rounded-[3rem] p-12 md:p-24 text-center relative overflow-hidden shadow-2xl">
             {/* Dark mode abstract decor */}
             <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-teal-500/20 blur-[120px] rounded-full translate-x-1/2 -translate-y-1/2" />
             <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-orange-400/20 blur-[100px] rounded-full -translate-x-1/3 translate-y-1/3" />
@@ -326,7 +329,7 @@ const LandingPage = ({ user }: { user: any }) => {
                 PAPAN DASHBOARD <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
