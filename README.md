@@ -2,11 +2,15 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Run and deploy your AI Studio app
+# WarDosen PTI UNESA
 
-This contains everything you need to run your app locally.
+Sistem Informasi Akademik untuk pemilihan Dosen Pembimbing Skripsi secara adil, transparan, dan real-time bagi mahasiswa Pendidikan Teknologi Informasi (PTI) Universitas Negeri Surabaya.
 
-View your app in AI Studio: https://ai.studio/apps/6f50b745-f437-4bf6-8297-cf44e305ba35
+## Fitur Utama
+- **Real-time Quota Monitoring:** Lihat sisa kuota dosen secara live.
+- **Sistem Pemilihan First Come, First Served (War):** Transparansi absolut dalam memilih pembimbing skripsi.
+- **Manajemen Kelompok:** Mahasiswa dapat membuat kelompok skripsi dan mengundang rekan tim (maks. 3 anggota).
+- **Admin Dashboard:** Pantau statistik, kelola data mahasiswa, dan ekspor laporan ke Excel/CSV yang rapi.
 
 ## Run Locally
 
