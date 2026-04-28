@@ -1,1 +1,4 @@
-/* /index.html 200
+# Ganti URL di bawah dengan URL Backend Render kamu setelah deploy
+/api/*  https://GANTI-DENGAN-URL-RENDER-KAMU.onrender.com/api/:splat  200
+/*      /index.html                                                  200
+
