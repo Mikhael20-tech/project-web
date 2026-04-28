@@ -665,9 +665,12 @@ const Dashboard = ({ user: initialUser, token, onProfileUpdate }: { user: any; t
         fetch("/api/me", auth),
         fetch("/api/invitations", auth)
       ]);
-      const data = await meRes.json();
-      const invData = await invRes.json();
-      if (meRes.ok) {
+      if (!meRes.ok && !invRes.ok) {
+        throw new Error(`Server unreachable (status: ${meRes.status})`);
+      }
+      const data = meRes.ok ? await meRes.json() : null;
+      const invData = invRes.ok ? await invRes.json() : [];
+      if (data) {
         setStudentData(data);
         onProfileUpdate(data);
         setProfileForm({
@@ -678,7 +681,7 @@ const Dashboard = ({ user: initialUser, token, onProfileUpdate }: { user: any; t
           foto: data.foto || ""
         });
       }
-      if (invRes.ok) setInvitations(invData);
+      setInvitations(invData);
     } catch (err) {
       console.error("Failed to fetch student data", err);
     }
@@ -749,15 +752,25 @@ const Dashboard = ({ user: initialUser, token, onProfileUpdate }: { user: any; t
   };
 
   const fetchDosen = async () => {
-    const res = await fetch("/api/dosen");
-    const data = await res.json();
-    setDosenList(data);
+    try {
+      const res = await fetch("/api/dosen");
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      const data = await res.json();
+      setDosenList(data);
+    } catch (err) {
+      console.error("fetchDosen failed:", err);
+    }
   };
 
   const fetchConfig = async () => {
-    const res = await fetch("/api/war-config");
-    const data = await res.json();
-    setConfig(data);
+    try {
+      const res = await fetch("/api/war-config");
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      const data = await res.json();
+      setConfig(data);
+    } catch (err) {
+      console.error("fetchConfig failed:", err);
+    }
   };
 
   useEffect(() => {
