@@ -565,11 +565,20 @@ app.post("/api/admin/upload", authenticate, isAdmin, (req: any, res: any) => {
 // Dosen CRUD
 app.post("/api/admin/dosen", authenticate, isAdmin, async (req, res) => {
   try {
-    const { nama, nip, kuotaMax, foto } = req.body;
+    const { nama, nip, kuotaMax, foto, keahlian, bio, pendidikan, publikasi } = req.body;
     if (!nama || !nip || !kuotaMax) throw new Error("Nama, NIP, dan kuota maksimal wajib diisi.");
     
     const dosen = await prisma.dosen.create({
-      data: { nama, nip, kuotaMax: parseInt(kuotaMax), foto }
+      data: { 
+        nama, 
+        nip, 
+        kuotaMax: parseInt(kuotaMax), 
+        foto,
+        keahlian,
+        bio,
+        pendidikan,
+        publikasi
+      }
     });
     res.json(dosen);
   } catch (err: any) {
@@ -580,10 +589,19 @@ app.post("/api/admin/dosen", authenticate, isAdmin, async (req, res) => {
 app.put("/api/admin/dosen/:id", authenticate, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { nama, nip, kuotaMax, foto } = req.body;
+    const { nama, nip, kuotaMax, foto, keahlian, bio, pendidikan, publikasi } = req.body;
     const dosen = await prisma.dosen.update({
       where: { id },
-      data: { nama, nip, kuotaMax: parseInt(kuotaMax), foto }
+      data: { 
+        nama, 
+        nip, 
+        kuotaMax: parseInt(kuotaMax), 
+        foto,
+        keahlian,
+        bio,
+        pendidikan,
+        publikasi
+      }
     });
     res.json(dosen);
   } catch (err: any) {

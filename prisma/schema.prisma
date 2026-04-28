@@ -73,13 +73,17 @@ model Invitation {
 }
 
 model Dosen {
-  id        String   @id @default(uuid())
-  nama      String
-  foto      String?  @default("https://images.unsplash.com/photo-1544717297-fa154da09f9b?w=400&h=400&fit=crop")
-  nip       String
-  kuotaMax  Int      @default(5)
-  kelompok  Kelompok[]
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  nama        String
+  foto        String?  @default("https://images.unsplash.com/photo-1544717297-fa154da09f9b?w=400&h=400&fit=crop")
+  nip         String
+  keahlian    String?  @default("Pendidikan Teknologi Informasi")
+  bio         String?  @default("Dosen tetap di Program Studi Pendidikan Teknologi Informasi UNESA dengan fokus pada pengembangan sistem dan metodologi pembelajaran berbasis teknologi.")
+  pendidikan  String?  @default("S1 Pendidikan Teknologi Informasi - UNESA; S2 Teknik Informatika - ITS")
+  publikasi   String?  @default("Pengembangan Sistem E-Learning Berbasis Gamifikasi (2023); Implementasi AI dalam Media Pembelajaran (2022)")
+  kuotaMax    Int      @default(5)
+  kelompok    Kelompok[]
+  createdAt   DateTime @default(now())
 }
 
 model WarConfig {

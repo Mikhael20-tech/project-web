@@ -1577,7 +1577,7 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
   const [uploadLoading, setUploadLoading] = useState(false);
 
   // Forms State
-  const [dosenForm, setDosenForm] = useState({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '' });
+  const [dosenForm, setDosenForm] = useState({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', pendidikan: '', publikasi: '' });
   const [studentForm, setStudentForm] = useState({ id: '', nim: '', nama: '', kontak: '', password: '' });
   const [configForm, setConfigForm] = useState({ startTime: '', endTime: '' });
   const [passwordForm, setPasswordForm] = useState({ newPassword: '', confirmPassword: '' });
@@ -1711,7 +1711,7 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
       if (!res.ok) throw new Error(data.error || "Gagal menyimpan data dosen.");
       
       setMessage({ type: 'success', text: "Data dosen berhasil disimpan!" });
-      setDosenForm({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '' });
+      setDosenForm({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', pendidikan: '', publikasi: '' });
       fetchData();
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message });
@@ -2170,11 +2170,27 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
                           />
                         </div>
                       </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Keahlian Utama</label>
+                        <input value={dosenForm.keahlian || ''} onChange={e => setDosenForm({...dosenForm, keahlian: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner" placeholder="Misal: Kecerdasan Buatan" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Bio Singkat</label>
+                        <textarea value={dosenForm.bio || ''} onChange={e => setDosenForm({...dosenForm, bio: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner min-h-[80px]" placeholder="Deskripsi singkat..." />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Riwayat Pendidikan</label>
+                        <textarea value={dosenForm.pendidikan || ''} onChange={e => setDosenForm({...dosenForm, pendidikan: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner min-h-[80px]" placeholder="S1..., S2..." />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Daftar Publikasi</label>
+                        <textarea value={dosenForm.publikasi || ''} onChange={e => setDosenForm({...dosenForm, publikasi: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner min-h-[80px]" placeholder="Judul (Tahun)..." />
+                      </div>
                       <button type="submit" className="w-full py-5 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-teal-500/10 hover:bg-teal-950 transition-all flex items-center justify-center gap-2 mt-4 group">
                         <Save className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" /> {dosenForm.id ? "SIMPAN PERUBAHAN" : "TAMBAH DOSEN"}
                       </button>
                       {dosenForm.id && (
-                        <button type="button" onClick={() => setDosenForm({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '' })} className="w-full text-[10px] font-black text-teal-800/40 hover:text-rose-500 tracking-widest uppercase transition-colors">Batal Edit</button>
+                        <button type="button" onClick={() => setDosenForm({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', pendidikan: '', publikasi: '' })} className="w-full text-[10px] font-black text-teal-800/40 hover:text-rose-500 tracking-widest uppercase transition-colors">Batal Edit</button>
                       )}
                    </form>
                 </div>
@@ -2609,6 +2625,7 @@ const PortfolioPage = () => {
   const [dosenList, setDosenList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDosen, setSelectedDosen] = useState<any>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -2707,7 +2724,8 @@ const PortfolioPage = () => {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ delay: index * 0.05, type: "spring", stiffness: 300, damping: 25 }}
-                    className="bg-white rounded-[2.5rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_40px_-15px_rgba(20,184,166,0.2)] hover:-translate-y-2 transition-all duration-300 border border-teal-50 group flex flex-col h-full relative"
+                    className="bg-white rounded-[2.5rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_40px_-15px_rgba(20,184,166,0.2)] hover:-translate-y-2 transition-all duration-300 border border-teal-50 group flex flex-col h-full relative cursor-pointer"
+                    onClick={() => setSelectedDosen(dosen)}
                   >
                     <div className="aspect-square w-full overflow-hidden relative">
                       <div className="absolute inset-0 bg-gradient-to-t from-teal-950/90 via-teal-950/20 to-transparent opacity-70 group-hover:opacity-90 transition-opacity z-10" />
@@ -2774,6 +2792,111 @@ const PortfolioPage = () => {
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {selectedDosen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 sm:p-0">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedDosen(null)}
+              className="absolute inset-0 bg-teal-950/60 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-2xl bg-[#f8fdfc] rounded-[2.5rem] shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+            >
+              <div className="h-48 w-full relative">
+                <div className="absolute inset-0 bg-gradient-to-tr from-teal-900 to-teal-600 z-0"></div>
+                <div className="absolute top-0 right-0 w-64 h-64 bg-orange-400/20 blur-[80px] rounded-full mix-blend-screen pointer-events-none" />
+                <button 
+                  onClick={() => setSelectedDosen(null)} 
+                  className="absolute top-6 right-6 z-20 w-10 h-10 bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all border border-white/10"
+                >
+                  <XCircle className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="px-10 pb-10 relative z-10 -mt-20">
+                <div className="flex flex-col sm:flex-row gap-6 items-end sm:items-center mb-8">
+                  <div className="w-36 h-36 rounded-[2rem] border-4 border-white overflow-hidden shadow-xl shadow-teal-900/10 bg-white shrink-0">
+                    <img 
+                      src={selectedDosen.foto || 'https://images.unsplash.com/photo-1544717297-fa154da09f9b?w=400&h=400&fit=crop'} 
+                      alt={selectedDosen.nama} 
+                      className="w-full h-full object-cover" 
+                    />
+                  </div>
+                  <div className="flex-1 pb-2">
+                    <div className="inline-block px-3 py-1 bg-teal-100/50 text-teal-800 text-[10px] font-black uppercase tracking-widest rounded-lg mb-2">
+                      NIP. {selectedDosen.nip}
+                    </div>
+                    <h2 className="text-3xl font-black text-teal-950 tracking-tight leading-tight">{selectedDosen.nama}</h2>
+                    <p className="text-teal-600 font-bold text-sm mt-1">{selectedDosen.keahlian || "Pakar Akademik"}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-8">
+                  {selectedDosen.bio && (
+                    <div className="bg-white p-6 rounded-[2rem] border border-teal-50 shadow-sm">
+                      <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-teal-400 mb-3">
+                        <Info className="w-4 h-4" /> Tentang Dosen
+                      </h4>
+                      <p className="text-teal-950 text-sm leading-relaxed font-medium">
+                        {selectedDosen.bio}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white p-6 rounded-[2rem] border border-teal-50 shadow-sm">
+                      <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-teal-400 mb-3">
+                        <GraduationCap className="w-4 h-4" /> Riwayat Pendidikan
+                      </h4>
+                      <ul className="space-y-3">
+                        {(selectedDosen.pendidikan ? selectedDosen.pendidikan.split(';') : ['S1 - Universitas Negeri Surabaya']).map((edu: string, idx: number) => (
+                          <li key={idx} className="flex items-start gap-3 text-sm font-bold text-teal-950">
+                            <div className="w-1.5 h-1.5 rounded-full bg-teal-400 mt-1.5 shrink-0" />
+                            <span className="leading-snug">{edu.trim()}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-[2rem] border border-teal-50 shadow-sm">
+                      <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-teal-400 mb-3">
+                        <BookOpen className="w-4 h-4" /> Publikasi Utama
+                      </h4>
+                      <ul className="space-y-4">
+                        {(selectedDosen.publikasi ? selectedDosen.publikasi.split(';') : ['Belum ada data publikasi.']).map((pub: string, idx: number) => (
+                          <li key={idx} className="flex items-start gap-3 text-sm font-bold text-teal-950">
+                            <div className="w-5 h-5 rounded-lg bg-teal-50 text-teal-500 flex items-center justify-center shrink-0 mt-0.5 text-[10px]">
+                              {idx + 1}
+                            </div>
+                            <span className="leading-snug">{pub.trim()}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-teal-50/50 p-6 rounded-[2rem] border border-dashed border-teal-100 flex items-center justify-between">
+                     <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-teal-500 mb-1">Status Ketersediaan</p>
+                        <p className="text-teal-950 font-bold text-sm">Sisa {selectedDosen.kuotaMax - (selectedDosen._count?.kelompok || 0)} Kuota Bimbingan</p>
+                     </div>
+                     <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-teal-500 shadow-sm">
+                        <Users className="w-6 h-6" />
+                     </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
