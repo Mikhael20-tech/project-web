@@ -654,7 +654,7 @@ app.post("/api/admin/upload", authenticate, isAdmin, (req: any, res: any) => {
 // Dosen CRUD
 app.post("/api/admin/dosen", authenticate, isAdmin, async (req, res) => {
   try {
-    const { nama, nip, kuotaMax, foto, keahlian, bio, pendidikan, publikasi, kontak } = req.body;
+    const { nama, nip, kuotaMax, foto, keahlian, bio, pendidikan, publikasi, kontak, password } = req.body;
     if (!nama || !nip || !kuotaMax) throw new Error("Nama, NIP, dan kuota maksimal wajib diisi.");
     
     const dosen = await prisma.dosen.create({
@@ -670,6 +670,19 @@ app.post("/api/admin/dosen", authenticate, isAdmin, async (req, res) => {
         kontak
       }
     });
+
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await prisma.user.create({
+        data: {
+          username: nip,
+          password: hashedPassword,
+          role: "DOSEN",
+          dosen: { connect: { id: dosen.id } }
+        }
+      });
+    }
+
     res.json(dosen);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -679,7 +692,7 @@ app.post("/api/admin/dosen", authenticate, isAdmin, async (req, res) => {
 app.put("/api/admin/dosen/:id", authenticate, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { nama, nip, kuotaMax, foto, keahlian, bio, pendidikan, publikasi, kontak } = req.body;
+    const { nama, nip, kuotaMax, foto, keahlian, bio, pendidikan, publikasi, kontak, password } = req.body;
     const dosen = await prisma.dosen.update({
       where: { id },
       data: { 
@@ -694,6 +707,27 @@ app.put("/api/admin/dosen/:id", authenticate, isAdmin, async (req, res) => {
         kontak
       }
     });
+
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const user = await prisma.user.findUnique({ where: { username: dosen.nip } });
+      if (user) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { password: hashedPassword }
+        });
+      } else {
+        await prisma.user.create({
+          data: {
+            username: dosen.nip,
+            password: hashedPassword,
+            role: "DOSEN",
+            dosen: { connect: { id } }
+          }
+        });
+      }
+    }
+
     res.json(dosen);
   } catch (err: any) {
     res.status(400).json({ error: "Gagal memperbarui data dosen." });

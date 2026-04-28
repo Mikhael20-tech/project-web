@@ -1682,7 +1682,7 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
   const [uploadLoading, setUploadLoading] = useState(false);
 
   // Forms State
-  const [dosenForm, setDosenForm] = useState({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', pendidikan: '', publikasi: '', kontak: '' });
+  const [dosenForm, setDosenForm] = useState({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', pendidikan: '', publikasi: '', kontak: '', password: '' });
   const [studentForm, setStudentForm] = useState({ id: '', nim: '', nama: '', kontak: '', password: '' });
   const [configForm, setConfigForm] = useState({ startTime: '', endTime: '' });
   const [passwordForm, setPasswordForm] = useState({ newPassword: '', confirmPassword: '' });
@@ -1816,7 +1816,7 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
       if (!res.ok) throw new Error(data.error || "Gagal menyimpan data dosen.");
       
       setMessage({ type: 'success', text: "Data dosen berhasil disimpan!" });
-      setDosenForm({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', pendidikan: '', publikasi: '', kontak: '' });
+      setDosenForm({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', pendidikan: '', publikasi: '', kontak: '', password: '' });
       fetchData();
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message });
@@ -2295,11 +2295,15 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Nomor HP / Kontak</label>
                         <input value={dosenForm.kontak || ''} onChange={e => setDosenForm({...dosenForm, kontak: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner" placeholder="08123xxxx (Dapat diakses mahasiswa setelah war)" />
                       </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Password {dosenForm.id && "(Kosongi jika tidak diubah)"}</label>
+                        <input type="password" value={dosenForm.password || ''} onChange={e => setDosenForm({...dosenForm, password: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner" placeholder={dosenForm.id ? "Ketik password baru..." : "Password akun dosen..."} required={!dosenForm.id} />
+                      </div>
                       <button type="submit" className="w-full py-5 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-teal-500/10 hover:bg-teal-950 transition-all flex items-center justify-center gap-2 mt-4 group">
                         <Save className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" /> {dosenForm.id ? "SIMPAN PERUBAHAN" : "TAMBAH DOSEN"}
                       </button>
                       {dosenForm.id && (
-                        <button type="button" onClick={() => setDosenForm({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', pendidikan: '', publikasi: '', kontak: '' })} className="w-full text-[10px] font-black text-teal-800/40 hover:text-rose-500 tracking-widest uppercase transition-colors">Batal Edit</button>
+                        <button type="button" onClick={() => setDosenForm({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', pendidikan: '', publikasi: '', kontak: '', password: '' })} className="w-full text-[10px] font-black text-teal-800/40 hover:text-rose-500 tracking-widest uppercase transition-colors">Batal Edit</button>
                       )}
                    </form>
                 </div>
@@ -2330,7 +2334,7 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
                             </div>
                          </div>
                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => setDosenForm({ id: dosen.id, nama: dosen.nama, nip: dosen.nip, kuotaMax: dosen.kuotaMax, foto: dosen.foto || '', keahlian: dosen.keahlian || '', bio: dosen.bio || '', pendidikan: dosen.pendidikan || '', publikasi: dosen.publikasi || '', kontak: dosen.kontak || '' })} className="p-3 bg-[#f8fdfc] text-teal-800/40 hover:bg-teal-50 hover:text-teal-500 border border-transparent hover:border-teal-100 rounded-xl transition-all shadow-sm">
+                            <button onClick={() => setDosenForm({ id: dosen.id, nama: dosen.nama, nip: dosen.nip, kuotaMax: dosen.kuotaMax, foto: dosen.foto || '', keahlian: dosen.keahlian || '', bio: dosen.bio || '', pendidikan: dosen.pendidikan || '', publikasi: dosen.publikasi || '', kontak: dosen.kontak || '', password: '' })} className="p-3 bg-[#f8fdfc] text-teal-800/40 hover:bg-teal-50 hover:text-teal-500 border border-transparent hover:border-teal-100 rounded-xl transition-all shadow-sm">
                               <Edit className="w-4 h-4" />
                             </button>
                             <button onClick={() => setDeleteData({ type: 'dosen', id: dosen.id, name: dosen.nama })} className="p-3 bg-[#f8fdfc] text-teal-800/40 hover:bg-rose-50 hover:text-rose-600 border border-transparent hover:border-rose-100 rounded-xl transition-all shadow-sm">
