@@ -41,10 +41,10 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
             <>
               <div className="text-right hidden md:block mr-2">
                 <p className="text-[11px] text-gray-500 font-medium tracking-wider uppercase">
-                  {user.role === 'ADMIN' ? 'Administrator' : 'Mahasiswa'}
+                  {user.role === 'ADMIN' ? 'Administrator' : user.role === 'DOSEN' ? 'Dosen' : 'Mahasiswa'}
                 </p>
                 <p className="text-sm font-semibold text-gray-900">
-                  {user.role === 'ADMIN' ? user.username : (user.mahasiswa?.nama || user.username)}
+                  {user.role === 'ADMIN' ? user.username : (user.mahasiswa?.nama || user.dosen?.nama || user.nama || user.username)}
                 </p>
               </div>
               <div className="flex items-center gap-5 pl-5 border-l border-gray-200">
@@ -55,7 +55,7 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
                     <img referrerPolicy="no-referrer" src={user.foto || undefined} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-sm font-semibold text-gray-600">
-                      {user.mahasiswa?.nama ? getInitials(user.mahasiswa.nama) : (user.role === 'ADMIN' ? 'A' : '??')}
+                      {user.mahasiswa?.nama ? getInitials(user.mahasiswa.nama) : user.dosen?.nama ? getInitials(user.dosen.nama) : user.nama ? getInitials(user.nama) : (user.role === 'ADMIN' ? 'A' : user.role === 'DOSEN' ? 'D' : '??')}
                     </span>
                   )}
                 </div>
@@ -2857,7 +2857,7 @@ const PortfolioPage = () => {
                   >
                     <div className="aspect-square w-full overflow-hidden relative">
                       <div className="absolute inset-0 bg-gradient-to-t from-teal-950/90 via-teal-950/20 to-transparent opacity-70 group-hover:opacity-90 transition-opacity z-10" />
-                      <img src={dosen.foto || 'https://images.unsplash.com/photo-1544717297-fa154da09f9b?w=400&h=400&fit=crop'} alt={dosen.nama} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                      <img src={dosen.foto || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop'} alt={dosen.nama} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                       
                       {/* Badge Top Right */}
                       <div className="absolute top-4 right-4 z-20">
@@ -2952,7 +2952,7 @@ const PortfolioPage = () => {
                 <div className="flex flex-col sm:flex-row gap-6 items-end sm:items-center mb-8">
                   <div className="w-36 h-36 rounded-[2rem] border-4 border-white overflow-hidden shadow-xl shadow-teal-900/10 bg-white shrink-0">
                     <img 
-                      src={selectedDosen.foto || 'https://images.unsplash.com/photo-1544717297-fa154da09f9b?w=400&h=400&fit=crop'} 
+                      src={selectedDosen.foto || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop'} 
                       alt={selectedDosen.nama} 
                       className="w-full h-full object-cover" 
                     />
@@ -3173,7 +3173,7 @@ const DosenDashboard = ({ user, token }: { user: any; token: string }) => {
         <div className="bg-gradient-to-br from-teal-950 to-teal-900 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-8 items-center border border-teal-800">
            <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3" />
            <div className="w-32 h-32 rounded-3xl bg-teal-800/50 border-4 border-teal-700/50 overflow-hidden shrink-0 relative z-10 shadow-xl">
-             <img src={dosenData.foto || 'https://images.unsplash.com/photo-1544717297-fa154da09f9b?w=400&h=400&fit=crop'} alt={dosenData.nama} className="w-full h-full object-cover" />
+             <img src={dosenData.foto || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop'} alt={dosenData.nama} className="w-full h-full object-cover" />
            </div>
            <div className="relative z-10 flex-1 text-center md:text-left space-y-2">
              <div className="inline-block px-3 py-1 bg-teal-800/50 border border-teal-700/50 text-teal-300 text-[10px] font-black uppercase tracking-widest rounded-lg mb-2">
@@ -3276,7 +3276,7 @@ const DosenDashboard = ({ user, token }: { user: any; token: string }) => {
                        <div className="w-full md:w-1/3 flex flex-col items-center gap-4">
                           <div className="relative group w-48 h-48">
                              <div className="w-full h-full rounded-[2.5rem] bg-teal-50 border-4 border-white shadow-xl overflow-hidden ring-1 ring-teal-100">
-                                <img src={profileForm.foto || 'https://images.unsplash.com/photo-1544717297-fa154da09f9b?w=400&h=400&fit=crop'} className="w-full h-full object-cover" />
+                                <img src={profileForm.foto || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop'} className="w-full h-full object-cover" />
                              </div>
                              <label className="absolute inset-0 bg-teal-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer rounded-[2.5rem]">
                                 {uploadLoading ? <RefreshCcw className="w-8 h-8 text-white animate-spin" /> : <Camera className="w-8 h-8 text-white" />}
