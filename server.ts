@@ -693,6 +693,19 @@ app.put("/api/admin/dosen/:id", authenticate, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { nama, nip, kuotaMax, foto, keahlian, bio, pendidikan, publikasi, kontak, password } = req.body;
+    
+    const currentDosen = await prisma.dosen.findUnique({ where: { id } });
+    if (currentDosen?.foto && currentDosen.foto !== foto && currentDosen.foto.startsWith('/uploads/')) {
+      try {
+        const oldPath = path.join(process.cwd(), currentDosen.foto);
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      } catch (err) {
+        console.error("Gagal menghapus file lama (admin):", err);
+      }
+    }
+
     const dosen = await prisma.dosen.update({
       where: { id },
       data: { 
@@ -1042,6 +1055,20 @@ app.put("/api/dosen/profile", authenticate, async (req: any, res) => {
   if (req.user.role !== 'DOSEN') return res.status(403).json({ error: "Access denied." });
   const { nama, keahlian, bio, pendidikan, publikasi, kontak, foto } = req.body;
   try {
+    const currentDosen = await prisma.dosen.findUnique({ where: { nip: req.user.nim } });
+    
+    // Hapus file foto lama jika ada dan berbeda dengan yang baru
+    if (currentDosen?.foto && currentDosen.foto !== foto && currentDosen.foto.startsWith('/uploads/')) {
+      try {
+        const oldPath = path.join(process.cwd(), currentDosen.foto);
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      } catch (err) {
+        console.error("Gagal menghapus file lama:", err);
+      }
+    }
+
     const updatedDosen = await prisma.dosen.update({
       where: { nip: req.user.nim },
       data: { nama, keahlian, bio, pendidikan, publikasi, kontak, foto }
