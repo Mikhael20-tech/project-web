@@ -145,7 +145,7 @@ const LandingPage = ({ user }: { user: any }) => {
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
               {user ? (
                 <button 
-                  onClick={() => navigate(user.role === 'ADMIN' ? "/admin" : "/dashboard")}
+                  onClick={() => navigate(user.role === 'ADMIN' ? "/admin" : user.role === 'DOSEN' ? "/dosen-dashboard" : "/dashboard")}
                   className="w-full sm:w-auto px-10 py-5 bg-teal-500 text-white rounded-[1.25rem] font-black text-sm uppercase tracking-widest shadow-2xl shadow-teal-500/20 hover:bg-teal-600 hover:shadow-teal-500/40 hover:-translate-y-1 transition-all flex items-center justify-center gap-3 group"
                 >
                   Dashboard Saya <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -414,7 +414,10 @@ const LandingPage = ({ user }: { user: any }) => {
 };
 
 const LoginPage = ({ onLogin }: { onLogin: (token: string, user: any) => void }) => {
+  const [isRegister, setIsRegister] = useState(false);
+  const [isDosenLogin, setIsDosenLogin] = useState(false);
   const [username, setUsername] = useState("");
+  const [nama, setNama] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -457,24 +460,42 @@ const LoginPage = ({ onLogin }: { onLogin: (token: string, user: any) => void })
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-      
-      if (!res.ok) {
+      if (isRegister) {
+        const url = isDosenLogin ? "/api/register-dosen" : "/api/register";
+        const body = isDosenLogin ? { nip: username, nama, password } : { nim: username, nama, password };
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Terjadi kesalahan saat registrasi.");
+        }
+        
+        alert("Pendaftaran berhasil! Silakan login dengan akun yang baru dibuat.");
+        setIsRegister(false);
+      } else {
+        const res = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        });
+        
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Terjadi kesalahan saat login.");
+        }
+        
         const data = await res.json();
-        throw new Error(data.error || "Terjadi kesalahan saat login.");
+        onLogin(data.token, data.user);
       }
-      
-      const data = await res.json();
-      onLogin(data.token, data.user);
     } catch (err: any) {
       if (err.name === "TypeError" && err.message.includes("fetch")) {
         setError("Gagal terhubung ke server. Periksa koneksi internet Anda.");
       } else {
-        setError(err.message || "Username atau password salah.");
+        setError(err.message || (isRegister ? "Gagal mendaftar." : "Username atau password salah."));
       }
     } finally {
       setLoading(false);
@@ -505,7 +526,7 @@ const LoginPage = ({ onLogin }: { onLogin: (token: string, user: any) => void })
             >
                <Lock className="w-8 h-8 text-white" />
             </motion.div>
-            <h1 className="text-4xl font-black text-teal-950 tracking-tighter leading-tight">STUDENT <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-orange-500 italic">PORTAL</span></h1>
+            <h1 className="text-4xl font-black text-teal-950 tracking-tighter leading-tight">{isDosenLogin ? "DOSEN" : "STUDENT"} <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-orange-500 italic">PORTAL</span></h1>
             <p className="text-teal-800/50 text-[10px] uppercase font-black tracking-[0.3em]">War Dosen Pembimbing v2.0</p>
           </div>
 
@@ -517,18 +538,41 @@ const LoginPage = ({ onLogin }: { onLogin: (token: string, user: any) => void })
               className="space-y-2 relative"
             >
               <div className="flex justify-between items-center px-2">
-                <label className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">NIM / Username</label>
-                <span className="text-[9px] text-teal-800/50 font-mono tracking-tighter bg-teal-50 px-2 py-0.5 rounded-md">18000101</span>
+                <label className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">{isDosenLogin ? "NIP DOSEN" : "NIM MAHASISWA"}</label>
+                <span className="text-[9px] text-teal-800/50 font-mono tracking-tighter bg-teal-50 px-2 py-0.5 rounded-md">{isDosenLogin ? "19800101" : "18000101"}</span>
               </div>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full bg-[#f8fdfc]/50 border border-teal-100 rounded-[1.25rem] px-5 py-4 text-teal-950 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all placeholder:text-teal-800/30 shadow-inner"
-                placeholder="NIM Mahasiswa"
+                placeholder={isDosenLogin ? "NIP Dosen" : "NIM Mahasiswa"}
                 required
               />
             </motion.div>
+
+            <AnimatePresence>
+              {isRegister && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0, overflow: 'hidden' }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-2 relative"
+                >
+                  <div className="flex justify-between items-center px-2 mt-2">
+                    <label className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">Nama Lengkap</label>
+                  </div>
+                  <input
+                    type="text"
+                    value={nama}
+                    onChange={(e) => setNama(e.target.value)}
+                    className="w-full bg-[#f8fdfc]/50 border border-teal-100 rounded-[1.25rem] px-5 py-4 text-teal-950 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all placeholder:text-teal-800/30 shadow-inner"
+                    placeholder="Nama Lengkap Anda"
+                    required={isRegister}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
             
             <motion.div 
               initial={{ opacity: 0, x: -20 }}
@@ -580,11 +624,11 @@ const LoginPage = ({ onLogin }: { onLogin: (token: string, user: any) => void })
               <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
               {loading ? (
                 <>
-                  <RefreshCcw className="w-4 h-4 animate-spin" /> MENGOTENTIKASI...
+                  <RefreshCcw className="w-4 h-4 animate-spin" /> {isRegister ? "MENDAFTARKAN..." : "MENGOTENTIKASI..."}
                 </>
               ) : (
                 <>
-                  <LogIn className="w-4 h-4 group-hover:translate-x-1 transition-transform" /> MASUK KE PORTAL
+                  <LogIn className="w-4 h-4 group-hover:translate-x-1 transition-transform" /> {isRegister ? "DAFTAR SEKARANG" : "MASUK KE PORTAL"}
                 </>
               )}
             </motion.button>
@@ -596,6 +640,22 @@ const LoginPage = ({ onLogin }: { onLogin: (token: string, user: any) => void })
             transition={{ delay: 0.6 }}
             className="mt-6 space-y-4"
           >
+            <div className="text-center">
+              <button 
+                type="button" 
+                onClick={() => { setIsRegister(!isRegister); setError(""); }}
+                className="text-xs font-bold text-teal-600 hover:text-teal-800 transition-colors block w-full mb-2"
+              >
+                {isRegister ? "Sudah punya akun? Login di sini" : `Belum punya akun? Daftar ${isDosenLogin ? 'Dosen' : 'Mahasiswa'}`}
+              </button>
+              <button 
+                type="button" 
+                onClick={() => { setIsDosenLogin(!isDosenLogin); setError(""); }}
+                className="text-xs font-bold text-orange-500 hover:text-orange-700 transition-colors block w-full"
+              >
+                {isDosenLogin ? "Masuk sebagai Mahasiswa" : "Masuk sebagai Dosen"}
+              </button>
+            </div>
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-teal-100/50"></div>
@@ -1301,12 +1361,56 @@ const Dashboard = ({ user: initialUser, token, onProfileUpdate }: { user: any; t
         {/* Content Section Divider */}
         <div className="flex items-center gap-4 py-4">
            <div className="h-px bg-teal-100 flex-1"></div>
-           <span className="text-[10px] font-black uppercase text-teal-800/50 tracking-[0.5em]">List Database Dosen</span>
+           <span className="text-[10px] font-black uppercase text-teal-800/50 tracking-[0.5em]">
+             {studentData?.kelompok?.dosen ? "Hasil War Dosen Pembimbing" : "List Database Dosen"}
+           </span>
            <div className="h-px bg-teal-100 flex-1"></div>
         </div>
 
-        {/* Lecturers Grid */}
+        {studentData?.kelompok?.dosen ? (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-[3rem] p-10 text-white shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center gap-8 border border-emerald-400"
+          >
+             <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3" />
+             <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-900/20 rounded-full blur-[80px] translate-y-1/3 -translate-x-1/3" />
+             <div className="w-40 h-40 rounded-[2rem] bg-white/20 border-4 border-white/40 overflow-hidden shrink-0 shadow-2xl relative z-10 flex items-center justify-center">
+               {studentData.kelompok.dosen.foto ? (
+                 <img src={studentData.kelompok.dosen.foto} alt={studentData.kelompok.dosen.nama} className="w-full h-full object-cover" />
+               ) : (
+                 <Award className="w-16 h-16 text-white" />
+               )}
+             </div>
+             <div className="relative z-10 flex-1 space-y-3 text-center md:text-left">
+               <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/20 text-white text-[10px] font-black uppercase tracking-widest rounded-lg border border-white/30 backdrop-blur-sm">
+                 <CheckCircle2 className="w-4 h-4" /> SELAMAT! DOSEN PEMBIMBING TERPILIH
+               </div>
+               <h2 className="text-4xl md:text-5xl font-black tracking-tighter drop-shadow-md">{studentData.kelompok.dosen.nama}</h2>
+               <p className="text-emerald-100 font-bold text-lg">NIP: {studentData.kelompok.dosen.nip}</p>
+               
+               <div className="flex flex-col sm:flex-row gap-4 mt-6 pt-4">
+                 {studentData.kelompok.dosen.kontak ? (
+                    <a href={`https://wa.me/${studentData.kelompok.dosen.kontak.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="bg-white text-emerald-600 px-6 py-4 rounded-[1.25rem] font-black uppercase tracking-widest text-xs hover:bg-emerald-50 hover:scale-105 transition-all shadow-xl flex items-center justify-center gap-3">
+                      <Smartphone className="w-5 h-5" /> Hubungi via WhatsApp
+                    </a>
+                 ) : (
+                    <div className="bg-white/10 text-white border border-white/20 px-6 py-4 rounded-[1.25rem] font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3">
+                      <AlertCircle className="w-5 h-5" /> Kontak Belum Tersedia
+                    </div>
+                 )}
+                 <button 
+                   onClick={() => navigate('/portfolio')}
+                   className="bg-transparent border-2 border-white/30 text-white px-6 py-4 rounded-[1.25rem] font-black uppercase tracking-widest text-xs hover:bg-white/10 transition-all flex items-center justify-center gap-3"
+                 >
+                   <BookOpen className="w-5 h-5" /> Lihat Profil Dosen
+                 </button>
+               </div>
+             </div>
+          </motion.div>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* Lecturers Grid */}
           {dosenList.map((dosen) => (
             <motion.div
               key={dosen.id}
@@ -1383,6 +1487,7 @@ const Dashboard = ({ user: initialUser, token, onProfileUpdate }: { user: any; t
             </motion.div>
           ))}
         </div>
+        )}
       </div>
 
       <AnimatePresence>
@@ -1577,7 +1682,7 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
   const [uploadLoading, setUploadLoading] = useState(false);
 
   // Forms State
-  const [dosenForm, setDosenForm] = useState({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', pendidikan: '', publikasi: '' });
+  const [dosenForm, setDosenForm] = useState({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', pendidikan: '', publikasi: '', kontak: '' });
   const [studentForm, setStudentForm] = useState({ id: '', nim: '', nama: '', kontak: '', password: '' });
   const [configForm, setConfigForm] = useState({ startTime: '', endTime: '' });
   const [passwordForm, setPasswordForm] = useState({ newPassword: '', confirmPassword: '' });
@@ -1711,7 +1816,7 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
       if (!res.ok) throw new Error(data.error || "Gagal menyimpan data dosen.");
       
       setMessage({ type: 'success', text: "Data dosen berhasil disimpan!" });
-      setDosenForm({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', pendidikan: '', publikasi: '' });
+      setDosenForm({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', pendidikan: '', publikasi: '', kontak: '' });
       fetchData();
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message });
@@ -2186,11 +2291,15 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Daftar Publikasi</label>
                         <textarea value={dosenForm.publikasi || ''} onChange={e => setDosenForm({...dosenForm, publikasi: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner min-h-[80px]" placeholder="Judul (Tahun)..." />
                       </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Nomor HP / Kontak</label>
+                        <input value={dosenForm.kontak || ''} onChange={e => setDosenForm({...dosenForm, kontak: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner" placeholder="08123xxxx (Dapat diakses mahasiswa setelah war)" />
+                      </div>
                       <button type="submit" className="w-full py-5 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-teal-500/10 hover:bg-teal-950 transition-all flex items-center justify-center gap-2 mt-4 group">
                         <Save className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" /> {dosenForm.id ? "SIMPAN PERUBAHAN" : "TAMBAH DOSEN"}
                       </button>
                       {dosenForm.id && (
-                        <button type="button" onClick={() => setDosenForm({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', pendidikan: '', publikasi: '' })} className="w-full text-[10px] font-black text-teal-800/40 hover:text-rose-500 tracking-widest uppercase transition-colors">Batal Edit</button>
+                        <button type="button" onClick={() => setDosenForm({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', pendidikan: '', publikasi: '', kontak: '' })} className="w-full text-[10px] font-black text-teal-800/40 hover:text-rose-500 tracking-widest uppercase transition-colors">Batal Edit</button>
                       )}
                    </form>
                 </div>
@@ -2221,7 +2330,7 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
                             </div>
                          </div>
                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => setDosenForm({ id: dosen.id, nama: dosen.nama, nip: dosen.nip, kuotaMax: dosen.kuotaMax, foto: dosen.foto || '' })} className="p-3 bg-[#f8fdfc] text-teal-800/40 hover:bg-teal-50 hover:text-teal-500 border border-transparent hover:border-teal-100 rounded-xl transition-all shadow-sm">
+                            <button onClick={() => setDosenForm({ id: dosen.id, nama: dosen.nama, nip: dosen.nip, kuotaMax: dosen.kuotaMax, foto: dosen.foto || '', keahlian: dosen.keahlian || '', bio: dosen.bio || '', pendidikan: dosen.pendidikan || '', publikasi: dosen.publikasi || '', kontak: dosen.kontak || '' })} className="p-3 bg-[#f8fdfc] text-teal-800/40 hover:bg-teal-50 hover:text-teal-500 border border-transparent hover:border-teal-100 rounded-xl transition-all shadow-sm">
                               <Edit className="w-4 h-4" />
                             </button>
                             <button onClick={() => setDeleteData({ type: 'dosen', id: dosen.id, name: dosen.nama })} className="p-3 bg-[#f8fdfc] text-teal-800/40 hover:bg-rose-50 hover:text-rose-600 border border-transparent hover:border-rose-100 rounded-xl transition-all shadow-sm">
@@ -2901,6 +3010,117 @@ const PortfolioPage = () => {
   );
 };
 
+const DosenDashboard = ({ user, token }: { user: any; token: string }) => {
+  const [dosenData, setDosenData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDosen = async () => {
+      try {
+        const res = await fetch("/api/me-dosen", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setDosenData(data);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDosen();
+  }, [token]);
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center bg-[#F0FAF8]"><RefreshCcw className="w-8 h-8 animate-spin text-teal-500" /></div>;
+  }
+
+  if (!dosenData) {
+    return <div className="min-h-screen flex items-center justify-center bg-[#F0FAF8]">Gagal memuat data dosen.</div>;
+  }
+
+  return (
+    <div className="min-h-screen bg-[#F0FAF8] pt-24 pb-12 px-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        <div className="bg-gradient-to-br from-teal-950 to-teal-900 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-8 items-center border border-teal-800">
+           <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3" />
+           <div className="w-32 h-32 rounded-3xl bg-teal-800/50 border-4 border-teal-700/50 overflow-hidden shrink-0 relative z-10 shadow-xl">
+             <img src={dosenData.foto || 'https://images.unsplash.com/photo-1544717297-fa154da09f9b?w=400&h=400&fit=crop'} alt={dosenData.nama} className="w-full h-full object-cover" />
+           </div>
+           <div className="relative z-10 flex-1 text-center md:text-left space-y-2">
+             <div className="inline-block px-3 py-1 bg-teal-800/50 border border-teal-700/50 text-teal-300 text-[10px] font-black uppercase tracking-widest rounded-lg mb-2">
+               DOSEN PEMBIMBING
+             </div>
+             <h1 className="text-3xl md:text-4xl font-black tracking-tight">{dosenData.nama}</h1>
+             <p className="text-teal-400 font-bold">NIP: {dosenData.nip}</p>
+             <p className="text-sm text-teal-100/80 max-w-2xl mt-4">{dosenData.bio || "Belum ada bio."}</p>
+           </div>
+           <div className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-3xl relative z-10 flex flex-col items-center justify-center text-center w-full md:w-auto shrink-0 shadow-lg">
+              <span className="text-5xl font-black font-mono tracking-tighter text-teal-300 drop-shadow-md">
+                {dosenData.kelompok?.length || 0}
+              </span>
+              <span className="text-[10px] uppercase font-black text-teal-100 mt-2 tracking-widest opacity-80">KELOMPOK Bimbingan</span>
+              <div className="w-full h-px bg-white/20 my-3" />
+              <span className="text-xs font-bold text-white">Maksimal {dosenData.kuotaMax} Kelompok</span>
+           </div>
+        </div>
+
+        <div className="bg-white rounded-[2.5rem] p-10 border border-teal-50 shadow-sm relative overflow-hidden">
+           <h2 className="text-xl font-black text-teal-950 uppercase tracking-tighter mb-8 flex items-center gap-3">
+             <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center text-teal-500 shadow-inner">
+               <Users className="w-5 h-5" />
+             </div>
+             Daftar Mahasiswa Bimbingan
+           </h2>
+           
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+             {dosenData.kelompok?.length > 0 ? (
+               dosenData.kelompok.map((k: any) => (
+                 <div key={k.id} className="p-6 bg-slate-50 border border-slate-200 rounded-[2rem] hover:shadow-md transition-all">
+                   <div className="flex items-center gap-3 mb-4">
+                     <span className="text-[10px] font-black bg-teal-500 text-white px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">
+                       {k.nama || `Team #${k.id.substring(0,5)}`}
+                     </span>
+                   </div>
+                   <div className="space-y-3">
+                     {k.mahasiswa.map((m: any) => (
+                       <div key={m.id} className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                         <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center overflow-hidden border border-teal-100 relative">
+                           {m.isLeader && <div className="absolute top-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white z-10" />}
+                           <img src={m.foto || undefined} className="w-full h-full object-cover" />
+                         </div>
+                         <div className="flex flex-col">
+                           <span className="text-sm font-bold text-slate-800">{m.nama}</span>
+                           <span className="text-[10px] font-mono text-slate-500 font-bold">{m.nim}</span>
+                         </div>
+                         {m.kontak && (
+                           <div className="ml-auto">
+                             <a href={`https://wa.me/${m.kontak.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="text-[10px] font-black text-teal-600 hover:text-teal-800 bg-teal-50 px-3 py-1.5 rounded-lg border border-teal-100 transition-colors uppercase flex items-center gap-1">
+                               <Smartphone className="w-3 h-3" /> Chat
+                             </a>
+                           </div>
+                         )}
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+               ))
+             ) : (
+               <div className="col-span-full py-12 text-center border-2 border-dashed border-teal-100 rounded-[2rem] bg-teal-50/50">
+                 <Search className="w-8 h-8 text-teal-300 mx-auto mb-4" />
+                 <h3 className="text-lg font-black text-teal-950 mb-1">Belum Ada Mahasiswa</h3>
+                 <p className="text-sm font-medium text-teal-800/60">Mahasiswa akan muncul di sini setelah mereka memilih Anda.</p>
+               </div>
+             )}
+           </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState<any>(JSON.parse(localStorage.getItem("user") || "null"));
@@ -2933,7 +3153,7 @@ export default function App() {
         <Navbar user={user} onLogout={logout} />
         <Routes>
           <Route path="/" element={<LandingPage user={user} />} />
-          <Route path="/login" element={!token ? <LoginPage onLogin={login} /> : user?.role === 'ADMIN' ? <Navigate to="/admin" /> : <Navigate to="/dashboard" />} />
+          <Route path="/login" element={!token ? <LoginPage onLogin={login} /> : user?.role === 'ADMIN' ? <Navigate to="/admin" /> : user?.role === 'DOSEN' ? <Navigate to="/dosen-dashboard" /> : <Navigate to="/dashboard" />} />
           
           <Route path="/dashboard" element={
             token && user?.role === 'STUDENT' ? (
@@ -2942,6 +3162,12 @@ export default function App() {
               ) : (
                 <Dashboard user={user} token={token || ""} onProfileUpdate={updateProfile} />
               )
+            ) : <Navigate to="/login" />
+          } />
+
+          <Route path="/dosen-dashboard" element={
+            token && user?.role === 'DOSEN' ? (
+              <DosenDashboard user={user} token={token || ""} />
             ) : <Navigate to="/login" />
           } />
 

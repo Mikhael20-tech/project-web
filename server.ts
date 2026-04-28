@@ -85,6 +85,83 @@ const authenticate = async (req: any, res: any, next: any) => {
 };
 
 // --- AUTH ROUTES ---
+app.post("/api/register", async (req, res) => {
+  try {
+    const { nim, nama, password } = req.body;
+    if (!nim || !nama || !password) {
+      return res.status(400).json({ error: "NIM, Nama, dan Password wajib diisi." });
+    }
+    
+    const existingUser = await prisma.user.findUnique({ where: { username: nim } });
+    if (existingUser) {
+      return res.status(400).json({ error: "NIM tersebut sudah terdaftar." });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    await prisma.user.create({
+      data: {
+        username: nim,
+        password: hashedPassword,
+        role: "STUDENT",
+        mahasiswa: {
+          create: {
+            nim,
+            nama
+          }
+        }
+      }
+    });
+
+    res.status(201).json({ message: "Registrasi berhasil. Silakan login." });
+  } catch (err: any) {
+    console.error("Register Error Details:", err);
+    res.status(500).json({ error: "Terjadi kesalahan pada server saat registrasi." });
+  }
+});
+
+app.post("/api/register-dosen", async (req, res) => {
+  try {
+    const { nip, nama, password } = req.body;
+    if (!nip || !nama || !password) {
+      return res.status(400).json({ error: "NIP, Nama, dan Password wajib diisi." });
+    }
+    
+    const existingUser = await prisma.user.findUnique({ where: { username: nip } });
+    if (existingUser) {
+      return res.status(400).json({ error: "Akun dengan NIP tersebut sudah terdaftar." });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const existingDosen = await prisma.dosen.findFirst({ where: { nip } });
+    
+    if (existingDosen) {
+      await prisma.user.create({
+        data: {
+          username: nip,
+          password: hashedPassword,
+          role: "DOSEN",
+          dosen: { connect: { id: existingDosen.id } }
+        }
+      });
+    } else {
+      await prisma.user.create({
+        data: {
+          username: nip,
+          password: hashedPassword,
+          role: "DOSEN",
+          dosen: { create: { nip, nama } }
+        }
+      });
+    }
+
+    res.status(201).json({ message: "Registrasi Dosen berhasil. Silakan login." });
+  } catch (err: any) {
+    console.error("Register Dosen Error:", err);
+    res.status(500).json({ error: "Terjadi kesalahan pada server saat registrasi dosen." });
+  }
+});
+
 app.post("/api/login", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -95,7 +172,7 @@ app.post("/api/login", async (req, res) => {
           { email: username }
         ]
       },
-      include: { mahasiswa: true },
+      include: { mahasiswa: true, dosen: true },
     });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -108,7 +185,7 @@ app.post("/api/login", async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    res.json({ token, user: { id: user.id, username: user.username, role: user.role, mahasiswa: user.mahasiswa, foto: user.foto } });
+    res.json({ token, user: { id: user.id, username: user.username, role: user.role, mahasiswa: user.mahasiswa, dosen: user.dosen, foto: user.foto } });
   } catch (err: any) {
     console.error("Login Error Details:", err);
     res.status(500).json({ error: `Server error during login: ${err.message || "Unknown error"}` });
@@ -239,6 +316,18 @@ app.get("/api/me", authenticate, async (req: any, res) => {
     res.json(student);
   } catch (err) {
     res.status(500).json({ error: "Gagal memuat data profil." });
+  }
+});
+
+app.get("/api/me-dosen", authenticate, async (req: any, res) => {
+  try {
+    const dosen = await prisma.dosen.findUnique({
+      where: { userId: req.user.id },
+      include: { kelompok: { include: { mahasiswa: true } } }
+    });
+    res.json(dosen);
+  } catch (err) {
+    res.status(500).json({ error: "Gagal memuat data profil dosen." });
   }
 });
 
@@ -565,7 +654,7 @@ app.post("/api/admin/upload", authenticate, isAdmin, (req: any, res: any) => {
 // Dosen CRUD
 app.post("/api/admin/dosen", authenticate, isAdmin, async (req, res) => {
   try {
-    const { nama, nip, kuotaMax, foto, keahlian, bio, pendidikan, publikasi } = req.body;
+    const { nama, nip, kuotaMax, foto, keahlian, bio, pendidikan, publikasi, kontak } = req.body;
     if (!nama || !nip || !kuotaMax) throw new Error("Nama, NIP, dan kuota maksimal wajib diisi.");
     
     const dosen = await prisma.dosen.create({
@@ -577,7 +666,8 @@ app.post("/api/admin/dosen", authenticate, isAdmin, async (req, res) => {
         keahlian,
         bio,
         pendidikan,
-        publikasi
+        publikasi,
+        kontak
       }
     });
     res.json(dosen);
@@ -589,7 +679,7 @@ app.post("/api/admin/dosen", authenticate, isAdmin, async (req, res) => {
 app.put("/api/admin/dosen/:id", authenticate, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { nama, nip, kuotaMax, foto, keahlian, bio, pendidikan, publikasi } = req.body;
+    const { nama, nip, kuotaMax, foto, keahlian, bio, pendidikan, publikasi, kontak } = req.body;
     const dosen = await prisma.dosen.update({
       where: { id },
       data: { 
@@ -600,7 +690,8 @@ app.put("/api/admin/dosen/:id", authenticate, isAdmin, async (req, res) => {
         keahlian,
         bio,
         pendidikan,
-        publikasi
+        publikasi,
+        kontak
       }
     });
     res.json(dosen);

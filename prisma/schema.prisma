@@ -13,6 +13,7 @@ datasource db {
 enum Role {
   ADMIN
   STUDENT
+  DOSEN
 }
 
 enum InvitationStatus {
@@ -29,6 +30,7 @@ model User {
   foto      String?
   role      Role     @default(STUDENT)
   mahasiswa Mahasiswa?
+  dosen     Dosen?
   createdAt DateTime @default(now())
 }
 
@@ -81,8 +83,11 @@ model Dosen {
   bio         String?  @default("Dosen tetap di Program Studi Pendidikan Teknologi Informasi UNESA dengan fokus pada pengembangan sistem dan metodologi pembelajaran berbasis teknologi.")
   pendidikan  String?  @default("S1 Pendidikan Teknologi Informasi - UNESA; S2 Teknik Informatika - ITS")
   publikasi   String?  @default("Pengembangan Sistem E-Learning Berbasis Gamifikasi (2023); Implementasi AI dalam Media Pembelajaran (2022)")
+  kontak      String?
   kuotaMax    Int      @default(5)
   kelompok    Kelompok[]
+  userId      String?  @unique
+  user        User?    @relation(fields: [userId], references: [id])
   createdAt   DateTime @default(now())
 }
 
