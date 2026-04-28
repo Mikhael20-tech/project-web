@@ -53,10 +53,12 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
                     <img referrerPolicy="no-referrer" src={user.mahasiswa.foto || undefined} alt="Profile" className="w-full h-full object-cover" />
                   ) : user.foto ? (
                     <img referrerPolicy="no-referrer" src={user.foto || undefined} alt="Profile" className="w-full h-full object-cover" />
+                  ) : user.role === 'DOSEN' ? (
+                    <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop" alt="Dosen" className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-sm font-semibold text-gray-600">
-                      {user.mahasiswa?.nama ? getInitials(user.mahasiswa.nama) : user.dosen?.nama ? getInitials(user.dosen.nama) : user.nama ? getInitials(user.nama) : (user.role === 'ADMIN' ? 'A' : user.role === 'DOSEN' ? 'D' : '??')}
-                    </span>
+                    <div className="w-full h-full bg-teal-50 flex items-center justify-center text-teal-300">
+                      <Users className="w-6 h-6" />
+                    </div>
                   )}
                 </div>
                 <button
