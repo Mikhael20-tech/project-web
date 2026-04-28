@@ -639,7 +639,7 @@ app.get("/api/admin/reports", authenticate, isAdmin, async (req: any, res) => {
 });
 
 // Photo Upload
-app.post("/api/admin/upload", authenticate, isAdmin, (req: any, res: any) => {
+app.post("/api/upload", authenticate, (req: any, res: any) => {
   upload.single("photo")(req, res, (err) => {
     if (err) {
       console.error("Upload error:", err);
@@ -1034,6 +1034,50 @@ app.put("/api/admin/profile-foto", authenticate, isAdmin, async (req: any, res) 
   } catch (err: any) {
     console.error("Gagal update foto profil:", err);
     res.status(500).json({ error: "Gagal memperbarui foto profil." });
+  }
+});
+
+// --- DOSEN SELF MANAGEMENT ---
+app.put("/api/dosen/profile", authenticate, async (req: any, res) => {
+  if (req.user.role !== 'DOSEN') return res.status(403).json({ error: "Access denied." });
+  const { nama, keahlian, bio, pendidikan, publikasi, kontak, foto } = req.body;
+  try {
+    const updatedDosen = await prisma.dosen.update({
+      where: { nip: req.user.nim },
+      data: { nama, keahlian, bio, pendidikan, publikasi, kontak, foto }
+    });
+    if (foto) {
+      await prisma.user.update({
+        where: { id: req.user.id },
+        data: { foto }
+      });
+    }
+    res.json(updatedDosen);
+  } catch (err: any) {
+    console.error("Update Dosen Profile Error:", err);
+    res.status(500).json({ error: "Gagal memperbarui profil dosen." });
+  }
+});
+
+app.put("/api/dosen/password", authenticate, async (req: any, res) => {
+  if (req.user.role !== 'DOSEN') return res.status(403).json({ error: "Access denied." });
+  const { currentPassword, newPassword } = req.body;
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ error: "Password baru minimal 6 karakter." });
+  }
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user || !(await bcrypt.compare(currentPassword, user.password))) {
+      return res.status(401).json({ error: "Password saat ini salah." });
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { password: hashedPassword }
+    });
+    res.json({ message: "Password berhasil diperbarui." });
+  } catch (err: any) {
+    res.status(500).json({ error: "Gagal memperbarui password." });
   }
 });
 

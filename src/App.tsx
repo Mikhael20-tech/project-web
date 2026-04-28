@@ -705,6 +705,7 @@ const Dashboard = ({ user: initialUser, token, onProfileUpdate }: { user: any; t
   const [groupLoading, setGroupLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [inviteNim, setInviteNim] = useState("");
+  const [uploadLoading, setUploadLoading] = useState(false);
   const [invitations, setInvitations] = useState<any[]>([]);
   const [teamNameForm, setTeamNameForm] = useState("");
   const [isEditingTeam, setIsEditingTeam] = useState(false);
@@ -1007,18 +1008,32 @@ const Dashboard = ({ user: initialUser, token, onProfileUpdate }: { user: any; t
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 1024 * 1024) { // 1MB Limit
-        setMessage({ type: 'error', text: "UKURAN FOTO TERLALU BESAR (MAKS 1MB)" });
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileForm({ ...profileForm, foto: reader.result as string });
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    
+    if (file.size > 2 * 1024 * 1024) { // 2MB Limit matching server
+      setMessage({ type: 'error', text: "UKURAN FOTO TERLALU BESAR (MAKS 2MB)" });
+      return;
+    }
+
+    setUploadLoading(true);
+    const formData = new FormData();
+    formData.append("photo", file);
+    
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` },
+        body: formData
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal upload foto.");
+      setProfileForm({ ...profileForm, foto: data.url });
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message.toUpperCase() });
+    } finally {
+      setUploadLoading(false);
     }
   };
   const formatCountdown = (ms: number) => {
@@ -1773,7 +1788,7 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
       const formData = new FormData();
       formData.append("photo", compressedBlob, file.name.replace(/\.[^/.]+$/, "") + ".jpg");
 
-      const res = await fetch("/api/admin/upload", {
+      const res = await fetch("/api/upload", {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}` },
         body: formData
@@ -2008,7 +2023,7 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
       const formData = new FormData();
       formData.append("photo", compressedBlob, file.name.replace(/\.[^/.]+$/, "") + ".jpg");
 
-      const res = await fetch("/api/admin/upload", {
+      const res = await fetch("/api/upload", {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}` },
         body: formData
@@ -3017,25 +3032,131 @@ const PortfolioPage = () => {
 const DosenDashboard = ({ user, token }: { user: any; token: string }) => {
   const [dosenData, setDosenData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'overview' | 'profile' | 'security'>('overview');
+  const [profileForm, setProfileForm] = useState({
+    nama: '',
+    keahlian: '',
+    bio: '',
+    pendidikan: '',
+    publikasi: '',
+    kontak: '',
+    foto: ''
+  });
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [uploadLoading, setUploadLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchDosen = async () => {
-      try {
-        const res = await fetch("/api/me-dosen", {
-          headers: { "Authorization": `Bearer ${token}` }
+  const fetchDosen = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/me-dosen", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDosenData(data);
+        setProfileForm({
+          nama: data.nama || '',
+          keahlian: data.keahlian || '',
+          bio: data.bio || '',
+          pendidikan: data.pendidikan || '',
+          publikasi: data.publikasi || '',
+          kontak: data.kontak || '',
+          foto: data.foto || ''
         });
-        if (res.ok) {
-          const data = await res.json();
-          setDosenData(data);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
     fetchDosen();
   }, [token]);
+
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage(null);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/dosen/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(profileForm)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal memperbarui profil.");
+      
+      setMessage({ type: 'success', text: "Profil berhasil diperbarui!" });
+      fetchDosen();
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage(null);
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setMessage({ type: 'error', text: "Konfirmasi password tidak cocok." });
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/dosen/password", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal mengubah password.");
+      
+      setMessage({ type: 'success', text: "Password berhasil diubah!" });
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadLoading(true);
+    const formData = new FormData();
+    formData.append("photo", file);
+    try {
+      const res = await fetch("/api/upload", { // Reuse admin upload for now
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` },
+        body: formData
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal upload foto.");
+      setProfileForm({ ...profileForm, foto: data.url });
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message });
+    } finally {
+      setUploadLoading(false);
+    }
+  };
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-[#F0FAF8]"><RefreshCcw className="w-8 h-8 animate-spin text-teal-500" /></div>;
@@ -3048,6 +3169,7 @@ const DosenDashboard = ({ user, token }: { user: any; token: string }) => {
   return (
     <div className="min-h-screen bg-[#F0FAF8] pt-24 pb-12 px-6">
       <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header Section */}
         <div className="bg-gradient-to-br from-teal-950 to-teal-900 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-8 items-center border border-teal-800">
            <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3" />
            <div className="w-32 h-32 rounded-3xl bg-teal-800/50 border-4 border-teal-700/50 overflow-hidden shrink-0 relative z-10 shadow-xl">
@@ -3071,55 +3193,164 @@ const DosenDashboard = ({ user, token }: { user: any; token: string }) => {
            </div>
         </div>
 
-        <div className="bg-white rounded-[2.5rem] p-10 border border-teal-50 shadow-sm relative overflow-hidden">
-           <h2 className="text-xl font-black text-teal-950 uppercase tracking-tighter mb-8 flex items-center gap-3">
-             <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center text-teal-500 shadow-inner">
-               <Users className="w-5 h-5" />
-             </div>
-             Daftar Mahasiswa Bimbingan
-           </h2>
-           
-           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-             {dosenData.kelompok?.length > 0 ? (
-               dosenData.kelompok.map((k: any) => (
-                 <div key={k.id} className="p-6 bg-slate-50 border border-slate-200 rounded-[2rem] hover:shadow-md transition-all">
-                   <div className="flex items-center gap-3 mb-4">
-                     <span className="text-[10px] font-black bg-teal-500 text-white px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">
-                       {k.nama || `Team #${k.id.substring(0,5)}`}
-                     </span>
-                   </div>
-                   <div className="space-y-3">
-                     {k.mahasiswa.map((m: any) => (
-                       <div key={m.id} className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
-                         <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center overflow-hidden border border-teal-100 relative">
-                           {m.isLeader && <div className="absolute top-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white z-10" />}
-                           <img src={m.foto || undefined} className="w-full h-full object-cover" />
-                         </div>
-                         <div className="flex flex-col">
-                           <span className="text-sm font-bold text-slate-800">{m.nama}</span>
-                           <span className="text-[10px] font-mono text-slate-500 font-bold">{m.nim}</span>
-                         </div>
-                         {m.kontak && (
-                           <div className="ml-auto">
-                             <a href={`https://wa.me/${m.kontak.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="text-[10px] font-black text-teal-600 hover:text-teal-800 bg-teal-50 px-3 py-1.5 rounded-lg border border-teal-100 transition-colors uppercase flex items-center gap-1">
-                               <Smartphone className="w-3 h-3" /> Chat
-                             </a>
-                           </div>
-                         )}
-                       </div>
-                     ))}
-                   </div>
-                 </div>
-               ))
-             ) : (
-               <div className="col-span-full py-12 text-center border-2 border-dashed border-teal-100 rounded-[2rem] bg-teal-50/50">
-                 <Search className="w-8 h-8 text-teal-300 mx-auto mb-4" />
-                 <h3 className="text-lg font-black text-teal-950 mb-1">Belum Ada Mahasiswa</h3>
-                 <p className="text-sm font-medium text-teal-800/60">Mahasiswa akan muncul di sini setelah mereka memilih Anda.</p>
-               </div>
-             )}
-           </div>
+        {/* Tab Navigation */}
+        <div className="flex flex-wrap gap-4 p-2 bg-white/50 backdrop-blur-md border border-teal-100 rounded-[2rem] w-fit mx-auto md:mx-0">
+          <button onClick={() => setActiveTab('overview')} className={cn("px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all", activeTab === 'overview' ? "bg-teal-500 text-white shadow-lg" : "text-teal-800/50 hover:bg-teal-50")}>Overview</button>
+          <button onClick={() => setActiveTab('profile')} className={cn("px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all", activeTab === 'profile' ? "bg-teal-500 text-white shadow-lg" : "text-teal-800/50 hover:bg-teal-50")}>Edit Profile</button>
+          <button onClick={() => setActiveTab('security')} className={cn("px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all", activeTab === 'security' ? "bg-teal-500 text-white shadow-lg" : "text-teal-800/50 hover:bg-teal-50")}>Security</button>
         </div>
+
+        {message && (
+          <div className={cn("p-4 rounded-2xl text-center font-bold text-sm shadow-sm", message.type === 'success' ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-rose-50 text-rose-700 border border-rose-100")}>
+            {message.text}
+          </div>
+        )}
+
+        <AnimatePresence mode="wait">
+          {activeTab === 'overview' && (
+            <motion.div key="overview" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+              <div className="bg-white rounded-[2.5rem] p-10 border border-teal-50 shadow-sm relative overflow-hidden">
+                 <h2 className="text-xl font-black text-teal-950 uppercase tracking-tighter mb-8 flex items-center gap-3">
+                   <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center text-teal-500 shadow-inner">
+                     <Users className="w-5 h-5" />
+                   </div>
+                   Daftar Mahasiswa Bimbingan
+                 </h2>
+                 
+                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                   {dosenData.kelompok?.length > 0 ? (
+                     dosenData.kelompok.map((k: any) => (
+                       <div key={k.id} className="p-6 bg-slate-50 border border-slate-200 rounded-[2rem] hover:shadow-md transition-all">
+                         <div className="flex items-center justify-between gap-3 mb-4">
+                           <span className="text-[10px] font-black bg-teal-500 text-white px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">
+                             {k.nama || `Team #${k.id.substring(0,5)}`}
+                           </span>
+                           <span className="text-[10px] font-mono text-slate-400 font-bold">{new Date(k.updatedAt).toLocaleDateString()}</span>
+                         </div>
+                         <div className="space-y-3">
+                           {k.mahasiswa.map((m: any) => (
+                             <div key={m.id} className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                               <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center overflow-hidden border border-teal-100 relative">
+                                 {m.isLeader && <div className="absolute top-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white z-10" />}
+                                 <img src={m.foto || undefined} className="w-full h-full object-cover" />
+                               </div>
+                               <div className="flex flex-col">
+                                 <span className="text-sm font-bold text-slate-800">{m.nama}</span>
+                                 <span className="text-[10px] font-mono text-slate-500 font-bold">{m.nim}</span>
+                               </div>
+                               {m.kontak && (
+                                 <div className="ml-auto">
+                                   <a href={`https://wa.me/${m.kontak.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="text-[10px] font-black text-teal-600 hover:text-teal-800 bg-teal-50 px-3 py-1.5 rounded-lg border border-teal-100 transition-colors uppercase flex items-center gap-1">
+                                     <Smartphone className="w-3 h-3" /> Chat
+                                   </a>
+                                 </div>
+                               )}
+                             </div>
+                           ))}
+                         </div>
+                       </div>
+                     ))
+                   ) : (
+                     <div className="col-span-full py-12 text-center border-2 border-dashed border-teal-100 rounded-[2rem] bg-teal-50/50">
+                       <Search className="w-8 h-8 text-teal-300 mx-auto mb-4" />
+                       <h3 className="text-lg font-black text-teal-950 mb-1">Belum Ada Mahasiswa</h3>
+                       <p className="text-sm font-medium text-teal-800/60">Mahasiswa akan muncul di sini setelah mereka memilih Anda.</p>
+                     </div>
+                   )}
+                 </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'profile' && (
+            <motion.div key="profile" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+               <div className="bg-white rounded-[2.5rem] p-10 border border-teal-50 shadow-sm">
+                  <h2 className="text-xl font-black text-teal-950 uppercase tracking-tighter mb-8 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center text-teal-500 shadow-inner">
+                      <Edit className="w-5 h-5" />
+                    </div>
+                    Pengaturan Profil Dosen
+                  </h2>
+                  <form onSubmit={handleProfileSubmit} className="space-y-6">
+                    <div className="flex flex-col md:flex-row gap-8">
+                       <div className="w-full md:w-1/3 flex flex-col items-center gap-4">
+                          <div className="relative group w-48 h-48">
+                             <div className="w-full h-full rounded-[2.5rem] bg-teal-50 border-4 border-white shadow-xl overflow-hidden ring-1 ring-teal-100">
+                                <img src={profileForm.foto || 'https://images.unsplash.com/photo-1544717297-fa154da09f9b?w=400&h=400&fit=crop'} className="w-full h-full object-cover" />
+                             </div>
+                             <label className="absolute inset-0 bg-teal-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer rounded-[2.5rem]">
+                                {uploadLoading ? <RefreshCcw className="w-8 h-8 text-white animate-spin" /> : <Camera className="w-8 h-8 text-white" />}
+                                <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} disabled={uploadLoading} />
+                             </label>
+                          </div>
+                          <p className="text-[10px] font-black uppercase text-teal-800/40 text-center tracking-widest">Klik foto untuk mengganti</p>
+                       </div>
+                       
+                       <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">Nama Lengkap</label>
+                             <input value={profileForm.nama} onChange={e => setProfileForm({...profileForm, nama: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:ring-4 focus:ring-teal-500/10 transition-all outline-none" required />
+                          </div>
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">Keahlian / Fokus Riset</label>
+                             <input value={profileForm.keahlian} onChange={e => setProfileForm({...profileForm, keahlian: e.target.value})} placeholder="Multimedia, RPL, Jaringan..." className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:ring-4 focus:ring-teal-500/10 transition-all outline-none" />
+                          </div>
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">Nomor HP / WA</label>
+                             <input value={profileForm.kontak} onChange={e => setProfileForm({...profileForm, kontak: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:ring-4 focus:ring-teal-500/10 transition-all outline-none" />
+                          </div>
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">Pendidikan (Pisahkan dengan ;)</label>
+                             <input value={profileForm.pendidikan} onChange={e => setProfileForm({...profileForm, pendidikan: e.target.value})} placeholder="S1 Unesa; S2 ITS..." className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:ring-4 focus:ring-teal-500/10 transition-all outline-none" />
+                          </div>
+                       </div>
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">Bio Singkat</label>
+                       <textarea value={profileForm.bio} onChange={e => setProfileForm({...profileForm, bio: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:ring-4 focus:ring-teal-500/10 transition-all outline-none min-h-[120px]" />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">Publikasi Utama (Pisahkan dengan ;)</label>
+                       <textarea value={profileForm.publikasi} onChange={e => setProfileForm({...profileForm, publikasi: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:ring-4 focus:ring-teal-500/10 transition-all outline-none min-h-[100px]" />
+                    </div>
+                    <button type="submit" className="w-full py-5 bg-teal-500 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg flex items-center justify-center gap-2">
+                       <Save className="w-4 h-4" /> SIMPAN PERUBAHAN PROFIL
+                    </button>
+                  </form>
+               </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'security' && (
+            <motion.div key="security" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+               <div className="max-w-2xl mx-auto bg-white rounded-[2.5rem] p-10 border border-teal-50 shadow-sm">
+                  <h2 className="text-xl font-black text-teal-950 uppercase tracking-tighter mb-8 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center text-teal-500 shadow-inner">
+                      <Lock className="w-5 h-5" />
+                    </div>
+                    Keamanan Akun
+                  </h2>
+                  <form onSubmit={handlePasswordSubmit} className="space-y-6">
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">Password Saat Ini</label>
+                       <input type="password" value={passwordForm.currentPassword} onChange={e => setPasswordForm({...passwordForm, currentPassword: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:ring-4 focus:ring-teal-500/10 transition-all outline-none" required />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">Password Baru</label>
+                       <input type="password" value={passwordForm.newPassword} onChange={e => setPasswordForm({...passwordForm, newPassword: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:ring-4 focus:ring-teal-500/10 transition-all outline-none" required />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">Konfirmasi Password Baru</label>
+                       <input type="password" value={passwordForm.confirmPassword} onChange={e => setPasswordForm({...passwordForm, confirmPassword: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:ring-4 focus:ring-teal-500/10 transition-all outline-none" required />
+                    </div>
+                    <button type="submit" className="w-full py-5 bg-teal-950 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-teal-800 transition-all shadow-lg flex items-center justify-center gap-2">
+                       <RefreshCcw className="w-4 h-4" /> PERBARUI PASSWORD
+                    </button>
+                  </form>
+               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
