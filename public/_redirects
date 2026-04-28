@@ -1,4 +1,4 @@
 # Ganti URL di bawah dengan URL Backend Render kamu setelah deploy
-/api/*  https://GANTI-DENGAN-URL-RENDER-KAMU.onrender.com/api/:splat  200
+/api/*  https://web-dpl-production.up.railway.app/api/:splat  200
 /*      /index.html                                                  200
 
