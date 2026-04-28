@@ -3031,7 +3031,7 @@ const PortfolioPage = () => {
   );
 };
 
-const DosenDashboard = ({ user, token }: { user: any; token: string }) => {
+const DosenDashboard = ({ user, token, onProfileUpdate }: { user: any; token: string; onProfileUpdate?: (updatedDosen: any) => void }) => {
   const [dosenData, setDosenData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'profile' | 'security'>('overview');
@@ -3099,6 +3099,7 @@ const DosenDashboard = ({ user, token }: { user: any; token: string }) => {
       
       setMessage({ type: 'success', text: "Profil berhasil diperbarui!" });
       fetchDosen();
+      if (onProfileUpdate) onProfileUpdate(data);
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message });
     } finally {
@@ -3376,8 +3377,13 @@ export default function App() {
     setUser(null);
   };
 
-  const updateProfile = (updatedStudent: any) => {
-    const updatedUser = { ...user, mahasiswa: updatedStudent };
+  const updateProfile = (updatedData: any) => {
+    let updatedUser;
+    if (user.role === 'DOSEN') {
+      updatedUser = { ...user, dosen: updatedData, foto: updatedData.foto };
+    } else {
+      updatedUser = { ...user, mahasiswa: updatedData, foto: updatedData.foto };
+    }
     localStorage.setItem("user", JSON.stringify(updatedUser));
     setUser(updatedUser);
   };
@@ -3404,7 +3410,7 @@ export default function App() {
 
           <Route path="/dosen-dashboard" element={
             token && user?.role === 'DOSEN' ? (
-              <DosenDashboard user={user} token={token || ""} />
+              <DosenDashboard user={user} token={token || ""} onProfileUpdate={updateProfile} />
             ) : <Navigate to="/login" />
           } />
 
