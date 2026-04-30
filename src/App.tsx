@@ -51,6 +51,8 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
                 <div className="w-10 h-10 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden ring-2 ring-transparent shadow-sm transition-all duration-300 hover:ring-teal-100 cursor-default">
                   {user.mahasiswa?.foto ? (
                     <img referrerPolicy="no-referrer" src={user.mahasiswa.foto || undefined} alt="Profile" className="w-full h-full object-cover" />
+                  ) : user.dosen?.foto ? (
+                    <img referrerPolicy="no-referrer" src={user.dosen.foto || undefined} alt="Profile" className="w-full h-full object-cover" />
                   ) : user.foto ? (
                     <img referrerPolicy="no-referrer" src={user.foto || undefined} alt="Profile" className="w-full h-full object-cover" />
                   ) : user.role === 'DOSEN' ? (
