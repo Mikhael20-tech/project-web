@@ -1,5 +1,5 @@
 import React, { useState, useEffect, ReactNode, FormEvent } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { LogIn, Users, Timer, GraduationCap, Lock, CheckCircle2, AlertCircle, Plus, Trash2, Edit, Save, Settings, Calendar, UserPlus, Info, Download, XCircle, RefreshCcw, Camera, Upload, TrendingUp, Smartphone, Globe, Award, Search, Menu, ArrowRight, ChevronRight, Play, BookOpen, Star } from "lucide-react";
 import { socket } from "@/src/lib/socket";
@@ -19,68 +19,174 @@ const GlassCard = ({ children, className }: { children: React.ReactNode; classNa
 );
 
 const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
-  const getInitials = (name: string) => {
-    return name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2);
-  };
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [visible, setVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Scrolled state for styling
+      setScrolled(currentScrollY > 20);
+
+      // Smart Hide logic
+      if (currentScrollY < 10) {
+        setVisible(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // Scrolling down & past threshold
+        setVisible(false);
+        setIsMobileMenuOpen(false); // Close mobile menu if open
+      } else if (currentScrollY < lastScrollY) {
+        // Scrolling up
+        setVisible(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
+
+  const navLinks = [
+    { name: "Beranda", path: "/", icon: <Globe className="w-4 h-4" /> },
+    { name: "Portfolio", path: "/portfolio", icon: <Star className="w-4 h-4" /> },
+    { name: "Bimbingan", path: "/dashboard", icon: <Users className="w-4 h-4" />, role: 'STUDENT' },
+    { name: "Panel Dosen", path: "/dosen-dashboard", icon: <Calendar className="w-4 h-4" />, role: 'DOSEN' },
+    { name: "Admin", path: "/admin", icon: <Settings className="w-4 h-4" />, role: 'ADMIN' },
+  ];
+
+  const filteredLinks = navLinks.filter(link => !link.role || (user && user.role === link.role));
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 py-3 flex justify-center items-center transition-all">
-      <div className="w-full max-w-7xl mx-auto px-6 lg:px-12 flex justify-between items-center">
-        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate("/")}>
-          <div className="w-10 h-10 bg-teal-600 rounded-2xl flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-300">
-            <GraduationCap className="text-white w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
+    <nav className={cn(
+      "fixed top-0 left-0 right-0 z-[100] transition-all duration-500 px-4 md:px-8",
+      scrolled ? "py-4" : "py-6",
+      visible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+    )}>
+      <div className={cn(
+        "max-w-7xl mx-auto rounded-[2rem] transition-all duration-500 border border-white/20 shadow-2xl flex items-center justify-between px-6 md:px-10 py-3 md:py-4",
+        scrolled ? "bg-white/70 backdrop-blur-2xl shadow-teal-900/5" : "bg-white/40 backdrop-blur-xl"
+      )}>
+        {/* Logo Section */}
+        <div 
+          className="flex items-center gap-3 cursor-pointer group" 
+          onClick={() => navigate("/")}
+        >
+          <div className="w-10 h-10 bg-gradient-to-br from-teal-600 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/20 group-hover:rotate-6 transition-all duration-500">
+            <GraduationCap className="text-white w-6 h-6" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-gray-900">
-            WarDosen <span className="text-teal-600">2024</span>
-          </span>
+          <div className="hidden sm:block">
+            <h1 className="text-lg font-black tracking-tighter text-teal-950 leading-none">WAR<span className="text-orange-500">DOSEN</span></h1>
+            <p className="text-[8px] font-black text-teal-800/40 uppercase tracking-widest">PTI Unesa Ecosystem</p>
+          </div>
         </div>
-        
+
+        {/* Desktop Navigation */}
+        <div className="hidden lg:flex items-center gap-2">
+          {filteredLinks.map((link) => (
+            <button
+              key={link.path}
+              onClick={() => navigate(link.path)}
+              className={cn(
+                "px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 flex items-center gap-2 relative group",
+                location.pathname === link.path 
+                  ? "bg-teal-950 text-white shadow-xl shadow-teal-950/20" 
+                  : "text-teal-800/60 hover:text-teal-950 hover:bg-teal-50"
+              )}
+            >
+              {link.icon}
+              {link.name}
+              {location.pathname === link.path && (
+                <motion.div layoutId="nav-glow" className="absolute inset-0 bg-white/10 rounded-full" />
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* User Section / Auth Button */}
         <div className="flex items-center gap-4">
           {user ? (
-            <>
-              <div className="text-right hidden md:block mr-2">
-                <p className="text-[11px] text-gray-500 font-medium tracking-wider uppercase">
-                  {user.role === 'ADMIN' ? 'Administrator' : user.role === 'DOSEN' ? 'Dosen' : 'Mahasiswa'}
-                </p>
-                <p className="text-sm font-semibold text-gray-900">
-                  {user.role === 'ADMIN' ? user.username : (user.mahasiswa?.nama || user.dosen?.nama || user.nama || user.username)}
-                </p>
+            <div className="flex items-center gap-3">
+              <div className="hidden md:block text-right">
+                <p className="text-[10px] font-black text-teal-950 leading-none uppercase tracking-widest">{user.username}</p>
+                <p className="text-[8px] font-bold text-orange-500 uppercase mt-1 tracking-tighter">{user.role}</p>
               </div>
-              <div className="flex items-center gap-5 pl-5 border-l border-gray-200">
-                <div className="w-10 h-10 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden ring-2 ring-transparent shadow-sm transition-all duration-300 hover:ring-teal-100 cursor-default">
-                  {user.mahasiswa?.foto ? (
-                    <img referrerPolicy="no-referrer" src={user.mahasiswa.foto || undefined} alt="Profile" className="w-full h-full object-cover" />
-                  ) : user.dosen?.foto ? (
-                    <img referrerPolicy="no-referrer" src={user.dosen.foto || undefined} alt="Profile" className="w-full h-full object-cover" />
-                  ) : user.foto ? (
-                    <img referrerPolicy="no-referrer" src={user.foto || undefined} alt="Profile" className="w-full h-full object-cover" />
-                  ) : user.role === 'DOSEN' ? (
-                    <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop" alt="Dosen" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-teal-50 flex items-center justify-center text-teal-300">
-                      <Users className="w-6 h-6" />
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={onLogout}
-                  className="text-sm font-medium text-gray-500 hover:text-red-600 px-3 py-2 rounded-xl border border-transparent hover:border-red-100 hover:bg-red-50 transition-all"
-                >
-                  Keluar
-                </button>
-              </div>
-            </>
+              <button
+                onClick={onLogout}
+                className="w-10 h-10 bg-white border border-teal-100 rounded-2xl flex items-center justify-center text-rose-500 hover:bg-rose-500 hover:text-white transition-all duration-300 shadow-sm"
+                title="Keluar"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
           ) : (
-            <button 
+            <button
               onClick={() => navigate("/login")}
-              className="px-6 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-teal-700 transition-all hover:shadow-md"
+              className="px-6 py-2.5 bg-teal-950 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-teal-950/20 hover:bg-teal-600 hover:-translate-y-0.5 transition-all active:scale-95"
             >
               Login Portal
             </button>
           )}
+
+          {/* Mobile Menu Toggle */}
+          <button 
+            className="lg:hidden w-10 h-10 bg-teal-50 rounded-2xl flex items-center justify-center text-teal-900"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <XCircle className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className="lg:hidden absolute top-full left-4 right-4 mt-4 bg-white/90 backdrop-blur-3xl border border-white/50 rounded-[2.5rem] shadow-2xl p-6 z-[110]"
+          >
+            <div className="flex flex-col gap-3">
+              {filteredLinks.map((link) => (
+                <button
+                  key={link.path}
+                  onClick={() => {
+                    navigate(link.path);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={cn(
+                    "w-full px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-4 transition-all",
+                    location.pathname === link.path 
+                      ? "bg-teal-950 text-white" 
+                      : "text-teal-800/60 hover:bg-teal-50"
+                  )}
+                >
+                  {link.icon}
+                  {link.name}
+                </button>
+              ))}
+              {user && (
+                <button
+                  onClick={() => {
+                    onLogout();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-4 text-rose-500 hover:bg-rose-50 transition-all"
+                >
+                  <XCircle className="w-5 h-5" />
+                  Logout
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 };
@@ -109,11 +215,8 @@ const LandingPage = ({ user }: { user: any }) => {
 
   return (
     <div className="min-h-screen bg-[#F0FAF8]">
-      {/* Navbar space filler */}
-      <div className="h-16 bg-[#F0FAF8] border-b border-white/50 backdrop-blur-md sticky top-0 z-40" />
-
       {/* Hero Section */}
-      <section className="relative pt-24 pb-28 px-6 overflow-hidden">
+      <section className="relative pt-40 pb-28 px-6 overflow-hidden">
         <div className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.5] z-0">
           <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-br from-teal-100/40 to-orange-100/40 blur-[100px] rounded-full translate-x-1/3 -translate-y-1/3" />
           <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-gradient-to-tr from-yellow-100/40 to-teal-100/40 blur-[100px] rounded-full -translate-x-1/3 translate-y-1/3" />
@@ -420,6 +523,7 @@ const LandingPage = ({ user }: { user: any }) => {
 const LoginPage = ({ onLogin }: { onLogin: (token: string, user: any) => void }) => {
   const [isRegister, setIsRegister] = useState(false);
   const [isDosenLogin, setIsDosenLogin] = useState(false);
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [nama, setNama] = useState("");
   const [password, setPassword] = useState("");
@@ -507,193 +611,213 @@ const LoginPage = ({ onLogin }: { onLogin: (token: string, user: any) => void })
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-[#F0FAF8] relative overflow-hidden">
-      {/* Decorative Gradients for modern esthetic */}
+    <div className="min-h-[130vh] flex flex-col items-center justify-start pt-32 pb-40 px-4 md:p-10 bg-[#F0FAF8] relative overflow-x-hidden transition-all duration-1000 scroll-smooth">
+      {/* Deep Background Decorations for scrollable feel */}
       <div className="absolute inset-0 w-full h-full pointer-events-none z-0">
-        <div className="absolute top-1/2 left-1/4 w-[600px] h-[600px] bg-gradient-to-br from-teal-200/50 to-orange-200/50 blur-[100px] rounded-full -translate-x-1/2 -translate-y-1/2 animate-pulse" style={{ animationDuration: '4s' }} />
-        <div className="absolute top-1/2 right-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-yellow-200/50 to-teal-200/50 blur-[100px] rounded-full translate-x-1/2 -translate-y-1/2 animate-pulse" style={{ animationDuration: '5s', animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/4 w-[600px] h-[600px] bg-gradient-to-br from-teal-200/40 to-orange-200/40 blur-[120px] rounded-full -translate-x-1/2 -translate-y-1/2 animate-pulse" style={{ animationDuration: '6s' }} />
+        <div className="absolute top-1/2 right-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-yellow-200/40 to-teal-200/40 blur-[120px] rounded-full translate-x-1/2 -translate-y-1/2 animate-pulse" style={{ animationDuration: '8s', animationDelay: '1s' }} />
+        
+        {/* Extra elements further down to reward scrolling */}
+        <div className="absolute top-[100vh] left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-teal-100/30 blur-[150px] rounded-full" />
+        <div className="absolute top-[110vh] right-0 w-64 h-64 bg-orange-100/20 blur-[100px] rounded-full" />
       </div>
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 30 }}
+        initial={{ opacity: 0, scale: 0.95, y: 40 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className="w-full max-w-md relative z-10"
       >
-        <div className="bg-white/80 backdrop-blur-2xl border border-white/50 rounded-[2.5rem] p-10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05),0_0_0_1px_rgba(255,255,255,0.7)] group hover:shadow-[0_20px_40px_-15px_rgba(20,184,166,0.1),0_0_0_1px_rgba(255,255,255,1)] transition-all duration-500">
-          <div className="text-center space-y-3 mb-10">
+        <div className="bg-white/80 backdrop-blur-3xl border border-white/50 rounded-[3rem] p-10 shadow-[0_30px_70px_-20px_rgba(0,0,0,0.08),0_0_0_1px_rgba(255,255,255,0.7)] group hover:shadow-[0_40px_80px_-20px_rgba(20,184,166,0.12)] transition-all duration-700">
+          <div className="text-center space-y-4 mb-8">
             <motion.div 
-               initial={{ scale: 0 }}
-               animate={{ scale: 1 }}
-               transition={{ type: "spring", delay: 0.2 }}
-               className="w-16 h-16 bg-gradient-to-br from-teal-500 to-orange-500 rounded-[1.25rem] flex items-center justify-center shadow-lg shadow-teal-500/20 mx-auto mb-6"
+               key={isDosenLogin ? 'dosen-icon' : 'student-icon'}
+               initial={{ rotate: -180, scale: 0, opacity: 0 }}
+               animate={{ rotate: 0, scale: 1, opacity: 1 }}
+               transition={{ type: "spring", stiffness: 260, damping: 20 }}
+               className="w-20 h-20 bg-gradient-to-br from-teal-500 to-orange-500 rounded-[1.5rem] flex items-center justify-center shadow-2xl shadow-teal-500/30 mx-auto mb-6 relative overflow-hidden group"
             >
-               <Lock className="w-8 h-8 text-white" />
+               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+               <Lock className="w-10 h-10 text-white relative z-10" />
             </motion.div>
-            <h1 className="text-4xl font-black text-teal-950 tracking-tighter leading-tight">{isDosenLogin ? "DOSEN" : "STUDENT"} <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-orange-500 italic">PORTAL</span></h1>
-            <p className="text-teal-800/50 text-[10px] uppercase font-black tracking-[0.3em]">War Dosen Pembimbing v2.0</p>
+            
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={isDosenLogin ? 'dosen-title' : 'student-title'}
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: -10, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <h1 className="text-5xl font-black text-teal-950 tracking-tighter leading-none mb-3">
+                  {isDosenLogin ? "DOSEN" : "STUDENT"} <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-orange-500 italic">PORTAL</span>
+                </h1>
+                <p className="text-teal-800/40 text-[10px] uppercase font-black tracking-[0.4em]">War Dosen Pembimbing v2.0</p>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* New Tab Switcher at the top */}
+          <div className="flex p-1 bg-teal-50/50 rounded-2xl mb-8 border border-teal-100/30 relative z-10">
+            <button 
+              type="button"
+              onClick={() => { setIsDosenLogin(false); setIsRegister(false); setError(""); }}
+              className={cn(
+                "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 relative overflow-hidden",
+                !isDosenLogin ? "bg-white text-teal-600 shadow-lg shadow-teal-500/10" : "text-teal-800/40 hover:text-teal-600"
+              )}
+            >
+              Mahasiswa
+            </button>
+            <button 
+              type="button"
+              onClick={() => { setIsDosenLogin(true); setIsRegister(false); setError(""); }}
+              className={cn(
+                "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 relative overflow-hidden",
+                isDosenLogin ? "bg-white text-teal-600 shadow-lg shadow-teal-500/10" : "text-teal-800/40 hover:text-teal-600"
+              )}
+            >
+              Dosen
+            </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="space-y-2 relative"
-            >
-              <div className="flex justify-between items-center px-2">
-                <label className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">{isDosenLogin ? "NIP DOSEN" : "NIM MAHASISWA"}</label>
-                <span className="text-[9px] text-teal-800/50 font-mono tracking-tighter bg-teal-50 px-2 py-0.5 rounded-md">{isDosenLogin ? "19800101" : "18000101"}</span>
-              </div>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full bg-[#f8fdfc]/50 border border-teal-100 rounded-[1.25rem] px-5 py-4 text-teal-950 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all placeholder:text-teal-800/30 shadow-inner"
-                placeholder={isDosenLogin ? "NIP Dosen" : "NIM Mahasiswa"}
-                required
-              />
-            </motion.div>
-
-            <AnimatePresence>
-              {isRegister && (
-                <motion.div 
-                  initial={{ opacity: 0, height: 0, overflow: 'hidden' }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="space-y-2 relative"
-                >
-                  <div className="flex justify-between items-center px-2 mt-2">
-                    <label className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">Nama Lengkap</label>
+            <AnimatePresence mode="wait">
+              <motion.div 
+                key={isDosenLogin ? 'dosen-fields' : 'student-fields'}
+                initial={{ opacity: 0, x: isDosenLogin ? 20 : -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: isDosenLogin ? -20 : 20 }}
+                transition={{ duration: 0.4, ease: "circOut" }}
+                className="space-y-6"
+              >
+                <div className="space-y-2 relative">
+                  <div className="flex justify-between items-center px-2">
+                    <label className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">{isDosenLogin ? "NIP DOSEN" : "NIM MAHASISWA"}</label>
+                    <span className="text-[9px] text-teal-800/50 font-mono tracking-tighter bg-teal-50/50 px-2 py-0.5 rounded-md border border-teal-100/30">{isDosenLogin ? "19800101" : "18000101"}</span>
                   </div>
                   <input
                     type="text"
-                    value={nama}
-                    onChange={(e) => setNama(e.target.value)}
-                    className="w-full bg-[#f8fdfc]/50 border border-teal-100 rounded-[1.25rem] px-5 py-4 text-teal-950 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all placeholder:text-teal-800/30 shadow-inner"
-                    placeholder="Nama Lengkap Anda"
-                    required={isRegister}
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 rounded-[1.5rem] px-6 py-5 text-teal-950 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all placeholder:text-teal-800/30 shadow-inner"
+                    placeholder={isDosenLogin ? "Nomor Induk Pegawai" : "Nomor Induk Mahasiswa"}
+                    required
                   />
-                </motion.div>
-              )}
-            </AnimatePresence>
-            
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              className="space-y-2 relative"
-            >
-              <div className="flex justify-between items-center px-2">
-                <label className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">Password</label>
-                <span className="text-[9px] text-teal-800/50 font-mono tracking-tighter bg-teal-50 px-2 py-0.5 rounded-md">mhs123</span>
-              </div>
-              <div className="relative">
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-[#f8fdfc]/50 border border-teal-100 rounded-[1.25rem] px-5 py-4 text-teal-950 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all placeholder:text-teal-800/30 shadow-inner"
-                  placeholder="Sandi Rahasia"
-                  required
-                />
-              </div>
-            </motion.div>
+                </div>
 
-            <AnimatePresence>
-              {error && (
-                <motion.div 
-                  initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                  animate={{ opacity: 1, height: "auto", marginTop: 16 }}
-                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="p-4 bg-rose-50/80 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-500 text-xs font-bold shadow-[0_4px_12px_rgba(225,29,72,0.05)]">
-                    <AlertCircle className="w-5 h-5 flex-shrink-0" /> {error}
+                {isRegister && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-2 relative overflow-hidden"
+                  >
+                    <div className="flex justify-between items-center px-2">
+                      <label className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">Nama Lengkap</label>
+                    </div>
+                    <input
+                      type="text"
+                      value={nama}
+                      onChange={(e) => setNama(e.target.value)}
+                      className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 rounded-[1.5rem] px-6 py-5 text-teal-950 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all placeholder:text-teal-800/30 shadow-inner"
+                      placeholder="Masukkan nama lengkap"
+                      required={isRegister}
+                    />
+                  </motion.div>
+                )}
+                
+                <div className="space-y-2 relative">
+                  <div className="flex justify-between items-center px-2">
+                    <label className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">Password</label>
+                    <span className="text-[9px] text-teal-800/50 font-mono tracking-tighter bg-teal-50/50 px-2 py-0.5 rounded-md border border-teal-100/30">mhs123</span>
                   </div>
-                </motion.div>
-              )}
+                  <div className="relative">
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 rounded-[1.5rem] px-6 py-5 text-teal-950 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all placeholder:text-teal-800/30 shadow-inner"
+                      placeholder="Ketuk sandi rahasia"
+                      required
+                    />
+                  </div>
+                </div>
+              </motion.div>
             </AnimatePresence>
 
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              type="submit"
-              disabled={loading}
-              className="w-full bg-teal-950 hover:bg-teal-500 text-white font-black text-xs uppercase tracking-[0.2em] py-5 px-6 rounded-[1.25rem] transition-all duration-300 shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3 group mt-4 relative overflow-hidden disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
-              {loading ? (
-                <>
-                  <RefreshCcw className="w-4 h-4 animate-spin" /> {isRegister ? "MENDAFTARKAN..." : "MENGOTENTIKASI..."}
-                </>
-              ) : (
-                <>
-                  <LogIn className="w-4 h-4 group-hover:translate-x-1 transition-transform" /> {isRegister ? "DAFTAR SEKARANG" : "MASUK KE PORTAL"}
-                </>
-              )}
-            </motion.button>
-          </form>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="mt-6 space-y-4"
-          >
-            <div className="text-center">
-              <button 
-                type="button" 
-                onClick={() => { setIsRegister(!isRegister); setError(""); }}
-                className="text-xs font-bold text-teal-600 hover:text-teal-800 transition-colors block w-full mb-2"
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-5 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-4 text-rose-600 text-xs font-bold shadow-sm"
               >
-                {isRegister ? "Sudah punya akun? Login di sini" : `Belum punya akun? Daftar ${isDosenLogin ? 'Dosen' : 'Mahasiswa'}`}
-              </button>
-              <button 
-                type="button" 
-                onClick={() => { setIsDosenLogin(!isDosenLogin); setError(""); }}
-                className="text-xs font-bold text-orange-500 hover:text-orange-700 transition-colors block w-full"
-              >
-                {isDosenLogin ? "Masuk sebagai Mahasiswa" : "Masuk sebagai Dosen"}
-              </button>
-            </div>
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-teal-100/50"></div>
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="bg-white px-2 text-teal-800/40 font-black tracking-widest">ATAU</span>
-              </div>
-            </div>
+                <AlertCircle className="w-5 h-5 shrink-0" /> {error}
+              </motion.div>
+            )}
 
             <button
-              type="button"
-              onClick={handleGoogleLogin}
-              className="w-full bg-white border border-teal-100 hover:bg-teal-50 text-teal-950 font-black text-xs tracking-widest py-4 px-6 rounded-[1.25rem] transition-all duration-300 shadow-sm flex items-center justify-center gap-3 overflow-hidden"
+              type="submit"
+              disabled={loading}
+              className="w-full py-6 bg-teal-950 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-teal-950/30 hover:bg-teal-600 hover:-translate-y-1 active:scale-95 transition-all disabled:opacity-50 disabled:translate-y-0 flex items-center justify-center gap-3 group relative overflow-hidden"
             >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-              </svg>
-              LOGIN SSO EMAIL UNESA
+              <div className="absolute inset-0 bg-white/10 -translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
+              {loading ? (
+                <RefreshCcw className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  <LogIn className="w-4 h-4 group-hover:rotate-12 transition-transform" /> {isRegister ? "DAFTAR SEKARANG" : "MASUK KE PORTAL"}
+                </>
+              )}
             </button>
-          </motion.div>
+          </form>
 
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7 }}
-            className="pt-8 mt-6 border-t border-teal-50 text-center"
-          >
-            <p className="text-[8px] font-black text-teal-800/30 uppercase tracking-[0.4em]">Integrated Academic System • 2026</p>
-          </motion.div>
+          <div className="mt-10 space-y-6">
+            {!isDosenLogin && !isRegister && (
+              <div className="relative flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-teal-100/30" /></div>
+                <span className="relative px-4 bg-white/80 backdrop-blur-md rounded-full text-[9px] font-black text-teal-800/30 uppercase tracking-[0.4em]">Otentikasi SSO</span>
+              </div>
+            )}
+
+            {!isDosenLogin && !isRegister && (
+              <button 
+                type="button"
+                onClick={handleGoogleLogin}
+                className="w-full py-5 bg-white border border-teal-100/50 rounded-[1.5rem] flex items-center justify-center gap-4 text-teal-950 font-black text-[10px] uppercase tracking-widest hover:bg-teal-50 hover:border-teal-400 transition-all group"
+              >
+                <Globe className="w-4 h-4 text-teal-500 group-hover:rotate-12 transition-transform" /> Lanjut dengan Email Unesa
+              </button>
+            )}
+
+            <div className="text-center space-y-4 pt-4 border-t border-teal-50/50">
+              <button 
+                type="button" 
+                onClick={() => {
+                  setIsRegister(!isRegister);
+                  setError("");
+                }}
+                className="text-[10px] font-black text-teal-600 hover:text-orange-500 uppercase tracking-[0.2em] transition-colors flex items-center justify-center gap-2 mx-auto group"
+              >
+                {isRegister ? "Sudah Punya Akun? Login" : "Belum Punya Akun? Daftar Disini"}
+                <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        {/* Subtle footer indicator for scroll feedback */}
+        <div className="mt-20 text-center">
+           <p className="text-[9px] font-black text-teal-800/10 uppercase tracking-[0.5em]">Scroll ke bawah untuk informasi lebih lanjut</p>
         </div>
       </motion.div>
+      
+      {/* Decorative footer elements at the bottom of the long page */}
+      <div className="mt-[40vh] relative z-10 text-center opacity-20 hover:opacity-50 transition-opacity duration-1000">
+         <GraduationCap className="w-16 h-16 text-teal-500 mx-auto mb-4" />
+         <p className="text-[10px] font-black text-teal-950 uppercase tracking-[1em] ml-[1em]">PTI UNESA</p>
+      </div>
     </div>
   );
 };
@@ -1049,7 +1173,7 @@ const Dashboard = ({ user: initialUser, token, onProfileUpdate }: { user: any; t
   };
 
   return (
-    <div className="min-h-screen bg-[#F0FAF8] pt-24 pb-12 px-6">
+    <div className="min-h-screen bg-[#F0FAF8] pt-32 pb-12 px-6">
       <div className="max-w-7xl mx-auto space-y-8">
         
         {/* Student Profile & Quick Stats Card */}
@@ -1430,85 +1554,117 @@ const Dashboard = ({ user: initialUser, token, onProfileUpdate }: { user: any; t
         ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {/* Lecturers Grid */}
-          {dosenList.map((dosen) => (
+          {dosenList.map((dosen, index) => (
             <motion.div
               key={dosen.id}
-              whileHover={{ scale: 1.02 }}
-              className="bg-white border border-teal-50 rounded-[2.5rem] p-7 flex flex-col shadow-sm hover:shadow-xl transition-all duration-500 group relative overflow-hidden"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="group bg-white/40 backdrop-blur-2xl border border-white/60 rounded-[3rem] p-10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_40px_80px_-20px_rgba(20,184,166,0.2)] hover:border-teal-200 hover:-translate-y-3 transition-all duration-700 flex flex-col relative overflow-hidden"
             >
-              {/* Ticket Notch Effects */}
-              <div className="absolute top-1/2 -left-3 w-6 h-6 bg-[#F0FAF8] rounded-full border border-teal-50"></div>
-              <div className="absolute top-1/2 -right-3 w-6 h-6 bg-[#F0FAF8] rounded-full border border-teal-50"></div>
-
-              <div className="flex items-start gap-5 mb-6 relative">
-                <div className="w-16 h-16 rounded-2xl bg-teal-50 flex-shrink-0 border border-teal-100 flex items-center justify-center overflow-hidden shadow-inner">
-                  {dosen.foto ? (
-                    <img src={dosen.foto || undefined} alt={dosen.nama} className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-500" />
-                  ) : (
-                    <Users className="w-8 h-8 text-teal-200" />
-                  )}
-                </div>
-                <div className="flex-1 pt-1">
-                  <h3 className="font-extrabold text-lg leading-tight text-teal-950 group-hover:text-teal-500 transition-colors uppercase tracking-tighter">{dosen.nama}</h3>
-                  <div className="mt-1.5 inline-block px-2.5 py-1 bg-teal-50 rounded-lg">
-                    <p className="text-[9px] text-teal-500 uppercase tracking-widest font-black">NIP. {dosen.nip}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-6 flex-1 relative">
-                <div className="p-5 bg-teal-50/50 rounded-3xl border border-dashed border-teal-100 group-hover:bg-teal-50/80 transition-colors">
-                  <p className="text-[9px] text-teal-800/50 uppercase mb-2 tracking-widest font-black">Informasi Akademik</p>
-                  <p className="text-xs leading-relaxed font-bold text-teal-950">
-                    Dosen Pembimbing Akademik dengan Nomor Induk Pegawai {dosen.nip}.
-                  </p>
-                </div>
-
-                <div className="space-y-3 px-1">
-                  <div className="flex justify-between text-[10px] uppercase font-black text-teal-800/50 tracking-wider">
-                    <span>Availability Quota</span>
-                    <span className={cn(
-                      "font-mono text-sm",
-                      (dosen.kuotaMax - dosen._count.kelompok) > 0 ? "text-teal-950" : "text-orange-500"
-                    )}>
-                      {dosen.kuotaMax - dosen._count.kelompok} <span className="text-[10px] text-teal-800/30">LEFT</span>
-                    </span>
-                  </div>
-                  <div className="w-full h-3 bg-teal-50 rounded-full overflow-hidden shadow-inner p-0.5">
-                    <div 
-                      className={cn(
-                        "h-full transition-all duration-1000 rounded-full shadow-sm",
-                        (dosen.kuotaMax - dosen._count.kelompok) > 0 ? "bg-gradient-to-r from-teal-500 to-yellow-500" : "bg-orange-400"
-                      )}
-                      style={{ width: `${(dosen._count.kelompok / dosen.kuotaMax) * 100}%` }}
+              {/* Decorative Glow */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-teal-400/10 blur-[60px] group-hover:bg-teal-400/20 transition-all duration-700" />
+              
+              <div className="flex flex-col items-center text-center mb-10 relative">
+                <div className="relative mb-6">
+                  <div className="absolute inset-0 bg-gradient-to-tr from-teal-400 to-orange-400 rounded-[2.5rem] blur-2xl opacity-20 group-hover:opacity-40 transition-opacity duration-700" />
+                  <div className="w-28 h-28 rounded-[2.25rem] bg-white p-1 relative z-10 shadow-xl border border-teal-50 overflow-hidden">
+                    <img 
+                      src={dosen.foto || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&h=300&fit=crop"} 
+                      alt={dosen.nama} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" 
                     />
                   </div>
+                  <div className={cn(
+                    "absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-4 border-white shadow-lg z-20",
+                    (dosen.kuotaMax - dosen._count.kelompok) > 0 ? "bg-teal-500" : "bg-rose-500"
+                  )} />
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50/50 rounded-full border border-teal-100/50">
+                    <p className="text-[8px] text-teal-600 uppercase tracking-[0.2em] font-black">NIP. {dosen.nip}</p>
+                  </div>
+                  <h3 className="font-black text-2xl text-teal-950 group-hover:text-teal-600 transition-colors tracking-tighter leading-tight">
+                    {dosen.nama}
+                  </h3>
+                  <p className="text-[10px] font-bold text-teal-800/40 uppercase tracking-widest">
+                    {dosen.keahlian || "Pendidikan Teknologi Informasi"}
+                  </p>
                 </div>
               </div>
 
-              <button
-                onClick={() => setConfirmingDosen(dosen)}
-                disabled={!isWarActive || (dosen.kuotaMax - dosen._count.kelompok) <= 0 || loading || !studentData?.kelompok || (!studentData.isLeader)}
-                className={cn(
-                  "w-full mt-8 py-4 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-lg",
-                  isWarActive && (dosen.kuotaMax - dosen._count.kelompok) > 0 && studentData?.isLeader && !studentData.kelompok.dosenId
-                    ? "bg-teal-500 text-white hover:bg-teal-950 shadow-teal-100 hover:shadow-teal-200 translate-y-0 active:translate-y-1"
-                    : "bg-[#f8fdfc] text-teal-800/30 cursor-not-allowed shadow-none"
-                )}
-              >
-                {loading ? "PROCESSING..." : 
-                 !studentData?.kelompok ? "BUAT KELOMPOK DULU" :
-                 !studentData.isLeader ? "HANYA KETUA" :
-                 studentData.kelompok.dosenId ? "SUDAH MEMILIH" :
-                 !isWarActive ? "WAITING FOR WAR" : 
-                 (dosen.kuotaMax - dosen._count.kelompok) <= 0 ? "SOLD OUT" : "TAKE SLOTS"}
-              </button>
+              <div className="space-y-8 flex-1 relative">
+                <div className="p-8 bg-white/60 rounded-[2.5rem] border border-white/50 shadow-inner space-y-6">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-[9px] uppercase font-black text-teal-800/30 tracking-widest mb-1">Ketersediaan</p>
+                      <p className={cn(
+                        "text-3xl font-black font-mono tracking-tighter",
+                        (dosen.kuotaMax - dosen._count.kelompok) > 0 ? "text-teal-950" : "text-rose-500"
+                      )}>
+                        {dosen.kuotaMax - dosen._count.kelompok} <span className="text-[10px] text-teal-800/30">TIM</span>
+                      </p>
+                    </div>
+                    <div className="text-right">
+                       <p className="text-[9px] uppercase font-black text-teal-800/30 tracking-widest mb-1">Kapasitas</p>
+                       <p className="text-xs font-black text-teal-800/60">{dosen._count.kelompok} / {dosen.kuotaMax}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="w-full h-2.5 bg-teal-50 rounded-full overflow-hidden p-0.5 border border-teal-100/50">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        whileInView={{ width: `${(dosen._count.kelompok / dosen.kuotaMax) * 100}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                        className={cn(
+                          "h-full rounded-full shadow-sm relative overflow-hidden",
+                          (dosen.kuotaMax - dosen._count.kelompok) > 0 
+                            ? "bg-gradient-to-r from-teal-400 to-teal-600" 
+                            : "bg-rose-500"
+                        )}
+                      />
+                    </div>
+                    <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-teal-800/20">
+                      <span>Mulai</span>
+                      <span>Penuh</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setConfirmingDosen(dosen)}
+                  disabled={!isWarActive || (dosen.kuotaMax - dosen._count.kelompok) <= 0 || loading || !studentData?.kelompok || (!studentData.isLeader)}
+                  className={cn(
+                    "w-full py-6 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all duration-500 shadow-xl group/btn overflow-hidden relative",
+                    isWarActive && (dosen.kuotaMax - dosen._count.kelompok) > 0 && studentData?.isLeader && !studentData.kelompok.dosenId
+                      ? "bg-teal-950 text-white hover:bg-teal-500 shadow-teal-950/20 hover:shadow-teal-500/30 hover:-translate-y-2"
+                      : "bg-teal-50 text-teal-800/20 cursor-not-allowed border border-teal-100"
+                  )}
+                >
+                  <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-500" />
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    {loading ? (
+                      <RefreshCcw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        {loading ? "PROCESSING..." : 
+                         !studentData?.kelompok ? "KELOMPOK DIBUTUHKAN" :
+                         !studentData.isLeader ? "KHUSUS KETUA" :
+                         studentData?.kelompok?.dosenId ? "SUDAH TERDAFTAR" :
+                         !isWarActive ? "MENUNGGU WAR" : 
+                         (dosen.kuotaMax - dosen._count.kelompok) <= 0 ? "KUOTA PENUH" : 
+                         <>PILIH PEMBIMBING <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" /></>}
+                      </>
+                    )}
+                  </span>
+                </button>
+              </div>
             </motion.div>
           ))}
         </div>
         )}
-      </div>
-
       <AnimatePresence>
         {confirmingDosen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-6 sm:p-0">
@@ -1687,6 +1843,7 @@ const Dashboard = ({ user: initialUser, token, onProfileUpdate }: { user: any; t
           </div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 };
@@ -1701,7 +1858,7 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
   const [uploadLoading, setUploadLoading] = useState(false);
 
   // Forms State
-  const [dosenForm, setDosenForm] = useState({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', pendidikan: '', publikasi: '', kontak: '', password: '' });
+  const [dosenForm, setDosenForm] = useState({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', moto: '', kontak: '', password: '' });
   const [studentForm, setStudentForm] = useState({ id: '', nim: '', nama: '', kontak: '', password: '' });
   const [configForm, setConfigForm] = useState({ startTime: '', endTime: '' });
   const [passwordForm, setPasswordForm] = useState({ newPassword: '', confirmPassword: '' });
@@ -1835,7 +1992,7 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
       if (!res.ok) throw new Error(data.error || "Gagal menyimpan data dosen.");
       
       setMessage({ type: 'success', text: "Data dosen berhasil disimpan!" });
-      setDosenForm({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', pendidikan: '', publikasi: '', kontak: '', password: '' });
+      setDosenForm({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', moto: '', kontak: '', password: '' });
       fetchData();
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message });
@@ -2064,7 +2221,7 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
   };
 
   return (
-    <div className="min-h-screen bg-[#F0FAF8] pb-24 relative overflow-hidden">
+    <div className="min-h-screen bg-[#F0FAF8] pb-24 pt-28 relative overflow-hidden">
       {/* Background decor */}
       <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-teal-50 to-transparent pointer-events-none z-0" />
       
@@ -2303,12 +2460,8 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
                         <textarea value={dosenForm.bio || ''} onChange={e => setDosenForm({...dosenForm, bio: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner min-h-[80px]" placeholder="Deskripsi singkat..." />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Riwayat Pendidikan</label>
-                        <textarea value={dosenForm.pendidikan || ''} onChange={e => setDosenForm({...dosenForm, pendidikan: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner min-h-[80px]" placeholder="S1..., S2..." />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Daftar Publikasi</label>
-                        <textarea value={dosenForm.publikasi || ''} onChange={e => setDosenForm({...dosenForm, publikasi: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner min-h-[80px]" placeholder="Judul (Tahun)..." />
+                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Moto Dosen (Maks 1 Baris)</label>
+                        <textarea value={dosenForm.moto || ''} onChange={e => setDosenForm({...dosenForm, moto: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner min-h-[80px]" placeholder="Kalimat inspiratif untuk mahasiswa..." />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Nomor HP / Kontak</label>
@@ -2322,7 +2475,7 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
                         <Save className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" /> {dosenForm.id ? "SIMPAN PERUBAHAN" : "TAMBAH DOSEN"}
                       </button>
                       {dosenForm.id && (
-                        <button type="button" onClick={() => setDosenForm({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', pendidikan: '', publikasi: '', kontak: '', password: '' })} className="w-full text-[10px] font-black text-teal-800/40 hover:text-rose-500 tracking-widest uppercase transition-colors">Batal Edit</button>
+                        <button type="button" onClick={() => setDosenForm({ id: '', nama: '', nip: '', kuotaMax: 3, foto: '', keahlian: '', bio: '', moto: '', kontak: '', password: '' })} className="w-full text-[10px] font-black text-teal-800/40 hover:text-rose-500 tracking-widest uppercase transition-colors">Batal Edit</button>
                       )}
                    </form>
                 </div>
@@ -2353,7 +2506,7 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
                             </div>
                          </div>
                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => setDosenForm({ id: dosen.id, nama: dosen.nama, nip: dosen.nip, kuotaMax: dosen.kuotaMax, foto: dosen.foto || '', keahlian: dosen.keahlian || '', bio: dosen.bio || '', pendidikan: dosen.pendidikan || '', publikasi: dosen.publikasi || '', kontak: dosen.kontak || '', password: '' })} className="p-3 bg-[#f8fdfc] text-teal-800/40 hover:bg-teal-50 hover:text-teal-500 border border-transparent hover:border-teal-100 rounded-xl transition-all shadow-sm">
+                            <button onClick={() => setDosenForm({ id: dosen.id, nama: dosen.nama, nip: dosen.nip, kuotaMax: dosen.kuotaMax, foto: dosen.foto || '', keahlian: dosen.keahlian || '', bio: dosen.bio || '', moto: dosen.moto || '', kontak: dosen.kontak || '', password: '' })} className="p-3 bg-[#f8fdfc] text-teal-800/40 hover:bg-teal-50 hover:text-teal-500 border border-transparent hover:border-teal-100 rounded-xl transition-all shadow-sm">
                               <Edit className="w-4 h-4" />
                             </button>
                             <button onClick={() => setDeleteData({ type: 'dosen', id: dosen.id, name: dosen.nama })} className="p-3 bg-[#f8fdfc] text-teal-800/40 hover:bg-rose-50 hover:text-rose-600 border border-transparent hover:border-rose-100 rounded-xl transition-all shadow-sm">
@@ -2523,7 +2676,7 @@ const AdminDashboard = ({ token, currentUser, onUserUpdate }: { token: string, c
                          <div className="absolute inset-0 bg-teal-100 rounded-full blur-xl opacity-50" />
                          <div className="relative w-full h-full rounded-full border-4 border-white bg-teal-50 overflow-hidden shadow-lg group">
                            {currentUser?.foto ? (
-                             <img src={currentUser.foto || undefined} alt="Admin Profile" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                             <img alt="Admin Profile" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src={currentUser.foto || "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop"} />
                            ) : (
                              <div className="w-full h-full flex items-center justify-center">
                                <Settings className="w-8 h-8 text-teal-300" />
@@ -2856,55 +3009,64 @@ const PortfolioPage = () => {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ delay: index * 0.05, type: "spring", stiffness: 300, damping: 25 }}
-                    className="bg-white rounded-[2.5rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_40px_-15px_rgba(20,184,166,0.2)] hover:-translate-y-2 transition-all duration-300 border border-teal-50 group flex flex-col h-full relative cursor-pointer"
+                    className="relative aspect-[3/4] group cursor-pointer rounded-[2.5rem] overflow-hidden shadow-2xl hover:shadow-teal-500/20 transition-all duration-700"
                     onClick={() => setSelectedDosen(dosen)}
                   >
-                    <div className="aspect-square w-full overflow-hidden relative">
-                      <div className="absolute inset-0 bg-gradient-to-t from-teal-950/90 via-teal-950/20 to-transparent opacity-70 group-hover:opacity-90 transition-opacity z-10" />
-                      <img src={dosen.foto || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop'} alt={dosen.nama} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                      
-                      {/* Badge Top Right */}
-                      <div className="absolute top-4 right-4 z-20">
-                        {isFull ? (
-                          <span className="flex items-center gap-1 bg-rose-500/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
-                            <XCircle className="w-3 h-3" /> Penuh
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1 bg-emerald-500/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
-                            <CheckCircle2 className="w-3 h-3" /> Tersedia
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Info on Image */}
-                      <div className="absolute bottom-4 left-4 right-4 z-20">
-                        <span className="inline-block px-2 py-1 bg-white/20 backdrop-blur-md text-white text-[8px] font-black uppercase tracking-widest rounded mb-2 border border-white/20">
-                          NIP: {dosen.nip}
-                        </span>
-                        <h3 className="font-black text-xl text-white leading-tight drop-shadow-md">{dosen.nama}</h3>
-                      </div>
+                    {/* Background Image */}
+                    <div className="absolute inset-0 z-0">
+                      <img 
+                        src={dosen.foto || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=800&fit=crop'} 
+                        alt={dosen.nama} 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2000ms] ease-out" 
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-teal-950 via-teal-950/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
                     </div>
 
-                    <div className="p-6 flex flex-col flex-grow bg-white">
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        <span className="px-2 py-1 bg-teal-50 text-teal-600 text-[9px] font-bold uppercase tracking-widest rounded-md border border-teal-100">
+                    {/* Glowing Border (only on hover) */}
+                    <div className="absolute inset-0 border-2 border-teal-400/0 group-hover:border-teal-400/40 rounded-[2.5rem] z-20 transition-all duration-500 pointer-events-none" />
+
+                    {/* Top Content: Badges */}
+                    <div className="absolute top-6 left-6 right-6 z-20 flex justify-between items-start">
+                       <div className="px-3 py-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-[8px] font-black uppercase tracking-widest text-white/80">
+                          {dosen.nip}
+                       </div>
+                       {isFull ? (
+                          <div className="bg-rose-500/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border border-white/20 flex items-center gap-1.5 shadow-lg">
+                            <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> Penuh
+                          </div>
+                        ) : (
+                          <div className="bg-teal-500/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border border-white/20 flex items-center gap-1.5 shadow-lg">
+                            <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> Tersedia
+                          </div>
+                        )}
+                    </div>
+
+                    {/* Bottom Content: Info */}
+                    <div className="absolute bottom-0 left-0 right-0 p-8 z-10 translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                      <div className="mb-3 flex flex-wrap gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
+                        <span className="px-2 py-0.5 bg-teal-500 text-white text-[8px] font-black uppercase tracking-widest rounded-md">
                           Dosen Ahli
                         </span>
-                        <span className="px-2 py-1 bg-orange-50 text-orange-600 text-[9px] font-bold uppercase tracking-widest rounded-md border border-orange-100">
-                          Pembimbing
+                        <span className="px-2 py-0.5 bg-orange-500 text-white text-[8px] font-black uppercase tracking-widest rounded-md">
+                          {dosen.kuotaMax - kuotaTerpakai} Slot Sisa
                         </span>
                       </div>
+                      <h3 className="font-black text-2xl md:text-3xl text-white leading-none tracking-tighter mb-2 group-hover:text-teal-300 transition-colors duration-300">
+                        {dosen.nama}
+                      </h3>
+                      <p className="text-white/60 text-xs font-bold line-clamp-1 group-hover:text-white/90 transition-colors">
+                        {dosen.keahlian || "Pendidikan Teknologi Informasi"}
+                      </p>
                       
-                      <div className="mt-auto pt-4 border-t border-teal-50 flex items-center justify-between">
-                        <div className="flex flex-col">
-                          <span className="text-[9px] font-black uppercase tracking-widest text-teal-800/40 mb-1">Status Kuota</span>
-                          <span className="text-sm font-black text-teal-950">
-                            {kuotaTerpakai} <span className="text-teal-800/40 text-xs font-bold">/ {dosen.kuotaMax} Terisi</span>
-                          </span>
-                        </div>
-                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shadow-inner", isFull ? "bg-rose-50 text-rose-500" : "bg-teal-50 text-teal-500")}>
-                          <Users className="w-5 h-5" />
-                        </div>
+                      <div className="mt-6 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">
+                         <div className="h-0.5 flex-1 bg-white/20 rounded-full overflow-hidden">
+                            <motion.div 
+                               initial={{ width: 0 }}
+                               whileInView={{ width: `${(kuotaTerpakai/dosen.kuotaMax)*100}%` }}
+                               className="h-full bg-teal-400"
+                            />
+                         </div>
+                         <span className="text-[10px] font-black text-white/50">{kuotaTerpakai}/{dosen.kuotaMax}</span>
                       </div>
                     </div>
                   </motion.div>
@@ -2936,93 +3098,124 @@ const PortfolioPage = () => {
               className="absolute inset-0 bg-teal-950/60 backdrop-blur-md"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-2xl bg-[#f8fdfc] rounded-[2.5rem] shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+              exit={{ opacity: 0, scale: 0.95, y: 30 }}
+              className="relative w-full max-w-4xl bg-white rounded-[3rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col md:flex-row h-[90vh] md:h-auto md:max-h-[85vh]"
             >
-              <div className="h-48 w-full relative">
-                <div className="absolute inset-0 bg-gradient-to-tr from-teal-900 to-teal-600 z-0"></div>
-                <div className="absolute top-0 right-0 w-64 h-64 bg-orange-400/20 blur-[80px] rounded-full mix-blend-screen pointer-events-none" />
+              {/* Left Side: Photo (Desktop) / Top Section (Mobile) */}
+              <div className="w-full md:w-[40%] relative bg-teal-900 overflow-hidden shrink-0 min-h-[350px] md:min-h-0">
+                <div className="absolute inset-0 z-0">
+                   <img 
+                     src={selectedDosen.foto || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&h=1200&fit=crop'} 
+                     className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-[2000ms]"
+                     alt={selectedDosen.nama}
+                   />
+                   <div className="absolute inset-0 bg-gradient-to-t from-teal-950 via-teal-950/40 to-transparent" />
+                </div>
+                
                 <button 
                   onClick={() => setSelectedDosen(null)} 
-                  className="absolute top-6 right-6 z-20 w-10 h-10 bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all border border-white/10"
+                  className="absolute top-8 left-8 z-20 w-12 h-12 bg-white/10 hover:bg-white/30 backdrop-blur-xl rounded-full flex items-center justify-center text-white transition-all border border-white/20 group shadow-2xl"
                 >
-                  <XCircle className="w-6 h-6" />
+                  <ArrowRight className="w-5 h-5 rotate-180 group-hover:-translate-x-1 transition-transform" />
                 </button>
-              </div>
-              
-              <div className="px-10 pb-10 relative z-10 -mt-20">
-                <div className="flex flex-col sm:flex-row gap-6 items-end sm:items-center mb-8">
-                  <div className="w-36 h-36 rounded-[2rem] border-4 border-white overflow-hidden shadow-xl shadow-teal-900/10 bg-white shrink-0">
-                    <img 
-                      src={selectedDosen.foto || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop'} 
-                      alt={selectedDosen.nama} 
-                      className="w-full h-full object-cover" 
-                    />
-                  </div>
-                  <div className="flex-1 pb-2">
-                    <div className="inline-block px-3 py-1 bg-teal-100/50 text-teal-800 text-[10px] font-black uppercase tracking-widest rounded-lg mb-2">
-                      NIP. {selectedDosen.nip}
-                    </div>
-                    <h2 className="text-3xl font-black text-teal-950 tracking-tight leading-tight">{selectedDosen.nama}</h2>
-                    <p className="text-teal-600 font-bold text-sm mt-1">{selectedDosen.keahlian || "Pakar Akademik"}</p>
-                  </div>
+
+                <div className="absolute bottom-12 left-10 right-10 z-10">
+                  <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="inline-flex items-center gap-2 px-4 py-1.5 bg-teal-500 text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-full mb-5 border border-white/20 shadow-lg"
+                  >
+                    <Users className="w-3.5 h-3.5" /> Pakar Akademik
+                  </motion.div>
+                  <motion.h2 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="text-4xl md:text-5xl font-black text-white leading-[1.1] tracking-tighter drop-shadow-2xl mb-3"
+                  >
+                    {selectedDosen.nama}
+                  </motion.h2>
+                  <motion.p 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                    className="text-teal-200/80 font-bold text-sm tracking-wide flex items-center gap-2"
+                  >
+                    <div className="w-2 h-2 rounded-full bg-orange-400" />
+                    NIP. {selectedDosen.nip}
+                  </motion.p>
                 </div>
+              </div>
 
-                <div className="space-y-8">
-                  {selectedDosen.bio && (
-                    <div className="bg-white p-6 rounded-[2rem] border border-teal-50 shadow-sm">
-                      <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-teal-400 mb-3">
-                        <Info className="w-4 h-4" /> Tentang Dosen
-                      </h4>
-                      <p className="text-teal-950 text-sm leading-relaxed font-medium">
-                        {selectedDosen.bio}
-                      </p>
+              {/* Right Side: Content */}
+              <div className="flex-1 bg-[#F8FEFD] overflow-y-auto relative scroll-smooth custom-scrollbar">
+                <div className="p-10 md:p-14 space-y-12">
+                  {/* Bio Section */}
+                  <motion.section
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 }}
+                  >
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-10 h-10 rounded-[1rem] bg-white shadow-md flex items-center justify-center text-teal-600 border border-teal-50">
+                        <Info className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-800/30">Profil Profesional</h3>
                     </div>
-                  )}
+                    <p className="text-teal-950 text-lg leading-relaxed font-semibold italic opacity-90 border-l-4 border-teal-100 pl-6">
+                      "{selectedDosen.bio || "Pakar Pendidikan Teknologi Informasi dengan fokus pada pengembangan sistem cerdas dan metodologi pembelajaran digital berbasis industri."}"
+                    </p>
+                  </motion.section>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-white p-6 rounded-[2rem] border border-teal-50 shadow-sm">
-                      <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-teal-400 mb-3">
-                        <GraduationCap className="w-4 h-4" /> Riwayat Pendidikan
-                      </h4>
-                      <ul className="space-y-3">
-                        {(selectedDosen.pendidikan ? selectedDosen.pendidikan.split(';') : ['S1 - Universitas Negeri Surabaya']).map((edu: string, idx: number) => (
-                          <li key={idx} className="flex items-start gap-3 text-sm font-bold text-teal-950">
-                            <div className="w-1.5 h-1.5 rounded-full bg-teal-400 mt-1.5 shrink-0" />
-                            <span className="leading-snug">{edu.trim()}</span>
-                          </li>
-                        ))}
-                      </ul>
+                  {/* Moto Dosen Section */}
+                  <motion.section
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.7 }}
+                    className="relative"
+                  >
+                    <div className="bg-gradient-to-br from-teal-600 to-teal-800 p-10 md:p-14 rounded-[3rem] shadow-2xl relative overflow-hidden group">
+                       <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2 group-hover:scale-150 transition-transform duration-1000" />
+                       <div className="flex flex-col items-center text-center space-y-6 relative z-10">
+                          <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/30">
+                             <Award className="w-7 h-7" />
+                          </div>
+                          <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-teal-100/60">Moto Kehidupan & Akademik</h3>
+                          <p className="text-2xl md:text-4xl font-black text-white leading-[1.15] tracking-tighter">
+                            "{selectedDosen.moto || "Mendidik dengan hati, membangun masa depan dengan teknologi."}"
+                          </p>
+                          <div className="w-12 h-1.5 bg-orange-400 rounded-full" />
+                       </div>
                     </div>
+                  </motion.section>
 
-                    <div className="bg-white p-6 rounded-[2rem] border border-teal-50 shadow-sm">
-                      <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-teal-400 mb-3">
-                        <BookOpen className="w-4 h-4" /> Publikasi Utama
-                      </h4>
-                      <ul className="space-y-4">
-                        {(selectedDosen.publikasi ? selectedDosen.publikasi.split(';') : ['Belum ada data publikasi.']).map((pub: string, idx: number) => (
-                          <li key={idx} className="flex items-start gap-3 text-sm font-bold text-teal-950">
-                            <div className="w-5 h-5 rounded-lg bg-teal-50 text-teal-500 flex items-center justify-center shrink-0 mt-0.5 text-[10px]">
-                              {idx + 1}
-                            </div>
-                            <span className="leading-snug">{pub.trim()}</span>
-                          </li>
-                        ))}
-                      </ul>
+                  {/* Footer Info */}
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.9 }}
+                    className="pt-12 border-t border-teal-100 flex flex-col sm:flex-row gap-8 items-center justify-between"
+                  >
+                    <div className="flex items-center gap-5">
+                       <div className="w-16 h-16 bg-white rounded-[1.5rem] flex items-center justify-center text-orange-500 shadow-xl border border-orange-50 relative overflow-hidden group">
+                          <div className="absolute inset-0 bg-orange-50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <Star className="w-8 h-8 relative z-10 animate-pulse" />
+                       </div>
+                       <div>
+                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-800/30 mb-1">Status Ketersediaan</p>
+                          <p className="text-teal-950 font-black text-2xl tracking-tighter">Sisa {selectedDosen.kuotaMax - (selectedDosen._count?.kelompok || 0)} Slot</p>
+                       </div>
                     </div>
-                  </div>
-                  
-                  <div className="bg-teal-50/50 p-6 rounded-[2rem] border border-dashed border-teal-100 flex items-center justify-between">
-                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-teal-500 mb-1">Status Ketersediaan</p>
-                        <p className="text-teal-950 font-bold text-sm">Sisa {selectedDosen.kuotaMax - (selectedDosen._count?.kelompok || 0)} Kuota Bimbingan</p>
-                     </div>
-                     <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-teal-500 shadow-sm">
-                        <Users className="w-6 h-6" />
-                     </div>
-                  </div>
+                    <button 
+                      onClick={() => setSelectedDosen(null)}
+                      className="w-full sm:w-auto px-10 py-5 bg-teal-900 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] hover:bg-orange-500 hover:-translate-y-2 transition-all shadow-2xl shadow-teal-900/20 hover:shadow-orange-500/40"
+                    >
+                      Tutup Profil
+                    </button>
+                  </motion.div>
                 </div>
               </div>
             </motion.div>
@@ -3041,8 +3234,7 @@ const DosenDashboard = ({ user, token, onProfileUpdate }: { user: any; token: st
     nama: '',
     keahlian: '',
     bio: '',
-    pendidikan: '',
-    publikasi: '',
+    moto: '',
     kontak: '',
     foto: ''
   });
@@ -3067,8 +3259,7 @@ const DosenDashboard = ({ user, token, onProfileUpdate }: { user: any; token: st
           nama: data.nama || '',
           keahlian: data.keahlian || '',
           bio: data.bio || '',
-          pendidikan: data.pendidikan || '',
-          publikasi: data.publikasi || '',
+          moto: data.moto || '',
           kontak: data.kontak || '',
           foto: data.foto || ''
         });
@@ -3168,35 +3359,63 @@ const DosenDashboard = ({ user, token, onProfileUpdate }: { user: any; token: st
   }
 
   if (!dosenData) {
-    return <div className="min-h-screen flex items-center justify-center bg-[#F0FAF8]">Gagal memuat data dosen.</div>;
+return <div className="min-h-screen flex items-center justify-center bg-[#F0FAF8]">Gagal memuat data dosen.</div>;
   }
 
   return (
-    <div className="min-h-screen bg-[#F0FAF8] pt-24 pb-12 px-6">
+    <div className="min-h-screen bg-[#F0FAF8] pt-32 pb-12 px-6">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header Section */}
-        <div className="bg-gradient-to-br from-teal-950 to-teal-900 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-8 items-center border border-teal-800">
-           <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3" />
-           <div className="w-32 h-32 rounded-3xl bg-teal-800/50 border-4 border-teal-700/50 overflow-hidden shrink-0 relative z-10 shadow-xl">
-             <img src={dosenData.foto || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop'} alt={dosenData.nama} className="w-full h-full object-cover" />
-           </div>
-           <div className="relative z-10 flex-1 text-center md:text-left space-y-2">
-             <div className="inline-block px-3 py-1 bg-teal-800/50 border border-teal-700/50 text-teal-300 text-[10px] font-black uppercase tracking-widest rounded-lg mb-2">
-               DOSEN PEMBIMBING
-             </div>
-             <h1 className="text-3xl md:text-4xl font-black tracking-tight">{dosenData.nama}</h1>
-             <p className="text-teal-400 font-bold">NIP: {dosenData.nip}</p>
-             <p className="text-sm text-teal-100/80 max-w-2xl mt-4">{dosenData.bio || "Belum ada bio."}</p>
-           </div>
-           <div className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-3xl relative z-10 flex flex-col items-center justify-center text-center w-full md:w-auto shrink-0 shadow-lg">
-              <span className="text-5xl font-black font-mono tracking-tighter text-teal-300 drop-shadow-md">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white/70 backdrop-blur-2xl rounded-[3rem] p-10 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.05)] relative overflow-hidden flex flex-col md:flex-row gap-10 items-center border border-white"
+        >
+          {/* Animated background accent */}
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-500/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 animate-pulse" />
+          <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-orange-500/5 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/3" />
+          
+          <div className="relative z-10 group">
+            <div className="absolute inset-0 bg-gradient-to-br from-teal-500 to-orange-500 rounded-[2.5rem] blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-700" />
+            <div className="w-40 h-40 rounded-[2.5rem] bg-white p-1 relative z-10 shadow-2xl border border-teal-50">
+              <div className="w-full h-full rounded-[2.2rem] overflow-hidden bg-teal-50 flex items-center justify-center">
+                <img src={dosenData.foto || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=800&fit=crop'} alt={dosenData.nama} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 relative z-10 text-center md:text-left space-y-6">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-teal-50 rounded-full border border-teal-100 mb-4">
+                <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-teal-600">Lecturer Profile</span>
+              </div>
+              <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-teal-950 mb-2 leading-tight">
+                {dosenData.nama}
+              </h1>
+              <p className="text-teal-800/60 font-bold text-lg">{dosenData.keahlian || "Pakar Pendidikan Teknologi Informasi"}</p>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
+               <div className="px-5 py-3 bg-white border border-teal-50 rounded-2xl text-xs font-black text-teal-800 shadow-sm flex items-center gap-3">
+                 <Users className="w-4 h-4 text-teal-500" /> NIP. {dosenData.nip}
+               </div>
+               <div className="px-5 py-3 bg-white border border-teal-50 rounded-2xl text-xs font-black text-teal-800 shadow-sm flex items-center gap-3">
+                 <GraduationCap className="w-4 h-4 text-teal-500" /> Kuota: {dosenData.kuotaMax} Kelompok
+               </div>
+            </div>
+          </div>
+
+          <div className="bg-teal-950 p-8 rounded-[2.5rem] relative z-10 flex flex-col items-center justify-center text-center w-full md:w-auto shrink-0 shadow-2xl border border-teal-900 group/quota">
+              <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 to-transparent opacity-0 group-hover/quota:opacity-100 transition-opacity duration-500" />
+              <span className="text-5xl font-black font-mono tracking-tighter text-white mb-1 relative z-10">
                 {dosenData.kelompok?.length || 0}
               </span>
-              <span className="text-[10px] uppercase font-black text-teal-100 mt-2 tracking-widest opacity-80">KELOMPOK Bimbingan</span>
-              <div className="w-full h-px bg-white/20 my-3" />
-              <span className="text-xs font-bold text-white">Maksimal {dosenData.kuotaMax} Kelompok</span>
-           </div>
-        </div>
+              <span className="text-[10px] uppercase font-black text-teal-400 mt-1 tracking-widest relative z-10">TIM Terdaftar</span>
+              <div className="w-12 h-1 bg-teal-800 my-4 rounded-full relative z-10" />
+              <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest relative z-10">Maks {dosenData.kuotaMax} Tim</span>
+          </div>
+        </motion.div>
 
         {/* Tab Navigation */}
         <div className="flex flex-wrap gap-4 p-2 bg-white/50 backdrop-blur-md border border-teal-100 rounded-[2rem] w-fit mx-auto md:mx-0">
@@ -3304,19 +3523,15 @@ const DosenDashboard = ({ user, token, onProfileUpdate }: { user: any; token: st
                              <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">Nomor HP / WA</label>
                              <input value={profileForm.kontak} onChange={e => setProfileForm({...profileForm, kontak: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:ring-4 focus:ring-teal-500/10 transition-all outline-none" />
                           </div>
-                          <div className="space-y-2">
-                             <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">Pendidikan (Pisahkan dengan ;)</label>
-                             <input value={profileForm.pendidikan} onChange={e => setProfileForm({...profileForm, pendidikan: e.target.value})} placeholder="S1 Unesa; S2 ITS..." className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:ring-4 focus:ring-teal-500/10 transition-all outline-none" />
-                          </div>
                        </div>
                     </div>
                     <div className="space-y-2">
                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">Bio Singkat</label>
                        <textarea value={profileForm.bio} onChange={e => setProfileForm({...profileForm, bio: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:ring-4 focus:ring-teal-500/10 transition-all outline-none min-h-[120px]" />
                     </div>
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">Publikasi Utama (Pisahkan dengan ;)</label>
-                       <textarea value={profileForm.publikasi} onChange={e => setProfileForm({...profileForm, publikasi: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:ring-4 focus:ring-teal-500/10 transition-all outline-none min-h-[100px]" />
+                    <div className="md:col-span-2 space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">Moto Dosen (Kalimat Inspiratif)</label>
+                       <textarea value={profileForm.moto} onChange={e => setProfileForm({...profileForm, moto: e.target.value})} className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:ring-4 focus:ring-teal-500/10 transition-all outline-none min-h-[80px]" placeholder="Contoh: Mendidik adalah ibadah..." />
                     </div>
                     <button type="submit" className="w-full py-5 bg-teal-500 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg flex items-center justify-center gap-2">
                        <Save className="w-4 h-4" /> SIMPAN PERUBAHAN PROFIL
@@ -3361,6 +3576,42 @@ const DosenDashboard = ({ user, token, onProfileUpdate }: { user: any; token: st
   );
 };
 
+const AppContent = ({ user, setUser, token, login, logout, updateProfile }: any) => {
+  const location = useLocation();
+  const isLoginPage = location.pathname === "/login";
+  const isProfileIncomplete = user?.role === 'STUDENT' && (!user.mahasiswa?.nama || !user.mahasiswa?.kontak);
+
+  return (
+    <div className="bg-[#f8fdfc] min-h-screen font-sans antialiased text-teal-950/80">
+      {!isLoginPage && <Navbar user={user} onLogout={logout} />}
+      <Routes>
+        <Route path="/" element={<LandingPage user={user} />} />
+        <Route path="/login" element={!token ? <LoginPage onLogin={login} /> : user?.role === 'ADMIN' ? <Navigate to="/admin" /> : user?.role === 'DOSEN' ? <Navigate to="/dosen-dashboard" /> : <Navigate to="/dashboard" />} />
+        
+        <Route path="/dashboard" element={
+          token && user?.role === 'STUDENT' ? (
+            isProfileIncomplete ? (
+              <ProfileForm user={user} token={token || ""} onComplete={updateProfile} />
+            ) : (
+              <Dashboard user={user} token={token || ""} onProfileUpdate={updateProfile} />
+            )
+          ) : <Navigate to="/login" />
+        } />
+
+        <Route path="/dosen-dashboard" element={
+          token && user?.role === 'DOSEN' ? (
+            <DosenDashboard user={user} token={token || ""} onProfileUpdate={updateProfile} />
+          ) : <Navigate to="/login" />
+        } />
+
+        <Route path="/portfolio" element={token ? <PortfolioPage /> : <Navigate to="/login" />} />
+        <Route path="/admin" element={token && user?.role === 'ADMIN' ? <AdminDashboard token={token} currentUser={user} onUserUpdate={(updated) => { const updatedUser = { ...user, ...updated }; localStorage.setItem("user", JSON.stringify(updatedUser)); setUser(updatedUser); }} /> : <Navigate to="/login" />} />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </div>
+  );
+};
+
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState<any>(JSON.parse(localStorage.getItem("user") || "null"));
@@ -3390,37 +3641,16 @@ export default function App() {
     setUser(updatedUser);
   };
 
-  const isProfileIncomplete = user?.role === 'STUDENT' && (!user.mahasiswa?.nama || !user.mahasiswa?.kontak);
-
   return (
     <BrowserRouter>
-      <div className="bg-[#f8fdfc] min-h-screen font-sans antialiased text-teal-950/80">
-        <Navbar user={user} onLogout={logout} />
-        <Routes>
-          <Route path="/" element={<LandingPage user={user} />} />
-          <Route path="/login" element={!token ? <LoginPage onLogin={login} /> : user?.role === 'ADMIN' ? <Navigate to="/admin" /> : user?.role === 'DOSEN' ? <Navigate to="/dosen-dashboard" /> : <Navigate to="/dashboard" />} />
-          
-          <Route path="/dashboard" element={
-            token && user?.role === 'STUDENT' ? (
-              isProfileIncomplete ? (
-                <ProfileForm user={user} token={token || ""} onComplete={updateProfile} />
-              ) : (
-                <Dashboard user={user} token={token || ""} onProfileUpdate={updateProfile} />
-              )
-            ) : <Navigate to="/login" />
-          } />
-
-          <Route path="/dosen-dashboard" element={
-            token && user?.role === 'DOSEN' ? (
-              <DosenDashboard user={user} token={token || ""} onProfileUpdate={updateProfile} />
-            ) : <Navigate to="/login" />
-          } />
-
-          <Route path="/portfolio" element={<PortfolioPage />} />
-          <Route path="/admin" element={token && user?.role === 'ADMIN' ? <AdminDashboard token={token} currentUser={user} onUserUpdate={(updated) => { const updatedUser = { ...user, ...updated }; localStorage.setItem("user", JSON.stringify(updatedUser)); setUser(updatedUser); }} /> : <Navigate to="/login" />} />
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </div>
+      <AppContent 
+        user={user} 
+        setUser={setUser}
+        token={token} 
+        login={login} 
+        logout={logout} 
+        updateProfile={updateProfile} 
+      />
     </BrowserRouter>
   );
 }

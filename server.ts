@@ -336,7 +336,14 @@ app.post("/api/profile", authenticate, async (req: any, res) => {
   try {
     const student = await prisma.mahasiswa.upsert({
       where: { userId: req.user.id },
-      update: { nama, kontak, peminatan, bio, foto, ipk },
+      update: { 
+        nama, 
+        kontak, 
+        peminatan, 
+        bio, 
+        foto: foto || null, 
+        ipk 
+      },
       create: {
         userId: req.user.id,
         nim: req.user.nim, 
@@ -344,10 +351,18 @@ app.post("/api/profile", authenticate, async (req: any, res) => {
         kontak,
         peminatan,
         bio,
-        foto,
+        foto: foto || null,
         ipk
       },
     });
+
+    if (foto) {
+      await prisma.user.update({
+        where: { id: req.user.id },
+        data: { foto }
+      });
+    }
+
     res.json(student);
   } catch (err: any) {
     console.error("Profile Update Error:", err);
@@ -654,7 +669,7 @@ app.post("/api/upload", authenticate, (req: any, res: any) => {
 // Dosen CRUD
 app.post("/api/admin/dosen", authenticate, isAdmin, async (req, res) => {
   try {
-    const { nama, nip, kuotaMax, foto, keahlian, bio, pendidikan, publikasi, kontak, password } = req.body;
+    const { nama, nip, kuotaMax, foto, keahlian, bio, moto, pendidikan, publikasi, kontak, password } = req.body;
     if (!nama || !nip || !kuotaMax) throw new Error("Nama, NIP, dan kuota maksimal wajib diisi.");
     
     const dosen = await prisma.dosen.create({
@@ -662,9 +677,10 @@ app.post("/api/admin/dosen", authenticate, isAdmin, async (req, res) => {
         nama, 
         nip, 
         kuotaMax: parseInt(kuotaMax), 
-        foto,
+        foto: foto || null,
         keahlian,
         bio,
+        moto,
         pendidikan,
         publikasi,
         kontak
@@ -692,7 +708,7 @@ app.post("/api/admin/dosen", authenticate, isAdmin, async (req, res) => {
 app.put("/api/admin/dosen/:id", authenticate, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { nama, nip, kuotaMax, foto, keahlian, bio, pendidikan, publikasi, kontak, password } = req.body;
+    const { nama, nip, kuotaMax, foto, keahlian, bio, moto, pendidikan, publikasi, kontak, password } = req.body;
     
     const currentDosen = await prisma.dosen.findUnique({ where: { id } });
     if (currentDosen?.foto && currentDosen.foto !== foto && currentDosen.foto.startsWith('/uploads/')) {
@@ -711,15 +727,34 @@ app.put("/api/admin/dosen/:id", authenticate, isAdmin, async (req, res) => {
       data: { 
         nama, 
         nip, 
-        kuotaMax: parseInt(kuotaMax), 
-        foto,
+        kuotaMax: parseInt(String(kuotaMax)), 
+        foto: foto || null,
         keahlian,
         bio,
-        pendidikan,
-        publikasi,
+        moto,
         kontak
       }
     });
+
+    // Sync User record if it exists
+    const existingUser = await prisma.user.findFirst({
+      where: { 
+        OR: [
+          { dosen: { id: dosen.id } },
+          { username: currentDosen?.nip }
+        ]
+      }
+    });
+
+    if (existingUser) {
+      await prisma.user.update({
+        where: { id: existingUser.id },
+        data: { 
+          username: nip, // Sync with new NIP if changed
+          foto: foto || existingUser.foto 
+        }
+      });
+    }
 
     if (password) {
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -1053,7 +1088,7 @@ app.put("/api/admin/profile-foto", authenticate, isAdmin, async (req: any, res) 
 // --- DOSEN SELF MANAGEMENT ---
 app.put("/api/dosen/profile", authenticate, async (req: any, res) => {
   if (req.user.role !== 'DOSEN') return res.status(403).json({ error: "Access denied." });
-  const { nama, keahlian, bio, pendidikan, publikasi, kontak, foto } = req.body;
+  const { nama, keahlian, bio, moto, pendidikan, publikasi, kontak, foto } = req.body;
   try {
     const currentDosen = await prisma.dosen.findUnique({ where: { nip: req.user.nim } });
     
@@ -1071,7 +1106,14 @@ app.put("/api/dosen/profile", authenticate, async (req: any, res) => {
 
     const updatedDosen = await prisma.dosen.update({
       where: { nip: req.user.nim },
-      data: { nama, keahlian, bio, pendidikan, publikasi, kontak, foto }
+      data: { 
+        nama, 
+        keahlian, 
+        bio, 
+        moto, 
+        kontak, 
+        foto 
+      }
     });
     if (foto) {
       await prisma.user.update({
