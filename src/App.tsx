@@ -40,6 +40,7 @@ import {
   Play,
   BookOpen,
   Star,
+  Zap,
 } from "lucide-react";
 import { socket } from "@/src/lib/socket";
 import { clsx, type ClassValue } from "clsx";
@@ -1464,6 +1465,10 @@ const Dashboard = ({
                 Portal resmi perebutan kuota pembimbing skripsi. Pastikan profil
                 Anda sudah lengkap sebelum masa pemilihan dibuka.
               </p>
+              <div className="flex items-center gap-2 mt-4 text-[9px] font-black text-teal-400 uppercase tracking-widest bg-teal-50/50 w-fit px-3 py-1.5 rounded-full border border-teal-100">
+                <Zap className="w-3 h-3 fill-teal-400" />
+                Scale-Ready Architecture
+              </div>
             </div>
 
             <div className="h-20 w-px bg-teal-50 hidden md:block"></div>

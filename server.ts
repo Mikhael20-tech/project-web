@@ -1,10 +1,11 @@
 import express from "express";
 import cors from "cors";
 import { createServer } from "http";
-import { Server } from "socket.io";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { PrismaClient } from "@prisma/client";
+import { createAdapter } from "@socket.io/redis-adapter";
+import { createClient } from "redis";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
@@ -31,6 +32,22 @@ const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: "*" },
 });
+
+// Redis Adapter for Auto-Scaling
+if (process.env.REDIS_URL) {
+  const pubClient = createClient({ url: process.env.REDIS_URL });
+  const subClient = pubClient.duplicate();
+  
+  pubClient.on('error', (err) => console.error('Redis Pub Client Error', err));
+  subClient.on('error', (err) => console.error('Redis Sub Client Error', err));
+
+  Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
+    io.adapter(createAdapter(pubClient, subClient));
+    console.log("✅ Socket.io Redis adapter connected (Auto-scaling enabled)");
+  }).catch(err => {
+    console.error("❌ Failed to connect to Redis for auto-scaling:", err);
+  });
+}
 
 const JWT_SECRET = process.env.JWT_SECRET || "wardosen-secret-key-123";
 const PORT = 3000;
@@ -405,6 +422,9 @@ app.post("/api/war/select", authenticate, async (req: any, res) => {
       }
 
       // 3. PESSIMISTIC LOCKING / ATOMIC CHECK
+      // Lock the lecturer row to prevent over-booking across multiple server instances
+      await tx.$executeRawUnsafe(`SELECT id FROM "Dosen" WHERE id = $1 FOR UPDATE`, dosenId);
+
       const lecturer = await tx.dosen.findUnique({
         where: { id: dosenId },
         include: { _count: { select: { mahasiswa: true } } },
