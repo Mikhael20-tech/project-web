@@ -4,9 +4,7 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  await prisma.invitation.deleteMany();
   await prisma.mahasiswa.deleteMany();
-  await prisma.kelompok.deleteMany();
   await prisma.dosen.deleteMany();
   await prisma.user.deleteMany();
   await prisma.warConfig.deleteMany();
@@ -47,21 +45,14 @@ async function main() {
     },
   });
 
-  // Create Student Profile & Group
-  const student = await prisma.mahasiswa.create({
+  // Create Student Profile
+  await prisma.mahasiswa.create({
     data: {
       userId: studentUser.id,
       nim: '12345678',
       nama: 'Budi Mahasiswa',
       kontak: '08123456789',
-      isLeader: true,
     },
-  });
-
-  await prisma.kelompok.create({
-    data: {
-      mahasiswa: { connect: { id: student.id } }
-    }
   });
 
   // Create some Lecturers

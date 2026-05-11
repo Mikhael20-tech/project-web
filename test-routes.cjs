@@ -5,8 +5,7 @@ const urls = [
   "/api/war-config",
   "/api/admin/reports",
   "/api/admin/mahasiswa",
-  "/api/me",
-  "/api/invitations"
+  "/api/me"
 ];
 
 const checkUrl = (path) => {

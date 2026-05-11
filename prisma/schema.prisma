@@ -16,12 +16,6 @@ enum Role {
   DOSEN
 }
 
-enum InvitationStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-}
-
 model User {
   id        String   @id @default(uuid())
   username  String   @unique // NIM for student, or admin username
@@ -45,33 +39,8 @@ model Mahasiswa {
   ipk          Float?
   userId       String    @unique
   user         User      @relation(fields: [userId], references: [id])
-  kelompokId   String?
-  kelompok     Kelompok? @relation(fields: [kelompokId], references: [id])
-  isLeader     Boolean   @default(false)
-  sentInvites  Invitation[] @relation("SentInvites")
-  receivedInvites Invitation[] @relation("ReceivedInvites")
-}
-
-model Kelompok {
-  id           String    @id @default(uuid())
-  nama         String?
-  mahasiswa    Mahasiswa[]
   dosenId      String?
   dosen        Dosen?    @relation(fields: [dosenId], references: [id])
-  invitations  Invitation[]
-  createdAt    DateTime  @default(now())
-}
-
-model Invitation {
-  id           String           @id @default(uuid())
-  kelompokId   String
-  kelompok     Kelompok         @relation(fields: [kelompokId], references: [id])
-  fromId       String
-  from         Mahasiswa        @relation("SentInvites", fields: [fromId], references: [id])
-  toId         String
-  to           Mahasiswa        @relation("ReceivedInvites", fields: [toId], references: [id])
-  status       InvitationStatus @default(PENDING)
-  createdAt    DateTime         @default(now())
 }
 
 model Dosen {
@@ -86,9 +55,19 @@ model Dosen {
   publikasi   String?  @default("Pengembangan Sistem E-Learning Berbasis Gamifikasi (2023); Implementasi AI dalam Media Pembelajaran (2022)")
   kontak      String?
   kuotaMax    Int      @default(5)
-  kelompok    Kelompok[]
+  mahasiswa   Mahasiswa[]
+  penelitian  Penelitian[]
   userId      String?  @unique
   user        User?    @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Penelitian {
+  id          String   @id @default(uuid())
+  judul       String
+  isActive    Boolean  @default(true)
+  dosenId     String
+  dosen       Dosen    @relation(fields: [dosenId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
 }
 

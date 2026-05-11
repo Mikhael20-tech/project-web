@@ -9,7 +9,7 @@ Sistem Informasi Akademik untuk pemilihan Dosen Pembimbing Skripsi secara adil, 
 ## Fitur Utama
 - **Real-time Quota Monitoring:** Lihat sisa kuota dosen secara live.
 - **Sistem Pemilihan First Come, First Served (War):** Transparansi absolut dalam memilih pembimbing skripsi.
-- **Manajemen Kelompok:** Mahasiswa dapat membuat kelompok skripsi dan mengundang rekan tim (maks. 3 anggota).
+- **Individual Selection:** Mahasiswa memilih dosen pembimbing secara mandiri sesuai minat riset.
 - **Admin Dashboard:** Pantau statistik, kelola data mahasiswa, dan ekspor laporan ke Excel/CSV yang rapi.
 
 ## Run Locally

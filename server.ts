@@ -311,7 +311,9 @@ app.get("/api/me", authenticate, async (req: any, res) => {
   try {
     const student = await prisma.mahasiswa.findUnique({
       where: { userId: req.user.id },
-      include: { kelompok: { include: { mahasiswa: true, dosen: true } } }
+      include: { 
+        dosen: true
+      }
     });
     res.json(student);
   } catch (err) {
@@ -323,7 +325,10 @@ app.get("/api/me-dosen", authenticate, async (req: any, res) => {
   try {
     const dosen = await prisma.dosen.findUnique({
       where: { userId: req.user.id },
-      include: { kelompok: { include: { mahasiswa: true } } }
+      include: { 
+        mahasiswa: true,
+        penelitian: true 
+      }
     });
     res.json(dosen);
   } catch (err) {
@@ -370,156 +375,6 @@ app.post("/api/profile", authenticate, async (req: any, res) => {
   }
 });
 
-// --- GROUP SYSTEM ---
-app.get("/api/invitations", authenticate, async (req: any, res) => {
-  try {
-    const student = await prisma.mahasiswa.findUnique({ where: { userId: req.user.id } });
-    if (!student) return res.status(404).json({ error: "Student not found" });
-
-    const invitations = await prisma.invitation.findMany({
-      where: { toId: student.id, status: "PENDING" },
-      include: { kelompok: { include: { mahasiswa: true } }, from: true }
-    });
-    res.json(invitations);
-  } catch (err) {
-    res.status(500).json({ error: "Gagal memuat undangan." });
-  }
-});
-
-app.post("/api/invitations/:id/accept", authenticate, async (req: any, res) => {
-  const { id } = req.params;
-  try {
-    const student = await prisma.mahasiswa.findUnique({ where: { userId: req.user.id } });
-    if (!student) return res.status(404).json({ error: "Student not found" });
-    if (student.kelompokId) return res.status(400).json({ error: "Sudah berada dalam kelompok." });
-
-    const invite = await prisma.invitation.findUnique({
-      where: { id },
-      include: { kelompok: { include: { _count: { select: { mahasiswa: true } } } } }
-    });
-
-    if (!invite || invite.toId !== student.id || invite.status !== "PENDING") {
-      return res.status(400).json({ error: "Undangan tidak valid." });
-    }
-
-    if (invite.kelompok._count.mahasiswa >= 3) {
-      return res.status(400).json({ error: "Kelompok sudah penuh." });
-    }
-
-    await prisma.$transaction([
-      prisma.invitation.update({
-        where: { id },
-        data: { status: "ACCEPTED" }
-      }),
-      prisma.mahasiswa.update({
-        where: { id: student.id },
-        data: { kelompokId: invite.kelompokId }
-      })
-    ]);
-
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: "Gagal menerima undangan." });
-  }
-});
-
-app.post("/api/invitations/:id/reject", authenticate, async (req: any, res) => {
-  const { id } = req.params;
-  try {
-    const student = await prisma.mahasiswa.findUnique({ where: { userId: req.user.id } });
-    if (!student) return res.status(404).json({ error: "Student not found" });
-
-    const invite = await prisma.invitation.findUnique({ where: { id } });
-    if (!invite || invite.toId !== student.id) {
-      return res.status(400).json({ error: "Undangan tidak valid." });
-    }
-
-    await prisma.invitation.update({
-      where: { id },
-      data: { status: "REJECTED" }
-    });
-
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: "Gagal menolak undangan." });
-  }
-});
-
-app.post("/api/groups/create", authenticate, async (req: any, res) => {
-  const { nama } = req.body;
-  const mahasiswa = await prisma.mahasiswa.findUnique({ where: { userId: req.user.id } });
-  if (!mahasiswa) return res.status(400).json({ error: "Profile not found" });
-  if (mahasiswa.kelompokId) return res.status(400).json({ error: "Already in a group" });
-
-  const kelompok = await prisma.kelompok.create({
-    data: {
-      nama: nama || "Team Tanpa Nama",
-      mahasiswa: { connect: { id: mahasiswa.id } },
-    },
-  });
-
-  await prisma.mahasiswa.update({
-    where: { id: mahasiswa.id },
-    data: { isLeader: true },
-  });
-
-  res.json(kelompok);
-});
-
-app.put("/api/groups/rename", authenticate, async (req: any, res) => {
-  const { nama } = req.body;
-  if (!nama) return res.status(400).json({ error: "Nama kelompok wajib diisi." });
-  if (nama.length > 25) return res.status(400).json({ error: "Nama kelompok terlalu panjang (maks 25 karakter)." });
-  
-  try {
-    const student = await prisma.mahasiswa.findUnique({
-      where: { userId: req.user.id }
-    });
-    
-    if (!student || !student.isLeader || !student.kelompokId) {
-      return res.status(403).json({ error: "Hanya ketua kelompok yang dapat mengganti nama." });
-    }
-
-    const updated = await prisma.kelompok.update({
-      where: { id: student.kelompokId },
-      data: { nama }
-    });
-    
-    res.json(updated);
-  } catch (err) {
-    res.status(500).json({ error: "Gagal mengganti nama kelompok." });
-  }
-});
-
-app.post("/api/groups/invite", authenticate, async (req: any, res) => {
-  const { targetNim } = req.body;
-  const leader = await prisma.mahasiswa.findUnique({
-    where: { userId: req.user.id },
-    include: { kelompok: { include: { mahasiswa: true } } },
-  });
-
-  if (!leader || !leader.isLeader || !leader.kelompokId) {
-    return res.status(403).json({ error: "Only group leaders can invite" });
-  }
-
-  if (leader.kelompok!.mahasiswa.length >= 3) { // Max 3 for example
-    return res.status(400).json({ error: "Group full" });
-  }
-
-  const target = await prisma.mahasiswa.findUnique({ where: { nim: targetNim } });
-  if (!target) return res.status(404).json({ error: "Student not found" });
-  if (target.kelompokId) return res.status(400).json({ error: "Target already in a group" });
-
-  const invite = await prisma.invitation.create({
-    data: {
-      kelompokId: leader.kelompokId,
-      fromId: leader.id,
-      toId: target.id,
-    },
-  });
-
-  res.json(invite);
-});
 
 // --- THE CRITICAL WAR LOGIC: SELECT DOSEN ---
 app.post("/api/war/select", authenticate, async (req: any, res) => {
@@ -539,43 +394,39 @@ app.post("/api/war/select", authenticate, async (req: any, res) => {
         throw new Error("Masa pemilihan dosen telah berakhir.");
       }
 
-      // 2. Check if user is Leader
+      // 2. Check Profile
       const student = await tx.mahasiswa.findUnique({
         where: { userId: req.user.id },
-        include: { kelompok: true },
       });
       
       if (!student) throw new Error("Profil mahasiswa tidak ditemukan. Silakan lengkapi profil Anda.");
-      if (!student.isLeader || !student.kelompokId) {
-        throw new Error("Hanya Ketua Kelompok yang diperbolehkan memilih dosen pembimbing.");
-      }
-      if (student.kelompok?.dosenId) {
-        throw new Error("Kelompok Anda sudah memiliki dosen pembimbing.");
+      if (student.dosenId) {
+        throw new Error("Anda sudah memiliki dosen pembimbing.");
       }
 
       // 3. PESSIMISTIC LOCKING / ATOMIC CHECK
       const lecturer = await tx.dosen.findUnique({
         where: { id: dosenId },
-        include: { _count: { select: { kelompok: true } } },
+        include: { _count: { select: { mahasiswa: true } } },
       });
 
       if (!lecturer) throw new Error("Data dosen tidak ditemukan dalam sistem.");
-      if (lecturer._count.kelompok >= lecturer.kuotaMax) {
+      if (lecturer._count.mahasiswa >= lecturer.kuotaMax) {
         throw new Error(`Maaf, kuota untuk ${lecturer.nama} sudah penuh.`);
       }
 
       // 4. Update
-      const updatedKelompok = await tx.kelompok.update({
-        where: { id: student.kelompokId },
+      const updatedStudent = await tx.mahasiswa.update({
+        where: { id: student.id },
         data: { dosenId: lecturer.id },
       });
 
-      return { updatedKelompok, lecturerName: lecturer.nama };
+      return { updatedStudent, lecturerName: lecturer.nama };
     });
 
     // Broadcast update
     const allLecturers = await prisma.dosen.findMany({
-      include: { _count: { select: { kelompok: true } } },
+      include: { _count: { select: { mahasiswa: true } } },
     });
     io.emit("quota_update", allLecturers);
 
@@ -597,23 +448,22 @@ app.post("/api/war/cancel", authenticate, async (req: any, res) => {
         throw new Error("Membatalkan dosen hanya diperbolehkan saat periode pemilihan aktif.");
       }
 
-      // 2. Check Role
+      // 2. Check Profile
       const student = await tx.mahasiswa.findUnique({
         where: { userId: req.user.id },
-        include: { kelompok: true },
       });
 
-      if (!student || !student.isLeader || !student.kelompokId) {
-        throw new Error("Akses ditolak. Hanya ketua kelompok yang dapat membatalkan.");
+      if (!student) {
+        throw new Error("Profil mahasiswa tidak ditemukan.");
       }
 
-      if (!student.kelompok?.dosenId) {
-        throw new Error("Kelompok Anda belum memilih dosen.");
+      if (!student.dosenId) {
+        throw new Error("Anda belum memilih dosen.");
       }
 
       // 3. Update
-      await tx.kelompok.update({
-        where: { id: student.kelompokId },
+      await tx.mahasiswa.update({
+        where: { id: student.id },
         data: { dosenId: null },
       });
 
@@ -622,7 +472,7 @@ app.post("/api/war/cancel", authenticate, async (req: any, res) => {
 
     // Broadcast
     const allLecturers = await prisma.dosen.findMany({
-      include: { _count: { select: { kelompok: true } } },
+      include: { _count: { select: { mahasiswa: true } } },
     });
     io.emit("quota_update", allLecturers);
 
@@ -642,9 +492,8 @@ app.get("/api/admin/reports", authenticate, isAdmin, async (req: any, res) => {
   try {
     const reports = await prisma.dosen.findMany({
       include: {
-        kelompok: {
-          include: { mahasiswa: true }
-        }
+        mahasiswa: true,
+        penelitian: true
       }
     });
     res.json(reports);
@@ -785,11 +634,7 @@ app.put("/api/admin/dosen/:id", authenticate, isAdmin, async (req, res) => {
 app.delete("/api/admin/dosen/:id", authenticate, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    // Putuskan relasi kelompok sebelum menghapus dosen
-    await prisma.kelompok.updateMany({
-      where: { dosenId: id },
-      data: { dosenId: null }
-    });
+    // Dosen deletion logic
     
     await prisma.dosen.delete({ where: { id } });
     
@@ -797,7 +642,7 @@ app.delete("/api/admin/dosen/:id", authenticate, isAdmin, async (req, res) => {
     const updatedDosenList = await prisma.dosen.findMany({
       include: {
         _count: {
-          select: { kelompok: true }
+          select: { mahasiswa: true }
         }
       }
     });
@@ -814,7 +659,7 @@ app.delete("/api/admin/dosen/:id", authenticate, isAdmin, async (req, res) => {
 app.get("/api/admin/mahasiswa", authenticate, isAdmin, async (req, res) => {
   try {
     const students = await prisma.mahasiswa.findMany({
-      include: { user: true, kelompok: true }
+      include: { user: true, dosen: true }
     });
     res.json(students);
   } catch (err: any) {
@@ -861,47 +706,7 @@ app.delete("/api/admin/mahasiswa/:id", authenticate, isAdmin, async (req, res) =
     const { id } = req.params;
     const student = await prisma.mahasiswa.findUnique({ where: { id } });
     if (student) {
-      // Clean up any invitations associated with this student
-      await prisma.invitation.deleteMany({
-        where: {
-          OR: [
-            { fromId: id },
-            { toId: id }
-          ]
-        }
-      });
-      
-      if (student.kelompokId) {
-        // Disconnect from group before deleting
-        await prisma.mahasiswa.update({ where: { id }, data: { kelompokId: null }});
-        
-        // If this student was the leader, we might need to delete the kelompok if it's now empty,
-        // or just let it be. To be safe, if kelompok is empty, delete it.
-        const remainingMembers = await prisma.mahasiswa.count({
-          where: { kelompokId: student.kelompokId }
-        });
-        
-        if (remainingMembers === 0) {
-          // Delete any remaining invitations for this group
-          await prisma.invitation.deleteMany({
-            where: { kelompokId: student.kelompokId }
-          });
-          await prisma.kelompok.delete({
-            where: { id: student.kelompokId }
-          });
-        } else if (student.isLeader) {
-          // Reassign leadership to the first remaining member
-          const nextMember = await prisma.mahasiswa.findFirst({
-            where: { kelompokId: student.kelompokId }
-          });
-          if (nextMember) {
-            await prisma.mahasiswa.update({
-              where: { id: nextMember.id },
-              data: { isLeader: true }
-            });
-          }
-        }
-      }
+      // Simply delete student
       // Delete user also cascades to delete mahasiswa usually, but Prisma needs careful cascading.
       await prisma.mahasiswa.delete({ where: { id } });
       await prisma.user.delete({ where: { id: student.userId } });
@@ -910,7 +715,7 @@ app.delete("/api/admin/mahasiswa/:id", authenticate, isAdmin, async (req, res) =
       const updatedDosenList = await prisma.dosen.findMany({
         include: {
           _count: {
-            select: { kelompok: true }
+            select: { mahasiswa: true }
           }
         }
       });
@@ -1128,6 +933,59 @@ app.put("/api/dosen/profile", authenticate, async (req: any, res) => {
   }
 });
 
+// --- RESEARCH PROJECT MANAGEMENT ---
+app.post("/api/dosen/penelitian", authenticate, async (req: any, res) => {
+  if (req.user.role !== 'DOSEN') return res.status(403).json({ error: "Access denied." });
+  const { judul } = req.body;
+  if (!judul) return res.status(400).json({ error: "Judul penelitian wajib diisi." });
+
+  try {
+    const dosen = await prisma.dosen.findUnique({ where: { nip: req.user.nim } });
+    if (!dosen) return res.status(404).json({ error: "Dosen not found." });
+
+    const penelitian = await prisma.penelitian.create({
+      data: {
+        judul,
+        dosenId: dosen.id,
+        isActive: true
+      }
+    });
+    res.status(201).json(penelitian);
+  } catch (err: any) {
+    res.status(500).json({ error: "Gagal menambahkan penelitian." });
+  }
+});
+
+app.patch("/api/dosen/penelitian/:id/toggle", authenticate, async (req: any, res) => {
+  if (req.user.role !== 'DOSEN') return res.status(403).json({ error: "Access denied." });
+  const { id } = req.params;
+
+  try {
+    const current = await prisma.penelitian.findUnique({ where: { id } });
+    if (!current) return res.status(404).json({ error: "Penelitian tidak ditemukan." });
+
+    const updated = await prisma.penelitian.update({
+      where: { id },
+      data: { isActive: !current.isActive }
+    });
+    res.json(updated);
+  } catch (err: any) {
+    res.status(500).json({ error: "Gagal mengubah status penelitian." });
+  }
+});
+
+app.delete("/api/dosen/penelitian/:id", authenticate, async (req: any, res) => {
+  if (req.user.role !== 'DOSEN') return res.status(403).json({ error: "Access denied." });
+  const { id } = req.params;
+
+  try {
+    await prisma.penelitian.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: "Gagal menghapus penelitian." });
+  }
+});
+
 app.put("/api/dosen/password", authenticate, async (req: any, res) => {
   if (req.user.role !== 'DOSEN') return res.status(403).json({ error: "Access denied." });
   const { currentPassword, newPassword } = req.body;
@@ -1154,7 +1012,10 @@ app.put("/api/dosen/password", authenticate, async (req: any, res) => {
 app.get("/api/dosen", async (req, res) => {
   try {
     const lecturers = await prisma.dosen.findMany({
-      include: { _count: { select: { kelompok: true } } },
+      include: { 
+        _count: { select: { mahasiswa: true } },
+        penelitian: true
+      },
     });
     res.json(lecturers);
   } catch (err) {
