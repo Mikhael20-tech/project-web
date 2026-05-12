@@ -1,6 +1,8 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { createServer } from "http";
+import { Server } from "socket.io";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { PrismaClient } from "@prisma/client";

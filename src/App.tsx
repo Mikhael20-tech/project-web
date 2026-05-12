@@ -2175,18 +2175,23 @@ const AdminDashboard = ({
         fetch("/api/war-config"),
       ]);
 
-      const repData = await repRes.json();
-      const stuData = await stuRes.json();
-      const confData = await confRes.json();
-
-      if (repRes.ok) setReports(repData);
-      if (stuRes.ok) setStudents(stuData);
-      if (confRes.ok && confData) {
-        setConfig(confData);
-        setConfigForm({
-          startTime: new Date(confData.startTime).toISOString().slice(0, 16),
-          endTime: new Date(confData.endTime).toISOString().slice(0, 16),
-        });
+      if (repRes.ok) {
+        const repData = await repRes.json();
+        setReports(repData);
+      }
+      if (stuRes.ok) {
+        const stuData = await stuRes.json();
+        setStudents(stuData);
+      }
+      if (confRes.ok) {
+        const confData = await confRes.json();
+        if (confData) {
+          setConfig(confData);
+          setConfigForm({
+            startTime: new Date(confData.startTime).toISOString().slice(0, 16),
+            endTime: new Date(confData.endTime).toISOString().slice(0, 16),
+          });
+        }
       }
     } catch (err) {
       console.error(err);
@@ -3760,7 +3765,10 @@ const PortfolioPage = () => {
 
   useEffect(() => {
     fetch("/api/dosen")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
         setDosenList(data);
         setLoading(false);
