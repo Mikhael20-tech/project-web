@@ -13,6 +13,12 @@ import bcrypt from "bcryptjs";
 
 import multer from "multer";
 import fs from "fs";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+
+// Initialize Supabase Storage Client
+const supabaseUrl = process.env.SUPABASE_URL || "";
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY || "";
+const supabase = createSupabaseClient(supabaseUrl, supabaseKey);
 
 let _prisma: PrismaClient | null = null;
 const prisma = new Proxy({} as PrismaClient, {
@@ -54,24 +60,11 @@ if (process.env.REDIS_URL) {
 const JWT_SECRET = process.env.JWT_SECRET || "wardosen-secret-key-123";
 const PORT = 3000;
 
-// Multer Storage Configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(process.cwd(), "uploads");
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
-  },
-});
-
+// Multer Storage Configuration (Use memory storage for Supabase upload)
+const storage = multer.memoryStorage();
 const upload = multer({ 
   storage,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB Limit
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB Limit
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith("image/")) {
       cb(null, true);
@@ -520,16 +513,50 @@ app.get("/api/admin/reports", authenticate, isAdmin, async (req: any, res) => {
   }
 });
 
-// Photo Upload
+// Photo Upload (To Supabase Storage)
 app.post("/api/upload", authenticate, (req: any, res: any) => {
-  upload.single("photo")(req, res, (err) => {
+  upload.single("photo")(req, res, async (err) => {
     if (err) {
       console.error("Upload error:", err);
       return res.status(400).json({ error: err.message || "Gagal mengupload file." });
     }
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-    const url = `/uploads/${req.file.filename}`;
-    res.json({ url });
+
+    try {
+      const bucketName = req.user?.role === 'STUDENT' ? 'mahasiswa-photos' : 'dosen-photos';
+      const fileExt = path.extname(req.file.originalname);
+      const uniqueFilename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${fileExt}`;
+      const oldUrl = req.body.oldUrl; // Pass old URL from frontend if replacing
+
+      // 1. Delete old photo if replacing
+      if (oldUrl && oldUrl.includes("supabase.co/storage")) {
+        const oldFilename = oldUrl.split("/").pop();
+        if (oldFilename) {
+          await supabase.storage.from(bucketName).remove([oldFilename]);
+          console.log(`Deleted old photo: ${oldFilename} from bucket: ${bucketName}`);
+        }
+      }
+
+      // 2. Upload new photo to Supabase
+      const { data, error } = await supabase.storage
+        .from(bucketName)
+        .upload(uniqueFilename, req.file.buffer, {
+          contentType: req.file.mimetype,
+          upsert: true
+        });
+
+      if (error) throw error;
+
+      // 3. Get Public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(data.path);
+
+      res.json({ url: publicUrl });
+    } catch (uploadErr: any) {
+      console.error("Supabase Upload Error:", uploadErr);
+      res.status(500).json({ error: uploadErr.message || "Gagal mengunggah foto ke Supabase" });
+    }
   });
 });
 

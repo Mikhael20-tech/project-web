@@ -1377,6 +1377,9 @@ const Dashboard = ({
     setUploadLoading(true);
     const formData = new FormData();
     formData.append("photo", file);
+    if (profileForm.foto) {
+      formData.append("oldUrl", profileForm.foto);
+    }
 
     try {
       const res = await fetch("/api/upload", {
@@ -4274,6 +4277,9 @@ const DosenDashboard = ({
     setUploadLoading(true);
     const formData = new FormData();
     formData.append("photo", file);
+    if (profileForm.foto) {
+      formData.append("oldUrl", profileForm.foto);
+    }
     try {
       const res = await fetch("/api/upload", {
         // Reuse admin upload for now
