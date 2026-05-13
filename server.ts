@@ -91,12 +91,8 @@ const authenticate = async (req: any, res: any, next: any) => {
   if (!token) return res.status(401).json({ error: "Unauthorized" });
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as any;
-    // Look up by nim (username) instead of id to handle re-seeding
-    const userExists = await prisma.user.findUnique({ where: { username: decoded.nim } });
-    if (!userExists) {
-      return res.status(401).json({ error: "User no longer exists" });
-    }
-    req.user = { ...decoded, id: userExists.id };
+    // Removed DB lookup to prevent connection pool exhaustion during war
+    req.user = decoded;
     next();
   } catch (err) {
     res.status(401).json({ error: "Invalid token" });

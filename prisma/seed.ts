@@ -11,7 +11,7 @@ async function main() {
 
   // Create War Config
   const startTime = new Date();
-  startTime.setMinutes(startTime.getMinutes() + 5); // 5 minutes from now
+  startTime.setMinutes(startTime.getMinutes() - 5); // 5 minutes ago (war sudah dimulai)
   const endTime = new Date();
   endTime.setHours(endTime.getHours() + 24);
 
@@ -33,41 +33,36 @@ async function main() {
     },
   });
 
-  // Create Student User
+  // Generate 300 Students
   const studentPass = await bcrypt.hash('mhs123', 10);
-  const studentUser = await prisma.user.upsert({
-    where: { username: '12345678' },
-    update: {},
-    create: {
-      username: '12345678',
-      password: studentPass,
-      role: 'STUDENT',
-    },
-  });
+  
+  const studentUsers = Array.from({ length: 300 }).map((_, i) => ({
+    username: `2205${String(i + 1).padStart(3, '0')}`,
+    password: studentPass,
+    role: 'STUDENT' as const,
+  }));
+  
+  await prisma.user.createMany({ data: studentUsers, skipDuplicates: true });
 
-  // Create Student Profile
-  await prisma.mahasiswa.create({
-    data: {
-      userId: studentUser.id,
-      nim: '12345678',
-      nama: 'Budi Mahasiswa',
-      kontak: '08123456789',
-    },
-  });
+  const allStudentUsers = await prisma.user.findMany({ where: { role: 'STUDENT' } });
+  
+  const studentProfiles = allStudentUsers.map((u, i) => ({
+    userId: u.id,
+    nim: u.username,
+    nama: `Mahasiswa Test ${i + 1}`,
+    kontak: `0812345${String(i).padStart(4, '0')}`,
+  }));
 
-  // Create some Lecturers
-  const lecturers = [
-    { nama: 'Dr. Ir. Heryanto, M.T.', nip: '19750812-01', kuotaMax: 3 },
-    { nama: 'Siti Aminah, S.Kom., M.Cs.', nip: '19820315-02', kuotaMax: 2 },
-    { nama: 'Bambang Sudarsono, Ph.D.', nip: '19681120-03', kuotaMax: 5 },
-    { nama: 'Ani Maryani, M.T.', nip: '19850625-04', kuotaMax: 4 },
-  ];
+  await prisma.mahasiswa.createMany({ data: studentProfiles, skipDuplicates: true });
 
-  for (const lec of lecturers) {
-    await prisma.dosen.create({
-      data: lec,
-    });
-  }
+  // Generate 16 Lecturers with 18 quota
+  const lecturers = Array.from({ length: 16 }).map((_, i) => ({
+    nama: `Dosen Penguji ${i + 1}, S.Kom., M.T.`,
+    nip: `19800101${String(i + 1).padStart(2, '0')}`,
+    kuotaMax: 18,
+  }));
+
+  await prisma.dosen.createMany({ data: lecturers, skipDuplicates: true });
 
   console.log('Seeding finished.');
 }
