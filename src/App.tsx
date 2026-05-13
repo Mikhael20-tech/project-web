@@ -4013,38 +4013,30 @@ const PortfolioPage = () => {
                   <ArrowRight className="w-5 h-5 rotate-180 group-hover:-translate-x-1 transition-transform" />
                 </button>
 
-                <div className="absolute bottom-12 left-10 right-10 z-10">
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="inline-flex items-center gap-2 px-4 py-1.5 bg-teal-500 text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-full mb-5 border border-white/20 shadow-lg"
-                  >
-                    <Users className="w-3.5 h-3.5" /> Pakar Akademik
-                  </motion.div>
-                  <motion.h2
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="text-4xl md:text-5xl font-black text-white leading-[1.1] tracking-tighter drop-shadow-2xl mb-3"
-                  >
-                    {selectedDosen.nama}
-                  </motion.h2>
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    className="text-teal-200/80 font-bold text-sm tracking-wide flex items-center gap-2"
-                  >
-                    <div className="w-2 h-2 rounded-full bg-orange-400" />
-                    NIP. {selectedDosen.nip}
-                  </motion.p>
-                </div>
               </div>
 
               {/* Right Side: Content */}
               <div className="flex-1 bg-[#F8FEFD] overflow-y-auto relative scroll-smooth custom-scrollbar">
                 <div className="p-10 md:p-14 space-y-12">
+                  {/* Header Section (Moved from image overlay) */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="space-y-4"
+                  >
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-teal-50 text-teal-700 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border border-teal-100 shadow-sm">
+                      <Users className="w-3.5 h-3.5" /> Pakar Akademik
+                    </div>
+                    <h2 className="text-4xl md:text-5xl font-black text-teal-950 leading-[1.1] tracking-tighter">
+                      {selectedDosen.nama}
+                    </h2>
+                    <p className="text-teal-800/60 font-bold text-sm tracking-wide flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-orange-400" />
+                      NIP. {selectedDosen.nip}
+                    </p>
+                  </motion.div>
+
                   {/* Bio Section */}
                   <motion.section
                     initial={{ opacity: 0, y: 20 }}
