@@ -513,6 +513,33 @@ app.get("/api/admin/reports", authenticate, isAdmin, async (req: any, res) => {
   }
 });
 
+// Admin: Cancel Student Selection
+app.post("/api/admin/war/cancel", authenticate, isAdmin, async (req: any, res) => {
+  const { mahasiswaId } = req.body;
+  try {
+    if (!mahasiswaId) throw new Error("Mahasiswa ID wajib diisi.");
+    
+    // Check if student exists
+    const mhs = await prisma.mahasiswa.findUnique({ 
+      where: { id: mahasiswaId },
+      include: { dosen: true }
+    });
+    
+    if (!mhs) throw new Error("Mahasiswa tidak ditemukan.");
+    if (!mhs.dosenId) throw new Error("Mahasiswa ini belum memilih dosen.");
+
+    await prisma.mahasiswa.update({
+      where: { id: mahasiswaId },
+      data: { dosenId: null }
+    });
+
+    console.log(`Admin ${req.user.nim} membatalkan pilihan dosen untuk Mahasiswa ${mhs.nim}`);
+    res.json({ message: `Berhasil membatalkan pilihan dosen untuk ${mhs.nama}` });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // Photo Upload (To Supabase Storage)
 app.post("/api/upload", authenticate, (req: any, res: any) => {
   upload.single("photo")(req, res, async (err) => {

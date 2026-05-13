@@ -41,6 +41,7 @@ import {
   BookOpen,
   Star,
   Zap,
+  X,
 } from "lucide-react";
 import { socket } from "@/src/lib/socket";
 import { clsx, type ClassValue } from "clsx";
@@ -2379,6 +2380,31 @@ const AdminDashboard = ({
     }
   };
 
+  const handleCancelSelection = async (mahasiswaId: string, studentName: string) => {
+    if (!window.confirm(`Apakah Anda yakin ingin membatalkan pilihan dosen untuk ${studentName}?`)) return;
+    setMessage(null);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/war/cancel", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ mahasiswaId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal membatalkan pilihan.");
+
+      setMessage({ type: "success", text: data.message });
+      fetchData();
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!deleteData) return;
     const { type, id } = deleteData;
@@ -2806,15 +2832,29 @@ const AdminDashboard = ({
                                     key={m.id}
                                     className="flex flex-col px-4 py-2.5 bg-white border border-teal-100 rounded-xl shadow-sm hover:border-teal-200 hover:shadow-teal-100 transition-all cursor-default group/group"
                                   >
-                                    <span className="text-[10px] font-black text-teal-800/40 uppercase tracking-widest mb-0.5">
-                                      NIM:{" "}
-                                      <span className="text-teal-800 text-xs">
-                                        {m.nim}
-                                      </span>
-                                    </span>
-                                    <span className="text-[11px] font-bold text-teal-600 truncate max-w-[120px] group-hover/group:text-teal-700">
-                                      {m.nama}
-                                    </span>
+                                    <div className="flex items-center justify-between gap-3">
+                                      <div className="flex flex-col">
+                                        <span className="text-[10px] font-black text-teal-800/40 uppercase tracking-widest mb-0.5">
+                                          NIM:{" "}
+                                          <span className="text-teal-800 text-xs">
+                                            {m.nim}
+                                          </span>
+                                        </span>
+                                        <span className="text-[11px] font-bold text-teal-600 truncate max-w-[120px] group-hover/group:text-teal-700">
+                                          {m.nama}
+                                        </span>
+                                      </div>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleCancelSelection(m.id, m.nama);
+                                        }}
+                                        className="p-1.5 hover:bg-rose-50 text-teal-300 hover:text-rose-500 rounded-lg transition-colors group/btn"
+                                        title="Batalkan Pilihan"
+                                      >
+                                        <X className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
                                   </div>
                                 ))
                               ) : (
