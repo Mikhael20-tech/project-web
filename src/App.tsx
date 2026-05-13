@@ -3896,6 +3896,8 @@ const PortfolioPage = () => {
                           "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=800&fit=crop"
                         }
                         alt={dosen.nama}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2000ms] ease-out"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-teal-950 via-teal-950/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
