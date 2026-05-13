@@ -16,8 +16,8 @@ import fs from "fs";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 // Initialize Supabase Storage Client
-const supabaseUrl = process.env.SUPABASE_URL || "";
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY || "";
+const supabaseUrl = (process.env.SUPABASE_URL || "").replace(/^["']|["']$/g, "").trim();
+const supabaseKey = (process.env.SUPABASE_SERVICE_KEY || "").replace(/^["']|["']$/g, "").trim();
 const supabase = createSupabaseClient(supabaseUrl, supabaseKey);
 
 let _prisma: PrismaClient | null = null;
