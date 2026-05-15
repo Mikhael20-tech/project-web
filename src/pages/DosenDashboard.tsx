@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useLanguage } from "@/src/lib/LanguageContext";
+import LoadingOverlay from "@/src/components/LoadingOverlay";
 
 const DosenDashboard = ({
   user,
@@ -272,7 +273,11 @@ const DosenDashboard = ({
   }
 
   return (
-    <div className="min-h-screen bg-[#F0FAF8] pt-32 pb-12 px-6">
+    <>
+      <AnimatePresence>
+        {loading && <LoadingOverlay />}
+      </AnimatePresence>
+      <div className="min-h-screen bg-[#F0FAF8] pt-32 pb-12 px-6">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header Section */}
         <motion.div

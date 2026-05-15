@@ -25,6 +25,7 @@ import {
 import { cn } from "@/src/lib/utils";
 import { useLanguage } from "@/src/lib/LanguageContext";
 import { socket } from "@/src/lib/socket";
+import LoadingOverlay from "@/src/components/LoadingOverlay";
 import {
   BarChart,
   Bar,
@@ -689,7 +690,11 @@ const AdminDashboard = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#F0FAF8] pb-24 pt-28 relative overflow-hidden">
+    <>
+      <AnimatePresence>
+        {loading && <LoadingOverlay />}
+      </AnimatePresence>
+      <div className="min-h-screen bg-[#F0FAF8] pb-24 pt-28 relative overflow-hidden">
       {/* Background decor */}
       <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-teal-50 to-transparent pointer-events-none z-0" />
 

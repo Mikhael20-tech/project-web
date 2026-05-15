@@ -8,6 +8,9 @@ import {
 } from "react-router-dom";
 import { Zap } from "lucide-react";
 
+import { motion, AnimatePresence } from "motion/react";
+import PageTransition from "./components/PageTransition";
+
 // Components
 import Navbar from "./components/Navbar";
 
@@ -18,7 +21,6 @@ import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import DosenDashboard from "./pages/DosenDashboard";
 import PortfolioPage from "./pages/PortfolioPage";
-import ProfileForm from "./pages/ProfileForm";
 
 const AppContent = ({
   currentUser,
@@ -37,66 +39,75 @@ const AppContent = ({
   return (
     <div className={`${darkMode ? "dark" : ""} bg-[#f8fdfc] dark:bg-slate-950 min-h-screen font-sans antialiased text-teal-950 dark:text-slate-200 transition-colors`}>
       {(!isLoginPage && !isLandingPage) && <Navbar user={currentUser} onLogout={logout} />}
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route
-          path="/login"
-          element={
-            token ? (
-              <Navigate to={currentUser?.role === "ADMIN" ? "/admin" : currentUser?.role === "DOSEN" ? "/dosen-dashboard" : "/dashboard"} />
-            ) : (
-              <LoginPage onLogin={handleLogin} />
-            )
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            token && currentUser?.role === "STUDENT" ? (
-              <Dashboard
-                user={currentUser}
-                token={token || ""}
-                onProfileUpdate={updateProfile}
-              />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
-        <Route
-          path="/dosen-dashboard"
-          element={
-            token && currentUser?.role === "DOSEN" ? (
-              <DosenDashboard
-                user={currentUser}
-                token={token || ""}
-                onProfileUpdate={updateProfile}
-              />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
-        <Route
-          path="/portfolio"
-          element={<PortfolioPage />}
-        />
-        <Route
-          path="/admin"
-          element={
-            token && currentUser?.role === "ADMIN" ? (
-              <AdminDashboard
-                token={token}
-                currentUser={currentUser}
-                onUserUpdate={(data) => setCurrentUser({...currentUser, ...data})}
-              />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+      
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
+          <Route
+            path="/login"
+            element={
+              token ? (
+                <Navigate to={currentUser?.role === "ADMIN" ? "/admin" : currentUser?.role === "DOSEN" ? "/dosen-dashboard" : "/dashboard"} />
+              ) : (
+                <PageTransition><LoginPage onLogin={handleLogin} /></PageTransition>
+              )
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              token && currentUser?.role === "STUDENT" ? (
+                <PageTransition>
+                  <Dashboard
+                    user={currentUser}
+                    token={token || ""}
+                    onProfileUpdate={updateProfile}
+                  />
+                </PageTransition>
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route
+            path="/dosen-dashboard"
+            element={
+              token && currentUser?.role === "DOSEN" ? (
+                <PageTransition>
+                  <DosenDashboard
+                    user={currentUser}
+                    token={token || ""}
+                    onProfileUpdate={updateProfile}
+                  />
+                </PageTransition>
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route
+            path="/portfolio"
+            element={<PageTransition><PortfolioPage /></PageTransition>}
+          />
+          <Route
+            path="/admin"
+            element={
+              token && currentUser?.role === "ADMIN" ? (
+                <PageTransition>
+                  <AdminDashboard
+                    token={token}
+                    currentUser={currentUser}
+                    onUserUpdate={(data) => setCurrentUser({...currentUser, ...data})}
+                  />
+                </PageTransition>
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </AnimatePresence>
 
       {/* Dark Mode Toggle */}
       <button 

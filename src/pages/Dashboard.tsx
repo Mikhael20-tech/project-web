@@ -27,6 +27,7 @@ import { socket } from "@/src/lib/socket";
 import { cn } from "@/src/lib/utils";
 import { useToast } from "@/src/components/ToastProvider";
 import { useLanguage } from "@/src/lib/LanguageContext";
+import LoadingOverlay from "@/src/components/LoadingOverlay";
 
 const Dashboard = ({
   user: initialUser,
@@ -328,7 +329,11 @@ const Dashboard = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#F0FAF8] pt-32 pb-12 px-6">
+    <>
+      <AnimatePresence>
+        {loading && <LoadingOverlay />}
+      </AnimatePresence>
+      <div className="min-h-screen bg-[#F0FAF8] pt-32 pb-12 px-6">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Student Profile & Quick Stats Card */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-stretch">
