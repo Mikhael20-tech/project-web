@@ -39,8 +39,11 @@ model Mahasiswa {
   ipk          Float?
   userId       String    @unique
   user         User      @relation(fields: [userId], references: [id])
-  dosenId      String?
-  dosen        Dosen?    @relation(fields: [dosenId], references: [id])
+  dosenId         String?
+  dosen           Dosen?    @relation(fields: [dosenId], references: [id])
+  rencanaJudul    String?
+  statusBimbingan String    @default("PENDING")
+  periode         String?
 }
 
 model Dosen {
@@ -75,4 +78,5 @@ model WarConfig {
   id        String   @id @default("global_config")
   startTime DateTime
   endTime   DateTime
+  periode   String?  @default("Genap 2024/2025")
 }

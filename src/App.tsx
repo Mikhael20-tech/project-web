@@ -1232,6 +1232,8 @@ const Dashboard = ({
     foto: "",
   });
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [selectingDosenForJudul, setSelectingDosenForJudul] = useState<any>(null); // Modal: pick dosen step 2
+  const [rencanaJudulInput, setRencanaJudulInput] = useState("");
 
   const fetchStudentData = async () => {
     try {
@@ -1346,7 +1348,9 @@ const Dashboard = ({
   }, [config]);
 
 
-  const handlePickDosen = async (dosenId: string) => {
+  const handlePickDosen = async (dosenId: string, rencanaJudul: string) => {
+    setSelectingDosenForJudul(null);
+    setRencanaJudulInput("");
     setConfirmingDosen(null);
     setLoading(true);
     setMessage(null);
@@ -1357,7 +1361,7 @@ const Dashboard = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ dosenId }),
+        body: JSON.stringify({ dosenId, rencanaJudul }),
       });
 
       const data = await res.json();
@@ -1872,7 +1876,7 @@ const Dashboard = ({
                   </div>
 
                   <button
-                    onClick={() => setConfirmingDosen(dosen)}
+                    onClick={() => setSelectingDosenForJudul(dosen)}
                     disabled={
                       !isWarActive ||
                       dosen.kuotaMax - dosen._count.mahasiswa <= 0 ||
@@ -1958,7 +1962,7 @@ const Dashboard = ({
 
                   <div className="flex flex-col gap-3 pt-4">
                     <button
-                      onClick={() => handlePickDosen(confirmingDosen.id)}
+                      onClick={() => handlePickDosen(confirmingDosen.id, rencanaJudulInput)}
                       className="w-full py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-teal-100 hover:bg-teal-950 transition-all flex items-center justify-center gap-2"
                     >
                       YA, SAYA YAKIN
@@ -1968,6 +1972,69 @@ const Dashboard = ({
                       className="w-full py-4 bg-[#f8fdfc] text-teal-800/40 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-50 transition-all"
                     >
                       BATALKAN
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* MODAL: Input Rencana Judul Skripsi */}
+        <AnimatePresence>
+          {selectingDosenForJudul && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-6 sm:p-0">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => { setSelectingDosenForJudul(null); setRencanaJudulInput(""); }}
+                className="absolute inset-0 bg-teal-950/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="relative w-full max-w-md bg-white rounded-[2.5rem] p-10 shadow-2xl overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 p-8 opacity-5 text-teal-950">
+                  <BookOpen className="w-32 h-32" />
+                </div>
+                <div className="relative space-y-6">
+                  <div className="w-16 h-16 bg-teal-50 rounded-2xl flex items-center justify-center text-teal-500 mb-6">
+                    <BookOpen className="w-8 h-8" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-500">Langkah 1 dari 2</h3>
+                    <h2 className="text-2xl font-black text-teal-950 leading-tight">
+                      Rencana Judul Skripsi
+                    </h2>
+                    <p className="text-sm text-teal-800/60 font-medium leading-relaxed pt-1">
+                      Beritahu <span className="font-black text-teal-700">{selectingDosenForJudul.nama}</span> tentang topik yang ingin Anda kerjakan. (Opsional, bisa dikosongkan)
+                    </p>
+                  </div>
+                  <textarea
+                    value={rencanaJudulInput}
+                    onChange={(e) => setRencanaJudulInput(e.target.value)}
+                    placeholder="Contoh: Implementasi Machine Learning untuk Klasifikasi Teks..."
+                    rows={4}
+                    className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-2 focus:ring-teal-500/20 focus:outline-none resize-none"
+                  />
+                  <div className="flex flex-col gap-3">
+                    <button
+                      onClick={() => {
+                        setConfirmingDosen(selectingDosenForJudul);
+                        setSelectingDosenForJudul(null);
+                      }}
+                      className="w-full py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-teal-100 hover:bg-teal-950 transition-all flex items-center justify-center gap-2"
+                    >
+                      LANJUT KONFIRMASI <ChevronRight className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => { setSelectingDosenForJudul(null); setRencanaJudulInput(""); }}
+                      className="w-full py-4 bg-[#f8fdfc] text-teal-800/40 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-50 transition-all"
+                    >
+                      BATAL
                     </button>
                   </div>
                 </div>
@@ -4258,6 +4325,7 @@ const DosenDashboard = ({
     text: string;
   } | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
+  const [managingStudentId, setManagingStudentId] = useState<string | null>(null);
 
   const fetchDosen = async () => {
     setLoading(true);
@@ -4285,6 +4353,43 @@ const DosenDashboard = ({
   useEffect(() => {
     fetchDosen();
   }, [token]);
+
+  const handleApproveStudent = async (mahasiswaId: string) => {
+    setManagingStudentId(mahasiswaId);
+    try {
+      const res = await fetch(`/api/dosen/approve-student/${mahasiswaId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setMessage({ type: "success", text: data.message });
+      fetchDosen();
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message });
+    } finally {
+      setManagingStudentId(null);
+    }
+  };
+
+  const handleKickStudent = async (mahasiswaId: string, nama: string) => {
+    if (!confirm(`Keluarkan ${nama} dari daftar bimbingan? Mahasiswa akan bisa memilih dosen lain.`)) return;
+    setManagingStudentId(mahasiswaId);
+    try {
+      const res = await fetch(`/api/dosen/kick-student/${mahasiswaId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setMessage({ type: "success", text: data.message });
+      fetchDosen();
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message });
+    } finally {
+      setManagingStudentId(null);
+    }
+  };
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -4588,36 +4693,72 @@ const DosenDashboard = ({
                   Daftar Mahasiswa Bimbingan
                 </h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {dosenData.mahasiswa?.length > 0 ? (
                     dosenData.mahasiswa.map((m: any) => (
                       <div
                         key={m.id}
-                        className="flex items-center gap-4 bg-slate-50 p-4 rounded-[2rem] border border-slate-200 hover:shadow-md hover:border-teal-200 transition-all hover:-translate-y-1 group"
+                        className="flex flex-col bg-slate-50 p-5 rounded-[2rem] border border-slate-200 hover:shadow-md hover:border-teal-200 transition-all group"
                       >
-                        <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center overflow-hidden border border-slate-100 shadow-sm relative shrink-0">
-                          <img
-                            src={m.foto || undefined}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          />
+                        {/* Card Header */}
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center overflow-hidden border border-slate-100 shadow-sm shrink-0">
+                            <img
+                              src={m.foto || undefined}
+                              className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-500"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[10px] font-mono text-teal-600 font-black tracking-widest">{m.nim}</span>
+                            <p className="text-sm font-black text-slate-800 truncate">{m.nama}</p>
+                            {/* Status Badge */}
+                            <span className={cn(
+                              "text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full mt-1 inline-block",
+                              m.statusBimbingan === "APPROVED"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-amber-100 text-amber-700"
+                            )}>
+                              {m.statusBimbingan === "APPROVED" ? "✓ Disetujui" : "⏳ Menunggu"}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex flex-col min-w-0 flex-1">
-                          <span className="text-[10px] font-mono text-teal-600 font-black tracking-widest mb-0.5">
-                            {m.nim}
-                          </span>
-                          <span className="text-sm font-black text-slate-800 truncate">
-                            {m.nama}
-                          </span>
+
+                        {/* Rencana Judul */}
+                        {m.rencanaJudul && (
+                          <div className="mb-4 px-4 py-3 bg-white rounded-2xl border border-teal-100">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-teal-800/40 mb-1">Rencana Judul</p>
+                            <p className="text-xs font-bold text-teal-950 leading-relaxed">{m.rencanaJudul}</p>
+                          </div>
+                        )}
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2 mt-auto pt-3 border-t border-slate-100">
                           {m.kontak && (
                             <a
                               href={`https://wa.me/${m.kontak.replace(/[^0-9]/g, "")}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-[9px] font-black text-emerald-600 hover:text-emerald-800 mt-1.5 flex items-center gap-1.5 transition-colors"
+                              className="flex-1 py-2 text-[9px] font-black text-emerald-600 hover:text-emerald-800 flex items-center justify-center gap-1.5 transition-colors bg-emerald-50 rounded-xl hover:bg-emerald-100"
                             >
-                              <Smartphone className="w-3 h-3" /> HUBUNGI
+                              <Smartphone className="w-3 h-3" /> Hubungi
                             </a>
                           )}
+                          {m.statusBimbingan !== "APPROVED" && (
+                            <button
+                              onClick={() => handleApproveStudent(m.id)}
+                              disabled={managingStudentId === m.id}
+                              className="flex-1 py-2 text-[9px] font-black text-white bg-teal-500 hover:bg-teal-600 rounded-xl flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+                            >
+                              <CheckCircle2 className="w-3 h-3" /> Setujui
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleKickStudent(m.id, m.nama)}
+                            disabled={managingStudentId === m.id}
+                            className="py-2 px-3 text-[9px] font-black text-rose-500 bg-rose-50 hover:bg-rose-100 rounded-xl flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+                          >
+                            <XCircle className="w-3 h-3" /> Keluarkan
+                          </button>
                         </div>
                       </div>
                     ))

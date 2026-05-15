@@ -386,7 +386,7 @@ app.post("/api/profile", authenticate, async (req: any, res) => {
 
 // --- THE CRITICAL WAR LOGIC: SELECT DOSEN ---
 app.post("/api/war/select", authenticate, async (req: any, res) => {
-  const { dosenId } = req.body;
+  const { dosenId, rencanaJudul } = req.body;
 
   try {
     const result = await prisma.$transaction(async (tx) => {
@@ -413,7 +413,6 @@ app.post("/api/war/select", authenticate, async (req: any, res) => {
       }
 
       // 3. PESSIMISTIC LOCKING / ATOMIC CHECK
-      // Lock the lecturer row to prevent over-booking across multiple server instances
       await tx.$executeRawUnsafe(`SELECT id FROM "Dosen" WHERE id = $1 FOR UPDATE`, dosenId);
 
       const lecturer = await tx.dosen.findUnique({
@@ -426,10 +425,15 @@ app.post("/api/war/select", authenticate, async (req: any, res) => {
         throw new Error(`Maaf, kuota untuk ${lecturer.nama} sudah penuh.`);
       }
 
-      // 4. Update
+      // 4. Update - save rencanaJudul, set status PENDING, and tag with current periode
       const updatedStudent = await tx.mahasiswa.update({
         where: { id: student.id },
-        data: { dosenId: lecturer.id },
+        data: { 
+          dosenId: lecturer.id,
+          rencanaJudul: rencanaJudul || null,
+          statusBimbingan: "PENDING",
+          periode: (config as any).periode || null,
+        },
       });
 
       return { updatedStudent, lecturerName: lecturer.nama };
@@ -446,6 +450,7 @@ app.post("/api/war/select", authenticate, async (req: any, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+
 
 app.post("/api/war/cancel", authenticate, async (req: any, res) => {
   try {
@@ -475,7 +480,7 @@ app.post("/api/war/cancel", authenticate, async (req: any, res) => {
       // 3. Update
       await tx.mahasiswa.update({
         where: { id: student.id },
-        data: { dosenId: null },
+        data: { dosenId: null, statusBimbingan: "PENDING", rencanaJudul: null },
       });
 
       return { success: true };
@@ -490,6 +495,60 @@ app.post("/api/war/cancel", authenticate, async (req: any, res) => {
     res.json(result);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// --- DOSEN MANAGEMENT ROUTES ---
+const isDosen = (req: any, res: any, next: any) => {
+  if (req.user.role !== "DOSEN") return res.status(403).json({ error: "Access denied" });
+  next();
+};
+
+// Dosen: Approve a student
+app.post("/api/dosen/approve-student/:mahasiswaId", authenticate, isDosen, async (req: any, res) => {
+  const { mahasiswaId } = req.params;
+  try {
+    const dosen = await prisma.dosen.findUnique({ where: { userId: req.user.id } });
+    if (!dosen) return res.status(404).json({ error: "Data dosen tidak ditemukan." });
+
+    const student = await prisma.mahasiswa.findFirst({
+      where: { id: mahasiswaId, dosenId: dosen.id },
+    });
+    if (!student) return res.status(404).json({ error: "Mahasiswa tidak ditemukan dalam daftar bimbingan Anda." });
+
+    await prisma.mahasiswa.update({
+      where: { id: mahasiswaId },
+      data: { statusBimbingan: "APPROVED" },
+    });
+
+    io.emit("quota_update", await prisma.dosen.findMany({ include: { _count: { select: { mahasiswa: true } } } }));
+    res.json({ message: `Mahasiswa ${student.nama} berhasil disetujui.` });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Dosen: Kick/Reject a student (free up quota)
+app.post("/api/dosen/kick-student/:mahasiswaId", authenticate, isDosen, async (req: any, res) => {
+  const { mahasiswaId } = req.params;
+  try {
+    const dosen = await prisma.dosen.findUnique({ where: { userId: req.user.id } });
+    if (!dosen) return res.status(404).json({ error: "Data dosen tidak ditemukan." });
+
+    const student = await prisma.mahasiswa.findFirst({
+      where: { id: mahasiswaId, dosenId: dosen.id },
+    });
+    if (!student) return res.status(404).json({ error: "Mahasiswa tidak ditemukan dalam daftar bimbingan Anda." });
+
+    await prisma.mahasiswa.update({
+      where: { id: mahasiswaId },
+      data: { dosenId: null, statusBimbingan: "PENDING", rencanaJudul: null },
+    });
+
+    io.emit("quota_update", await prisma.dosen.findMany({ include: { _count: { select: { mahasiswa: true } } } }));
+    res.json({ message: `Mahasiswa ${student.nama} berhasil dikeluarkan dari daftar bimbingan.` });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 
