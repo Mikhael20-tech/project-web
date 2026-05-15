@@ -47,7 +47,7 @@ const AdminDashboard = ({
   currentUser: any;
   onUserUpdate: (user: any) => void;
 }) => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [activeTab, setActiveTab] = useState<
     "monitoring" | "dosen" | "students" | "settings" | "admin_profile" | "broadcast"
   >("monitoring");
