@@ -853,6 +853,7 @@ const Dashboard = ({
         </AnimatePresence>
       </div>
     </div>
+    </>
   );
 };
 
