@@ -14,6 +14,7 @@ import bcrypt from "bcryptjs";
 import multer from "multer";
 import fs from "fs";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize Supabase Storage Client
 const supabaseUrl = (process.env.SUPABASE_URL || "").replace(/^["']|["']$/g, "").trim();
@@ -115,7 +116,8 @@ app.post("/api/register", async (req, res) => {
         mahasiswa: {
           create: {
             nim,
-            nama
+            nama,
+            angkatan: "20" + nim.substring(0, 2)
           }
         }
       }
@@ -345,7 +347,7 @@ app.get("/api/me-dosen", authenticate, async (req: any, res) => {
 });
 
 app.post("/api/profile", authenticate, async (req: any, res) => {
-  const { nama, kontak, peminatan, bio, foto, ipk } = req.body;
+  const { nama, kontak, peminatan, bio, foto, angkatan } = req.body;
   try {
     const student = await prisma.mahasiswa.upsert({
       where: { userId: req.user.id },
@@ -355,7 +357,7 @@ app.post("/api/profile", authenticate, async (req: any, res) => {
         peminatan, 
         bio, 
         foto: foto || null, 
-        ipk 
+        angkatan 
       },
       create: {
         userId: req.user.id,
@@ -365,7 +367,7 @@ app.post("/api/profile", authenticate, async (req: any, res) => {
         peminatan,
         bio,
         foto: foto || null,
-        ipk
+        angkatan
       },
     });
 
@@ -395,6 +397,9 @@ app.post("/api/war/select", authenticate, async (req: any, res) => {
       if (!config) throw new Error("Konfigurasi jadwal pemilihan belum disetel oleh admin.");
       
       const now = new Date();
+      if (config.isForcedClosed) {
+        throw new Error("SISTEM DITUTUP SEMENTARA OLEH ADMIN (EMERGENCY STOP).");
+      }
       if (now < config.startTime) {
         throw new Error("Sistem pemilihan belum dibuka. Silakan tunggu hingga waktu countdown selesai.");
       }
@@ -408,6 +413,15 @@ app.post("/api/war/select", authenticate, async (req: any, res) => {
       });
       
       if (!student) throw new Error("Profil mahasiswa tidak ditemukan. Silakan lengkapi profil Anda.");
+      
+      // Batch (Angkatan) Check
+      if (config.targetAngkatan && config.targetAngkatan !== "All") {
+        const allowed = config.targetAngkatan.split(",").map(a => a.trim());
+        if (!student.angkatan || !allowed.includes(student.angkatan)) {
+          throw new Error(`Akses ditolak. Pemilihan periode ini hanya dibuka untuk angkatan: ${config.targetAngkatan}`);
+        }
+      }
+
       if (student.dosenId) {
         throw new Error("Anda sudah memiliki dosen pembimbing.");
       }
@@ -431,13 +445,36 @@ app.post("/api/war/select", authenticate, async (req: any, res) => {
         data: { 
           dosenId: lecturer.id,
           rencanaJudul: rencanaJudul || null,
-          statusBimbingan: "PENDING",
+          statusBimbingan: "APPROVED",
           periode: (config as any).periode || null,
         },
       });
 
-      return { updatedStudent, lecturerName: lecturer.nama };
+      return { updatedStudent, lecturerName: lecturer.nama, studentName: student.nama, studentKontak: student.kontak };
     });
+
+    // 5. SEND AUTOMATED WA NOTIFICATION (TRIGGERED)
+    const fonnteToken = process.env.FONNTE_TOKEN;
+    if (fonnteToken && !fonnteToken.includes("PLACEHOLDER") && result.studentKontak) {
+      const waMessage = `*PENGUMUMAN BERHASIL (WAR DOSPEM)* 📢
+
+Halo *${result.studentName}*! Selamat, Anda telah berhasil memilih dosen pembimbing:
+👨‍🏫 *${result.lecturerName}*
+
+Silakan cek dashboard Anda untuk mendownload bukti pemilihan. Tetap semangat! 🚀`;
+
+      fetch("https://api.fonnte.com/send", {
+        method: "POST",
+        headers: { Authorization: fonnteToken },
+        body: new URLSearchParams({
+          target: result.studentKontak,
+          message: waMessage,
+          countryCode: "62",
+        })
+      }).catch(err => console.error("Triggered WA Error:", err));
+    }
+
+    return result;
 
     // Broadcast update
     const allLecturers = await prisma.dosen.findMany({
@@ -899,7 +936,7 @@ app.put("/api/admin/mahasiswa/:id", authenticate, isAdmin, async (req, res) => {
 // WarConfig update
 app.put("/api/admin/war-config", authenticate, isAdmin, async (req, res) => {
   try {
-    const { startTime, endTime } = req.body;
+    const { startTime, endTime, periode } = req.body;
     if (!startTime || !endTime) throw new Error("Waktu mulai dan selesai wajib diisi.");
     
     if (new Date(startTime) >= new Date(endTime)) {
@@ -910,17 +947,43 @@ app.put("/api/admin/war-config", authenticate, isAdmin, async (req, res) => {
       where: { id: "global_config" },
       update: { 
         startTime: new Date(startTime), 
-        endTime: new Date(endTime) 
+        endTime: new Date(endTime),
+        periode: periode || "Ganjil 2024/2025",
+        targetAngkatan: req.body.targetAngkatan || "All",
+        announcement: req.body.announcement || null,
+        isForcedClosed: req.body.isForcedClosed ?? false
       },
       create: { 
         id: "global_config",
         startTime: new Date(startTime), 
-        endTime: new Date(endTime) 
+        endTime: new Date(endTime),
+        periode: periode || "Ganjil 2024/2025",
+        targetAngkatan: req.body.targetAngkatan || "All",
+        announcement: req.body.announcement || null,
+        isForcedClosed: req.body.isForcedClosed ?? false
       }
     });
     res.json(config);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// Reset Data by Angkatan
+app.post("/api/admin/reset-angkatan", authenticate, isAdmin, async (req, res) => {
+  const { angkatan } = req.body;
+  if (!angkatan) return res.status(400).json({ error: "Angkatan wajib ditentukan." });
+
+  try {
+    const result = await prisma.mahasiswa.updateMany({
+      where: { angkatan: angkatan },
+      data: { dosenId: null, statusBimbingan: "PENDING", rencanaJudul: null }
+    });
+    
+    io.emit("quota_update", await prisma.dosen.findMany({ include: { _count: { select: { mahasiswa: true } } } }));
+    res.json({ message: `Berhasil mereset ${result.count} data bimbingan mahasiswa angkatan ${angkatan}.` });
+  } catch (err: any) {
+    res.status(500).json({ error: "Gagal me-reset data angkatan." });
   }
 });
 
@@ -1018,6 +1081,83 @@ app.put("/api/admin/profile-foto", authenticate, isAdmin, async (req: any, res) 
   } catch (err: any) {
     console.error("Gagal update foto profil:", err);
     res.status(500).json({ error: "Gagal memperbarui foto profil." });
+  }
+});
+
+// --- BROADCAST SYSTEM (AI + WHATSAPP) ---
+app.post("/api/admin/broadcast/ai", authenticate, isAdmin, async (req, res) => {
+  const { prompt } = req.body;
+  if (!prompt) return res.status(400).json({ error: "Instruksi wajib diisi." });
+
+  try {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const fullPrompt = `Kamu adalah asisten admin akademik prodi PTI UNESA. 
+    Tugasmu adalah menyusun pesan pengumuman WhatsApp yang sangat informatif, rapi, dan menarik (gunakan emoji yang sesuai).
+    Admin memberikan instruksi singkat: "${prompt}"
+    Buatlah pesan tersebut dalam Bahasa Indonesia yang profesional namun tetap asik bagi mahasiswa.
+    Sertakan header pengumuman dan penutup yang sopan.
+    Hanya berikan teks pesannya saja tanpa komentar apapun.`;
+
+    const result = await model.generateContent(fullPrompt);
+    const response = await result.response;
+    const text = response.text().trim();
+    
+    res.json({ message: text });
+  } catch (err: any) {
+    console.error("AI Broadcast Error:", err);
+    res.status(500).json({ error: "Gagal menghasilkan pesan AI." });
+  }
+});
+
+app.post("/api/admin/broadcast/send", authenticate, isAdmin, async (req: any, res) => {
+  const { message, targetAngkatan } = req.body;
+  const fonnteToken = process.env.FONNTE_TOKEN;
+
+  if (!message) return res.status(400).json({ error: "Pesan tidak boleh kosong." });
+  if (!fonnteToken || fonnteToken.includes("PLACEHOLDER")) {
+    return res.status(400).json({ error: "Fonnte Token belum diatur di server." });
+  }
+
+  try {
+    // 1. Get recipients
+    let students;
+    if (targetAngkatan === "All") {
+      students = await prisma.mahasiswa.findMany({ where: { NOT: { kontak: null } } });
+    } else {
+      const allowed = targetAngkatan.split(",").map((a: string) => a.trim());
+      students = await prisma.mahasiswa.findMany({ 
+        where: { 
+          angkatan: { in: allowed },
+          NOT: { kontak: null }
+        } 
+      });
+    }
+
+    if (students.length === 0) return res.status(404).json({ error: "Tidak ada mahasiswa dengan nomor kontak yang ditemukan." });
+
+    // 2. Prepare numbers (Comma separated)
+    const numbers = students.map(s => s.kontak).join(",");
+
+    // 3. Send to Fonnte
+    const response = await fetch("https://api.fonnte.com/send", {
+      method: "POST",
+      headers: { Authorization: fonnteToken },
+      body: new URLSearchParams({
+        target: numbers,
+        message: message,
+        countryCode: "62",
+      })
+    });
+
+    const data = await response.json();
+    if (!data.status) throw new Error(data.reason || "Gagal mengirim ke Fonnte.");
+
+    res.json({ success: true, count: students.length, details: data });
+  } catch (err: any) {
+    console.error("WA Broadcast Error:", err);
+    res.status(500).json({ error: err.message || "Gagal mengirim pesan WhatsApp." });
   }
 });
 
@@ -1165,6 +1305,22 @@ app.get("/api/war-config", async (req, res) => {
 
 // --- VITE SETUP ---
 async function startServer() {
+  // Migration for Angkatan on startup
+  try {
+    const students = await prisma.mahasiswa.findMany({ where: { angkatan: null } });
+    if (students.length > 0) {
+      console.log(`🚀 Migrating ${students.length} students to detect Angkatan...`);
+      for (const s of students) {
+        const yearDigits = s.nim.substring(0, 2);
+        const angkatan = "20" + yearDigits;
+        await prisma.mahasiswa.update({ where: { id: s.id }, data: { angkatan } });
+      }
+      console.log("✅ Migration completed.");
+    }
+  } catch (mErr) {
+    console.error("Migration error:", mErr);
+  }
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },

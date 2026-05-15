@@ -36,7 +36,7 @@ model Mahasiswa {
   kontak       String?
   peminatan    String?
   bio          String?
-  ipk          Float?
+  angkatan     String?
   userId       String    @unique
   user         User      @relation(fields: [userId], references: [id])
   dosenId         String?
@@ -78,5 +78,8 @@ model WarConfig {
   id        String   @id @default("global_config")
   startTime DateTime
   endTime   DateTime
-  periode   String?  @default("Genap 2024/2025")
+  periode        String?  @default("Genap 2024/2025")
+  targetAngkatan String?  @default("All")
+  announcement   String?
+  isForcedClosed Boolean  @default(false)
 }
