@@ -1123,7 +1123,7 @@ app.post("/api/admin/broadcast/ai", authenticate, isAdmin, async (req, res) => {
 
 app.post("/api/admin/broadcast/send", authenticate, isAdmin, async (req: any, res) => {
   const { message, targetAngkatan } = req.body;
-  const fonnteToken = process.env.FONNTE_TOKEN;
+  const fonnteToken = (process.env.FONNTE_TOKEN || "").trim();
 
   if (!message) return res.status(400).json({ error: "Pesan tidak boleh kosong." });
   if (!fonnteToken || fonnteToken.includes("PLACEHOLDER")) {
