@@ -39,20 +39,20 @@ const LandingPage = () => {
 
   const faqs = [
     {
-      q: "Kapan jadwal war dospem dimulai?",
-      a: "Jadwal ditentukan oleh Admin Prodi. Anda dapat melihat hitung mundur (countdown) secara real-time di Dashboard setelah login."
+      q: t("q1"),
+      a: t("a1")
     },
     {
-      q: "Bagaimana jika kuota dosen yang saya inginkan penuh?",
-      a: "Sistem menggunakan prinsip 'First Come First Served'. Jika kuota penuh, silakan pilih dosen lain yang masih tersedia."
+      q: t("q2"),
+      a: t("a2")
     },
     {
-      q: "Apakah saya bisa mengubah pilihan dosen?",
-      a: "Selama masa war masih dibuka oleh admin, Anda dapat membatalkan pilihan dan memilih kembali dosen lain."
+      q: t("q3"),
+      a: t("a3")
     },
     {
-      q: "Apa fungsi fitur AI Broadcast?",
-      a: "Fitur ini membantu Admin menyusun pengumuman resmi yang profesional dan mengirimkannya langsung ke WhatsApp Anda agar tidak ketinggalan informasi."
+      q: t("q4"),
+      a: t("a4")
     }
   ];
 
@@ -69,7 +69,7 @@ const LandingPage = () => {
         
         <div className="hidden md:flex items-center gap-8">
           <a href="#features" className="text-xs font-black uppercase tracking-widest text-teal-800/60 hover:text-teal-950 transition-colors">{t("view_features")}</a>
-          <a href="#faq" className="text-xs font-black uppercase tracking-widest text-teal-800/60 hover:text-teal-950 transition-colors">FAQ</a>
+          <a href="#faq" className="text-xs font-black uppercase tracking-widest text-teal-800/60 hover:text-teal-950 transition-colors">{t("nav_faq")}</a>
           
           {/* Language Switcher */}
           <div className="relative">
@@ -183,18 +183,18 @@ const LandingPage = () => {
       <section id="features" className="py-24 bg-teal-50/30 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-20">
-            <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-4">Kenapa WarDosen?</h2>
+            <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-4">{t("why_wardosen")}</h2>
             <div className="w-20 h-1.5 bg-teal-500 mx-auto rounded-full" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { icon: Clock, title: "Real-time War", desc: "Sistem sinkronisasi detik demi detik untuk menjamin keadilan dalam pemilihan dospem." },
-              { icon: MessageSquare, title: "AI Smart Broadcast", desc: "Terima notifikasi resmi langsung ke WhatsApp Anda melalui integrasi AI Gemini." },
-              { icon: LayoutDashboard, title: "Premium Dashboard", desc: "Tampilan antarmuka kelas dunia yang memudahkan navigasi dan monitoring data." },
-              { icon: ShieldCheck, title: "Security First", desc: "Perlindungan data terjamin dengan enkripsi tingkat tinggi dan validasi ganda." },
-              { icon: Zap, title: "Fonnte Integration", desc: "Gateway pesan WhatsApp yang handal untuk menjamin informasi sampai tepat waktu." },
-              { icon: CheckCircle2, title: "Evidence PDF", desc: "Dapatkan bukti pemilihan resmi dalam format PDF langsung setelah Anda berhasil." }
+              { icon: Clock, title: t("f1_t"), desc: t("f1_d") },
+              { icon: MessageSquare, title: t("f2_t"), desc: t("f2_d") },
+              { icon: LayoutDashboard, title: t("f3_t"), desc: t("f3_d") },
+              { icon: ShieldCheck, title: t("f4_t"), desc: t("f4_d") },
+              { icon: Zap, title: t("f5_t"), desc: t("f5_d") },
+              { icon: CheckCircle2, title: t("f6_t"), desc: t("f6_d") }
             ].map((f, i) => (
               <motion.div 
                 key={i}
