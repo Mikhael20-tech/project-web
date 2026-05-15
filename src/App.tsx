@@ -74,6 +74,7 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [visible, setVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -92,6 +93,7 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
         // Scrolling down & past threshold
         setVisible(false);
         setIsMobileMenuOpen(false); // Close mobile menu if open
+        setIsProfileMenuOpen(false); // Close profile menu if open
       } else if (currentScrollY < lastScrollY) {
         // Scrolling up
         setVisible(true);
@@ -206,13 +208,52 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
                   {user.role}
                 </p>
               </div>
-              <button
-                onClick={onLogout}
-                className="w-10 h-10 bg-white border border-teal-100 rounded-2xl flex items-center justify-center text-rose-500 hover:bg-rose-500 hover:text-white transition-all duration-300 shadow-sm"
-                title="Keluar"
-              >
-                <XCircle className="w-5 h-5" />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                  className="w-10 h-10 rounded-2xl overflow-hidden border border-teal-100 shadow-sm hover:ring-2 hover:ring-teal-500 transition-all duration-300"
+                  title="Profile Menu"
+                >
+                  <img
+                    src={user.foto || (user.role === 'DOSEN' ? "https://images.unsplash.com/photo-1544717297-fa154da09f9b?w=400&h=400&fit=crop" : "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&h=400&fit=crop")}
+                    className="w-full h-full object-cover object-top"
+                    alt="Profile"
+                  />
+                </button>
+                <AnimatePresence>
+                  {isProfileMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 mt-3 w-48 bg-white/95 backdrop-blur-xl border border-white/50 rounded-[1.5rem] shadow-[0_10px_40px_-10px_rgba(20,184,166,0.15)] overflow-hidden z-[120] py-2 flex flex-col"
+                    >
+                      <button
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          if (user.role === 'ADMIN') navigate('/admin');
+                          else if (user.role === 'DOSEN') navigate('/dosen-dashboard');
+                          else navigate('/dashboard');
+                        }}
+                        className="w-full px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-teal-800 hover:bg-teal-50 flex items-center gap-3 transition-colors"
+                      >
+                        <Settings className="w-4 h-4 text-teal-500" />
+                        Pengaturan
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          onLogout();
+                        }}
+                        className="w-full px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-rose-500 hover:bg-rose-50 flex items-center gap-3 transition-colors"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        Keluar
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           ) : (
             <button
@@ -2761,113 +2802,109 @@ const AdminDashboard = ({
                     </div>
                   </div>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-[#f8fdfc] border-b border-teal-50">
-                        <th className="px-10 py-6 text-[10px] font-black uppercase text-teal-800/40 tracking-widest">
-                          Dosen
-                        </th>
-                        <th className="px-10 py-6 text-[10px] font-black uppercase text-teal-800/40 tracking-widest text-center">
-                          Okupansi
-                        </th>
-                        <th className="px-10 py-6 text-[10px] font-black uppercase text-teal-800/40 tracking-widest">
-                          Mahasiswa
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-teal-50">
-                      {reports.map((dosen, i) => (
-                        <tr
-                          key={dosen.id}
-                          className="hover:bg-[#f8fdfc] transition-colors group"
-                        >
-                          <td className="px-10 py-6">
-                            <div className="flex items-center gap-5">
-                              <div className="w-14 h-14 rounded-2xl bg-teal-50 overflow-hidden border border-teal-100 shadow-inner group-hover:scale-110 transition-transform">
-                                {dosen.foto ? (
-                                  <img
-                                    src={dosen.foto || undefined}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <GraduationCap className="w-6 h-6 text-teal-300 mx-auto mt-4" />
-                                )}
-                              </div>
-                              <div>
-                                <span className="font-extrabold text-teal-950 text-lg block mb-1 group-hover:text-teal-500 transition-colors">
-                                  {dosen.nama}
-                                </span>
-                                <span className="text-[10px] font-black uppercase text-teal-800/60 tracking-widest bg-teal-50/50 px-2 py-0.5 rounded-md">
-                                  NIP. {dosen.nip}
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-10 py-6">
-                            <div className="flex flex-col items-center">
-                              <span className="text-sm font-mono font-black mb-2 text-teal-800">
-                                {dosen.mahasiswa.length} / {dosen.kuotaMax}
-                              </span>
-                              <div className="w-32 h-2.5 bg-teal-50 rounded-full overflow-hidden shadow-inner p-0.5">
-                                <div
-                                  className={cn(
-                                    "h-full rounded-full transition-all duration-1000 ease-out",
-                                    dosen.mahasiswa.length / dosen.kuotaMax >= 1
-                                      ? "bg-rose-500"
-                                      : "bg-teal-500",
-                                  )}
-                                  style={{
-                                    width: `${Math.min((dosen.mahasiswa.length / dosen.kuotaMax) * 100, 100)}%`,
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-10 py-6">
-                            <div className="flex flex-wrap gap-2">
-                              {dosen.mahasiswa.length > 0 ? (
-                                dosen.mahasiswa.map((m: any) => (
-                                  <div
-                                    key={m.id}
-                                    className="flex flex-col px-4 py-2.5 bg-white border border-teal-100 rounded-xl shadow-sm hover:border-teal-200 hover:shadow-teal-100 transition-all cursor-default group/group"
-                                  >
-                                    <div className="flex items-center justify-between gap-3">
-                                      <div className="flex flex-col">
-                                        <span className="text-[10px] font-black text-teal-800/40 uppercase tracking-widest mb-0.5">
-                                          NIM:{" "}
-                                          <span className="text-teal-800 text-xs">
-                                            {m.nim}
-                                          </span>
-                                        </span>
-                                        <span className="text-[11px] font-bold text-teal-600 truncate max-w-[120px] group-hover/group:text-teal-700">
-                                          {m.nama}
-                                        </span>
-                                      </div>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleCancelSelection(m.id, m.nama);
-                                        }}
-                                        className="p-1.5 hover:bg-rose-50 text-teal-300 hover:text-rose-500 rounded-lg transition-colors group/btn"
-                                        title="Batalkan Pilihan"
-                                      >
-                                        <X className="w-3.5 h-3.5" />
-                                      </button>
-                                    </div>
-                                  </div>
-                                ))
-                              ) : (
-                                <span className="text-[10px] font-black text-teal-800/30 uppercase tracking-widest px-4 py-2 border border-dashed border-teal-100 rounded-xl bg-teal-50/50">
-                                  Belum Ada Mahasiswa
-                                </span>
+                <div className="w-full flex flex-col">
+                  {/* Header (Hidden on Mobile) */}
+                  <div className="hidden lg:grid lg:grid-cols-12 gap-6 bg-[#f8fdfc] border-b border-teal-50 px-6 py-6 md:px-10 text-[10px] font-black uppercase text-teal-800/40 tracking-widest">
+                    <div className="col-span-4">Dosen</div>
+                    <div className="col-span-2 text-center">Okupansi</div>
+                    <div className="col-span-6">Mahasiswa</div>
+                  </div>
+                  
+                  {/* Body */}
+                  <div className="divide-y divide-teal-50 flex flex-col">
+                    {reports.map((dosen, i) => (
+                      <div
+                        key={dosen.id}
+                        className="flex flex-col lg:grid lg:grid-cols-12 gap-4 lg:gap-6 hover:bg-[#f8fdfc] transition-colors group p-6 md:px-10 md:py-6"
+                      >
+                        {/* Dosen Section */}
+                        <div className="col-span-4 flex items-center gap-5">
+                          <div className="w-14 h-14 rounded-2xl bg-teal-50 overflow-hidden border border-teal-100 shadow-inner group-hover:scale-110 transition-transform shrink-0 flex items-center justify-center">
+                            {dosen.foto ? (
+                              <img
+                                src={dosen.foto || undefined}
+                                className="w-full h-full object-cover object-center"
+                              />
+                            ) : (
+                              <GraduationCap className="w-6 h-6 text-teal-300" />
+                            )}
+                          </div>
+                          <div>
+                            <span className="font-extrabold text-teal-950 text-lg block mb-1 group-hover:text-teal-500 transition-colors">
+                              {dosen.nama}
+                            </span>
+                            <span className="text-[10px] font-black uppercase text-teal-800/60 tracking-widest bg-teal-50/50 px-2 py-0.5 rounded-md">
+                              NIP. {dosen.nip}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Okupansi Section */}
+                        <div className="col-span-2 flex flex-col justify-center items-start lg:items-center mt-2 lg:mt-0">
+                          <span className="text-[10px] font-black uppercase text-teal-800/40 lg:hidden mb-2">Okupansi</span>
+                          <span className="text-sm font-mono font-black mb-2 text-teal-800">
+                            {dosen.mahasiswa.length} / {dosen.kuotaMax}
+                          </span>
+                          <div className="w-full max-w-[200px] lg:w-32 h-2.5 bg-teal-50 rounded-full overflow-hidden shadow-inner p-0.5">
+                            <div
+                              className={cn(
+                                "h-full rounded-full transition-all duration-1000 ease-out",
+                                dosen.mahasiswa.length / dosen.kuotaMax >= 1
+                                  ? "bg-rose-500"
+                                  : "bg-teal-500",
                               )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                              style={{
+                                width: `${Math.min((dosen.mahasiswa.length / dosen.kuotaMax) * 100, 100)}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Mahasiswa Section */}
+                        <div className="col-span-6 flex flex-col justify-center mt-4 lg:mt-0">
+                          <span className="text-[10px] font-black uppercase text-teal-800/40 lg:hidden mb-3">Data Mahasiswa</span>
+                          <div className="flex flex-wrap gap-2">
+                            {dosen.mahasiswa.length > 0 ? (
+                              dosen.mahasiswa.map((m: any) => (
+                                <div
+                                  key={m.id}
+                                  className="flex flex-col px-4 py-2.5 bg-white border border-teal-100 rounded-xl shadow-sm hover:border-teal-200 hover:shadow-teal-100 transition-all cursor-default group/group flex-grow sm:flex-grow-0"
+                                >
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div className="flex flex-col">
+                                      <span className="text-[10px] font-black text-teal-800/40 uppercase tracking-widest mb-0.5">
+                                        NIM:{" "}
+                                        <span className="text-teal-800 text-xs">
+                                          {m.nim}
+                                        </span>
+                                      </span>
+                                      <span className="text-[11px] font-bold text-teal-600 truncate max-w-[120px] group-hover/group:text-teal-700">
+                                        {m.nama}
+                                      </span>
+                                    </div>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleCancelSelection(m.id, m.nama);
+                                      }}
+                                      className="p-1.5 hover:bg-rose-50 text-teal-300 hover:text-rose-500 rounded-lg transition-colors group/btn shrink-0"
+                                      title="Batalkan Pilihan"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <span className="text-[10px] font-black text-teal-800/30 uppercase tracking-widest px-4 py-2 border border-dashed border-teal-100 rounded-xl bg-teal-50/50">
+                                Belum Ada Mahasiswa
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -4426,7 +4463,7 @@ const DosenDashboard = ({
                     "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=800&fit=crop"
                   }
                   alt={dosenData.nama}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                  className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-1000"
                 />
               </div>
             </div>
@@ -4716,7 +4753,7 @@ const DosenDashboard = ({
                               profileForm.foto ||
                               "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop"
                             }
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover object-top"
                           />
                         </div>
                         <label className="absolute inset-0 bg-teal-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer rounded-[2.5rem]">
