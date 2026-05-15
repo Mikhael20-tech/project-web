@@ -316,6 +316,23 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
                   {t("logout")}
                 </button>
               )}
+
+              {/* Mobile Language Switcher */}
+              <div className="pt-4 mt-4 border-t border-teal-50 flex flex-wrap gap-2 justify-center">
+                {languages.map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => {
+                      setLang(l.code);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`px-3 py-2 rounded-xl text-lg transition-all ${lang === l.code ? "bg-teal-50 ring-1 ring-teal-200" : "bg-slate-50 opacity-50"}`}
+                    title={l.label}
+                  >
+                    {l.flag}
+                  </button>
+                ))}
+              </div>
             </div>
           </motion.div>
         )}

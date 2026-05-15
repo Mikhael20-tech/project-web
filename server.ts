@@ -1086,8 +1086,18 @@ app.put("/api/admin/profile-foto", authenticate, isAdmin, async (req: any, res) 
 
 // --- BROADCAST SYSTEM (AI + WHATSAPP) ---
 app.post("/api/admin/broadcast/ai", authenticate, isAdmin, async (req, res) => {
-  const { prompt } = req.body;
+  const { prompt, lang = "id" } = req.body;
   if (!prompt) return res.status(400).json({ error: "Instruksi wajib diisi." });
+
+  const langNames: Record<string, string> = {
+    id: "Bahasa Indonesia",
+    en: "English",
+    zh: "Chinese (Mandarin)",
+    ja: "Japanese",
+    ko: "Korean"
+  };
+
+  const targetLang = langNames[lang] || "Bahasa Indonesia";
 
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
@@ -1096,7 +1106,7 @@ app.post("/api/admin/broadcast/ai", authenticate, isAdmin, async (req, res) => {
     const fullPrompt = `Kamu adalah asisten admin akademik prodi PTI UNESA. 
     Tugasmu adalah menyusun pesan pengumuman WhatsApp yang sangat informatif, rapi, dan menarik (gunakan emoji yang sesuai).
     Admin memberikan instruksi singkat: "${prompt}"
-    Buatlah pesan tersebut dalam Bahasa Indonesia yang profesional namun tetap asik bagi mahasiswa.
+    Buatlah pesan tersebut dalam ${targetLang} yang profesional namun tetap asik bagi mahasiswa.
     Sertakan header pengumuman dan penutup yang sopan.
     Hanya berikan teks pesannya saja tanpa komentar apapun.`;
 

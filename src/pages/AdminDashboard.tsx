@@ -489,7 +489,7 @@ const AdminDashboard = ({
       const res = await fetch("/api/admin/broadcast/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ prompt: broadcastForm.prompt })
+        body: JSON.stringify({ prompt: broadcastForm.prompt, lang })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal generate pesan.");
