@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLanguage } from "@/src/lib/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 
 const PortfolioPage = () => {
+  const { t } = useLanguage();
   const [dosenList, setDosenList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -56,7 +58,7 @@ const PortfolioPage = () => {
         >
           <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
           <span className="text-[10px] font-black uppercase tracking-widest text-teal-800">
-            Direktori Pakar Akademik
+            {t("port_badge")}
           </span>
         </motion.div>
 
@@ -66,12 +68,12 @@ const PortfolioPage = () => {
           transition={{ delay: 0.1 }}
           className="text-5xl md:text-7xl font-black text-teal-950 tracking-tighter leading-tight mb-6"
         >
-          Eksplorasi{" "}
+          {t("port_title_1")}{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-orange-400 italic pr-2 pb-1">
-            Portofolio
+            {t("port_title_2")}
           </span>
           <br />
-          Dosen Ahli.
+          {t("port_title_3")}
         </motion.h1>
 
         <motion.p
@@ -80,8 +82,7 @@ const PortfolioPage = () => {
           transition={{ delay: 0.2 }}
           className="text-teal-800/60 text-lg md:text-xl font-medium max-w-2xl mx-auto mb-10"
         >
-          Temukan pembimbing skripsi yang paling tepat untuk riset Anda. Lihat
-          profil, spesialisasi, dan ketersediaan kuota secara real-time.
+          {t("port_subtitle")}
         </motion.p>
 
         <motion.div
@@ -95,7 +96,7 @@ const PortfolioPage = () => {
           </div>
           <input
             type="text"
-            placeholder="Cari nama atau NIP dosen..."
+            placeholder={t("port_search_placeholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-12 pr-6 py-4 bg-white/80 backdrop-blur-xl border border-teal-100 rounded-[2rem] text-teal-950 font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all placeholder:text-teal-800/30"
@@ -109,7 +110,7 @@ const PortfolioPage = () => {
           className="mb-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-teal-600 hover:text-teal-800 transition-colors bg-white/50 px-4 py-2 rounded-full backdrop-blur-sm border border-teal-100 w-fit group"
         >
           <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />{" "}
-          Kembali
+          {t("port_back")}
         </button>
 
         {loading ? (
@@ -117,7 +118,7 @@ const PortfolioPage = () => {
             <div className="flex flex-col items-center gap-4">
               <RefreshCcw className="w-8 h-8 text-teal-500 animate-spin" />
               <p className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">
-                Memuat Data Server...
+                {t("port_loading")}
               </p>
             </div>
           </div>
@@ -167,12 +168,12 @@ const PortfolioPage = () => {
                       {isFull ? (
                         <div className="bg-rose-500/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border border-white/20 flex items-center gap-1.5 shadow-lg">
                           <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />{" "}
-                          Penuh
+                          {t("port_full")}
                         </div>
                       ) : (
                         <div className="bg-teal-500/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border border-white/20 flex items-center gap-1.5 shadow-lg">
                           <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />{" "}
-                          Tersedia
+                          {t("port_available")}
                         </div>
                       )}
                     </div>
@@ -181,17 +182,17 @@ const PortfolioPage = () => {
                     <div className="absolute bottom-0 left-0 right-0 p-8 z-10 translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
                       <div className="mb-3 flex flex-wrap gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
                         <span className="px-2 py-0.5 bg-teal-500 text-white text-[8px] font-black uppercase tracking-widest rounded-md">
-                          Dosen Ahli
+                          {t("port_expert")}
                         </span>
                         <span className="px-2 py-0.5 bg-orange-500 text-white text-[8px] font-black uppercase tracking-widest rounded-md">
-                          {dosen.kuotaMax - kuotaTerpakai} Slot Sisa
+                          {dosen.kuotaMax - kuotaTerpakai} {t("port_slots_left")}
                         </span>
                       </div>
                       <h3 className="font-black text-2xl md:text-3xl text-white leading-none tracking-tighter mb-2 group-hover:text-teal-300 transition-colors duration-300">
                         {dosen.nama}
                       </h3>
                       <p className="text-white/60 text-xs font-bold line-clamp-1 group-hover:text-white/90 transition-colors">
-                        {dosen.keahlian || "Pendidikan Teknologi Informasi"}
+                        {dosen.keahlian || t("dash_dosen_expert_default")}
                       </p>
 
                       <div className="mt-6 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">
@@ -220,10 +221,10 @@ const PortfolioPage = () => {
                   <Search className="w-8 h-8 text-teal-300" />
                 </div>
                 <h3 className="text-xl font-black text-teal-950 mb-2">
-                  Dosen Tidak Ditemukan
+                  {t("port_not_found")}
                 </h3>
                 <p className="text-teal-800/60 font-medium text-sm">
-                  Coba sesuaikan kata kunci pencarian Anda.
+                  {t("port_not_found_desc")}
                 </p>
               </div>
             )}
@@ -279,7 +280,7 @@ const PortfolioPage = () => {
                     className="space-y-4"
                   >
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-teal-50 text-teal-700 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border border-teal-100 shadow-sm">
-                      <Users className="w-3.5 h-3.5" /> Pakar Akademik
+                      <Users className="w-3.5 h-3.5" /> {t("port_academic_pakar")}
                     </div>
                     <h2 className="text-4xl md:text-5xl font-black text-teal-950 leading-[1.1] tracking-tighter">
                       {selectedDosen.nama}
@@ -300,13 +301,13 @@ const PortfolioPage = () => {
                         <Info className="w-5 h-5" />
                       </div>
                       <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-800/30">
-                        Profil Profesional
+                        {t("port_prof_profile")}
                       </h3>
                     </div>
                     <p className="text-teal-950 text-lg leading-relaxed font-semibold italic opacity-90 border-l-4 border-teal-100 pl-6">
                       "
                       {selectedDosen.bio ||
-                        "Pakar Pendidikan Teknologi Informasi dengan fokus pada pengembangan sistem cerdas dan metodologi pembelajaran digital berbasis industri."}
+                        t("port_default_bio")}
                       "
                     </p>
                   </motion.section>
@@ -322,7 +323,7 @@ const PortfolioPage = () => {
                         <BookOpen className="w-5 h-5" />
                       </div>
                       <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-800/30">
-                        Projek Dosen (Penelitian)
+                        {t("port_lecturer_projects")}
                       </h3>
                     </div>
 
@@ -347,7 +348,7 @@ const PortfolioPage = () => {
                       ) : (
                         <div className="p-8 bg-teal-50/50 border border-dashed border-teal-100 rounded-3xl text-center">
                           <p className="text-sm font-medium text-teal-800/60">
-                            Belum ada projek penelitian yang aktif.
+                            {t("port_no_projects")}
                           </p>
                         </div>
                       )}
@@ -367,13 +368,13 @@ const PortfolioPage = () => {
                       </div>
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-800/30 mb-1">
-                          Status Ketersediaan
+                          {t("port_avail_status")}
                         </p>
                         <p className="text-teal-950 font-black text-2xl tracking-tighter">
-                          Sisa{" "}
+                          {t("port_remaining")}{" "}
                           {selectedDosen.kuotaMax -
                             (selectedDosen._count?.mahasiswa || 0)}{" "}
-                          Slot
+                          {t("port_slot_unit")}
                         </p>
                       </div>
                     </div>
@@ -381,7 +382,7 @@ const PortfolioPage = () => {
                       onClick={() => setSelectedDosen(null)}
                       className="w-full sm:w-auto px-10 py-5 bg-teal-900 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] hover:bg-orange-500 hover:-translate-y-2 transition-all shadow-2xl shadow-teal-900/20 hover:shadow-orange-500/40"
                     >
-                      Tutup Profil
+                      {t("port_close_profile")}
                     </button>
                   </motion.div>
                 </div>

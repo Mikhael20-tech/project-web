@@ -23,6 +23,7 @@ import {
   Zap,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
+import { useLanguage } from "@/src/lib/LanguageContext";
 import { socket } from "@/src/lib/socket";
 import {
   BarChart,
@@ -46,6 +47,7 @@ const AdminDashboard = ({
   currentUser: any;
   onUserUpdate: (user: any) => void;
 }) => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<
     "monitoring" | "dosen" | "students" | "settings" | "admin_profile" | "broadcast"
   >("monitoring");
@@ -716,7 +718,7 @@ const AdminDashboard = ({
                 Control Room
               </h2>
               <h1 className="text-3xl sm:text-4xl font-black tracking-tighter text-white">
-                Admin{" "}
+                {t("dash_admin_dashboard").split(" ")[0] || "Admin"}{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-orange-400 italic pr-2">
                   Dashboard
                 </span>
@@ -726,12 +728,12 @@ const AdminDashboard = ({
 
           <div className="flex flex-wrap gap-2 sm:gap-3 p-2 bg-white/[0.03] backdrop-blur-md rounded-3xl border border-white/5 relative z-10 w-full xl:w-auto">
             {[
-              { id: "monitoring", label: "Monitor", icon: Timer },
-              { id: "dosen", label: "Dosen", icon: Users },
-              { id: "students", label: "Mahasiswa", icon: UserPlus },
-              { id: "broadcast", label: "Broadcast AI", icon: Zap },
-              { id: "settings", label: "Jadwal", icon: Calendar },
-              { id: "admin_profile", label: "Profil", icon: Settings },
+              { id: "monitoring", label: t("dash_admin_tab_monitor"), icon: Timer },
+              { id: "dosen", label: t("dash_admin_tab_dosen"), icon: Users },
+              { id: "students", label: t("dash_admin_tab_students"), icon: UserPlus },
+              { id: "broadcast", label: t("dash_admin_tab_broadcast"), icon: Zap },
+              { id: "settings", label: t("dash_admin_tab_schedule"), icon: Calendar },
+              { id: "admin_profile", label: t("dash_admin_tab_profile"), icon: Settings },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -822,7 +824,7 @@ const AdminDashboard = ({
                       <h4 className="text-sm font-black text-teal-900 uppercase tracking-widest flex items-center gap-2">
                         <Zap className="w-4 h-4 text-teal-500" /> Okupansi Per Dosen
                       </h4>
-                      <span className="text-[10px] font-black text-teal-300 uppercase tracking-widest">Top 10 Terisi</span>
+                      <span className="text-[10px] font-black text-teal-300 uppercase tracking-widest">{t("dash_admin_top_10")}</span>
                     </div>
                     <div className="h-[300px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
@@ -871,16 +873,16 @@ const AdminDashboard = ({
                         <span className="text-3xl font-black text-teal-950">
                           {Math.round((reports.reduce((acc, d) => acc + d.mahasiswa.length, 0) / reports.reduce((acc, d) => acc + d.kuotaMax, 0)) * 100)}%
                         </span>
-                        <span className="text-[10px] font-black text-teal-300 uppercase">Terisi</span>
+                        <span className="text-[10px] font-black text-teal-300 uppercase">{t("dash_admin_filled")}</span>
                       </div>
                     </div>
                     <div className="mt-4 space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-xs font-bold text-teal-800/60">Total Mahasiswa:</span>
+                        <span className="text-xs font-bold text-teal-800/60">{t("dash_admin_total_students")}</span>
                         <span className="text-sm font-black text-teal-950">{reports.reduce((acc, d) => acc + d.mahasiswa.length, 0)}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-xs font-bold text-teal-800/60">Total Kuota:</span>
+                        <span className="text-xs font-bold text-teal-800/60">{t("dash_admin_total_quota")}</span>
                         <span className="text-sm font-black text-teal-950">{reports.reduce((acc, d) => acc + d.kuotaMax, 0)}</span>
                       </div>
                     </div>
@@ -892,13 +894,13 @@ const AdminDashboard = ({
                   <div className="px-6 md:px-10 py-6 border-b border-teal-50 bg-[#f8fdfc] flex flex-wrap items-center gap-4">
                     {/* Filter Angkatan */}
                     <div className="flex items-center gap-3 bg-white border border-teal-100 px-4 py-2 rounded-2xl shadow-sm">
-                      <span className="text-[10px] font-black uppercase text-teal-800/40 tracking-widest">Filter:</span>
+                      <span className="text-[10px] font-black uppercase text-teal-800/40 tracking-widest">{t("dash_admin_filter")}</span>
                       <select 
                         value={filterAngkatan}
                         onChange={(e) => setFilterAngkatan(e.target.value)}
                         className="bg-transparent border-none text-xs font-bold text-teal-950 focus:ring-0 cursor-pointer"
                       >
-                        <option value="All">Semua Angkatan</option>
+                        <option value="All">{t("dash_admin_all_batch")}</option>
                         {[...new Set(reports.flatMap(d => d.mahasiswa.map((m: any) => m.angkatan)))].filter(Boolean).sort().map(a => (
                           <option key={a} value={a}>Angkatan {a}</option>
                         ))}
@@ -926,7 +928,7 @@ const AdminDashboard = ({
                   {/* Header (Hidden on Mobile) */}
                   <div className="hidden lg:grid lg:grid-cols-12 gap-6 bg-[#f8fdfc] border-b border-teal-50 px-6 py-6 md:px-10 text-[10px] font-black uppercase text-teal-800/40 tracking-widest">
                     <div className="col-span-4">Dosen</div>
-                    <div className="col-span-2 text-center">Okupansi</div>
+                    <div className="col-span-2 text-center">{t("dash_admin_occupancy")}</div>
                     <div className="col-span-6">Mahasiswa</div>
                   </div>
                   
@@ -968,7 +970,7 @@ const AdminDashboard = ({
 
                         {/* Okupansi Section */}
                         <div className="col-span-2 flex flex-col justify-center items-start lg:items-center mt-2 lg:mt-0">
-                          <span className="text-[10px] font-black uppercase text-teal-800/40 lg:hidden mb-2">Okupansi</span>
+                          <span className="text-[10px] font-black uppercase text-teal-800/40 lg:hidden mb-2">{t("dash_admin_occupancy")}</span>
                           <span className="text-sm font-mono font-black mb-2 text-teal-800">
                             {dosen.mahasiswa.length} / {dosen.kuotaMax}
                           </span>
@@ -989,7 +991,7 @@ const AdminDashboard = ({
 
                         {/* Mahasiswa Section */}
                         <div className="col-span-6 flex flex-col justify-center mt-4 lg:mt-0">
-                          <span className="text-[10px] font-black uppercase text-teal-800/40 lg:hidden mb-3">Data Mahasiswa</span>
+                          <span className="text-[10px] font-black uppercase text-teal-800/40 lg:hidden mb-3">{t("dash_admin_student_data")}</span>
                           <div className="flex flex-wrap gap-2">
                             {dosen.mahasiswa.length > 0 ? (
                               dosen.mahasiswa.filter((m: any) => filterAngkatan === "All" || m.angkatan === filterAngkatan).map((m: any) => (
@@ -1509,7 +1511,7 @@ const AdminDashboard = ({
                       onChange={(e) => setFilterStudentAngkatan(e.target.value)}
                       className="bg-transparent border-none text-xs font-bold text-teal-950 focus:ring-0 cursor-pointer"
                     >
-                      <option value="All">Semua Angkatan</option>
+                      <option value="All">{t("dash_admin_all_batch")}</option>
                       {[...new Set(students.map(s => s.angkatan))].filter(Boolean).sort().map(a => (
                         <option key={a} value={a}>{a}</option>
                       ))}
@@ -1524,7 +1526,7 @@ const AdminDashboard = ({
                         <th className="px-10 py-6">Mahasiswa</th>
                         <th className="px-10 py-6">NIM</th>
                         <th className="px-10 py-6">Dosen Terpilih</th>
-                        <th className="px-10 py-6 text-right">Aksi</th>
+                        <th className="px-10 py-6 text-right">{t("dash_admin_action")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-teal-50">
@@ -1723,7 +1725,7 @@ const AdminDashboard = ({
                           <h4 className="text-sm font-black text-rose-900 flex items-center gap-2">
                             <Zap className="w-4 h-4" /> EMERGENCY STOP
                           </h4>
-                          <p className="text-[10px] font-medium text-rose-700/60 uppercase tracking-wider">Tutup paksa akses war dosen seketika</p>
+                          <p className="text-[10px] font-medium text-rose-700/60 uppercase tracking-wider">{t("dash_admin_force_close")}</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input 

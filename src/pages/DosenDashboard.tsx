@@ -17,6 +17,7 @@ import {
   Search,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
+import { useLanguage } from "@/src/lib/LanguageContext";
 
 const DosenDashboard = ({
   user,
@@ -27,6 +28,7 @@ const DosenDashboard = ({
   token: string;
   onProfileUpdate?: (updatedDosen: any) => void;
 }) => {
+  const { t } = useLanguage();
   const [dosenData, setDosenData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
@@ -303,14 +305,14 @@ const DosenDashboard = ({
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-teal-50 rounded-full border border-teal-100 mb-4">
                 <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
                 <span className="text-[10px] font-black uppercase tracking-widest text-teal-600">
-                  Lecturer Profile
+                  {t("dash_dosen_profile_badge")}
                 </span>
               </div>
               <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-teal-950 mb-2 leading-tight">
                 {dosenData.nama}
               </h1>
               <p className="text-teal-800/60 font-bold text-lg">
-                {dosenData.keahlian || "Pakar Pendidikan Teknologi Informasi"}
+                {dosenData.keahlian || t("dash_dosen_expert_default")}
               </p>
             </div>
 
@@ -319,8 +321,8 @@ const DosenDashboard = ({
                 <Users className="w-4 h-4 text-teal-500" /> NIP. {dosenData.nip}
               </div>
               <div className="px-5 py-3 bg-white border border-teal-50 rounded-2xl text-xs font-black text-teal-800 shadow-sm flex items-center gap-3">
-                <GraduationCap className="w-4 h-4 text-teal-500" /> Kuota:{" "}
-                {dosenData.kuotaMax} Mahasiswa
+                <GraduationCap className="w-4 h-4 text-teal-500" /> {t("dash_dosen_quota")}{" "}
+                {dosenData.kuotaMax} {t("dash_dosen_students")}
               </div>
             </div>
           </div>
@@ -331,11 +333,11 @@ const DosenDashboard = ({
               {dosenData.mahasiswa?.length || 0}
             </span>
             <span className="text-[10px] uppercase font-black text-teal-400 mt-1 tracking-widest relative z-10">
-              Mhs Terdaftar
+              {t("dash_dosen_registered_students")}
             </span>
             <div className="w-12 h-1 bg-teal-800 my-4 rounded-full relative z-10" />
             <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest relative z-10">
-              Maks {dosenData.kuotaMax} Mhs
+              {t("dash_dosen_max")} {dosenData.kuotaMax} {t("dash_dosen_students_short")}
             </span>
           </div>
         </motion.div>
@@ -351,7 +353,7 @@ const DosenDashboard = ({
                 : "text-teal-800/50 hover:bg-teal-50",
             )}
           >
-            Overview
+            {t("dash_dosen_tab_overview")}
           </button>
           <button
             onClick={() => setActiveTab("research")}
@@ -362,7 +364,7 @@ const DosenDashboard = ({
                 : "text-teal-800/50 hover:bg-teal-50",
             )}
           >
-            Projek Dosen
+            {t("dash_dosen_tab_projects")}
           </button>
           <button
             onClick={() => setActiveTab("profile")}
@@ -373,7 +375,7 @@ const DosenDashboard = ({
                 : "text-teal-800/50 hover:bg-teal-50",
             )}
           >
-            Edit Profile
+            {t("dash_dosen_tab_profile")}
           </button>
           <button
             onClick={() => setActiveTab("security")}
@@ -384,7 +386,7 @@ const DosenDashboard = ({
                 : "text-teal-800/50 hover:bg-teal-50",
             )}
           >
-            Security
+            {t("dash_dosen_tab_security")}
           </button>
         </div>
 
@@ -414,7 +416,7 @@ const DosenDashboard = ({
                   <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center text-teal-500 shadow-inner">
                     <Users className="w-5 h-5" />
                   </div>
-                  Daftar Mahasiswa Bimbingan
+                  {t("dash_dosen_list_student")}
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -442,7 +444,7 @@ const DosenDashboard = ({
                                 ? "bg-emerald-100 text-emerald-700"
                                 : "bg-amber-100 text-amber-700"
                             )}>
-                              {(m.statusBimbingan === "APPROVED" || m.dosenId) ? "✓ Terdaftar" : "⌛ Menunggu"}
+                              {(m.statusBimbingan === "APPROVED" || m.dosenId) ? t("dash_dosen_status_registered") : t("dash_dosen_status_waiting")}
                             </span>
                           </div>
                         </div>
@@ -450,7 +452,7 @@ const DosenDashboard = ({
                         {/* Rencana Judul */}
                         {m.rencanaJudul && (
                           <div className="mb-4 px-4 py-3 bg-white rounded-2xl border border-teal-100">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-teal-800/40 mb-1">Rencana Judul</p>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-teal-800/40 mb-1">{t("dash_dosen_title_plan")}</p>
                             <p className="text-xs font-bold text-teal-950 leading-relaxed">{m.rencanaJudul}</p>
                           </div>
                         )}
@@ -464,7 +466,7 @@ const DosenDashboard = ({
                               rel="noreferrer"
                               className="flex-1 py-2 text-[9px] font-black text-emerald-600 hover:text-emerald-800 flex items-center justify-center gap-1.5 transition-colors bg-emerald-50 rounded-xl hover:bg-emerald-100"
                             >
-                              <Smartphone className="w-3 h-3" /> Hubungi
+                              <Smartphone className="w-3 h-3" /> {t("dash_dosen_contact")}
                             </a>
                           )}
                           {/* Approval is now automatic, button removed */}
@@ -473,7 +475,7 @@ const DosenDashboard = ({
                             disabled={managingStudentId === m.id}
                             className="py-2 px-3 text-[9px] font-black text-rose-500 bg-rose-50 hover:bg-rose-100 rounded-xl flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
                           >
-                            <XCircle className="w-3 h-3" /> Keluarkan
+                            <XCircle className="w-3 h-3" /> {t("dash_dosen_kick")}
                           </button>
                         </div>
                       </div>
@@ -482,11 +484,10 @@ const DosenDashboard = ({
                     <div className="col-span-full py-12 text-center border-2 border-dashed border-teal-100 rounded-[2rem] bg-teal-50/50">
                       <Search className="w-8 h-8 text-teal-300 mx-auto mb-4" />
                       <h3 className="text-lg font-black text-teal-950 mb-1">
-                        Belum Ada Mahasiswa
+                        {t("dash_dosen_no_student")}
                       </h3>
                       <p className="text-sm font-medium text-teal-800/60">
-                        Mahasiswa akan muncul di sini setelah mereka memilih
-                        Anda.
+                        {t("dash_dosen_no_student_desc")}
                       </p>
                     </div>
                   )}
@@ -508,7 +509,7 @@ const DosenDashboard = ({
                     <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center text-teal-500 shadow-inner">
                       <BookOpen className="w-5 h-5" />
                     </div>
-                    Manajemen Projek Dosen (Penelitian)
+                    {t("dash_dosen_project_management")}
                   </h2>
                 </div>
 
@@ -516,14 +517,14 @@ const DosenDashboard = ({
                   <input
                     value={researchJudul}
                     onChange={(e) => setResearchJudul(e.target.value)}
-                    placeholder="Masukkan judul penelitian yang ditawarkan..."
+                    placeholder={t("dash_dosen_project_placeholder")}
                     className="flex-1 p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:ring-4 focus:ring-teal-500/10 transition-all outline-none"
                   />
                   <button
                     type="submit"
                     className="px-8 py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg flex items-center gap-2"
                   >
-                    <Plus className="w-4 h-4" /> Tambah
+                    <Plus className="w-4 h-4" /> {t("dash_dosen_project_add")}
                   </button>
                 </form>
 
@@ -544,7 +545,7 @@ const DosenDashboard = ({
                             {p.judul}
                           </h4>
                           <p className="text-[9px] font-black uppercase tracking-widest text-teal-800/30 mt-2">
-                            Dibuat pada{" "}
+                            {t("dash_dosen_created_at")}{" "}
                             {new Date(p.createdAt).toLocaleDateString()}
                           </p>
                         </div>
@@ -558,7 +559,7 @@ const DosenDashboard = ({
                                 : "bg-slate-100 text-slate-400 border-slate-200",
                             )}
                           >
-                            {p.isActive ? "Aktif" : "Non-aktif"}
+                            {p.isActive ? t("dash_dosen_active") : t("dash_dosen_inactive")}
                           </button>
                           <button
                             onClick={() => handleDeleteResearch(p.id)}
@@ -573,11 +574,10 @@ const DosenDashboard = ({
                     <div className="py-12 text-center border-2 border-dashed border-teal-100 rounded-[2rem] bg-teal-50/50">
                       <BookOpen className="w-8 h-8 text-teal-300 mx-auto mb-4" />
                       <h3 className="text-lg font-black text-teal-950 mb-1">
-                        Belum Ada Projek Penelitian
+                        {t("dash_dosen_no_project")}
                       </h3>
                       <p className="text-sm font-medium text-teal-800/60">
-                        Tambahkan judul penelitian untuk menarik minat mahasiswa
-                        bimbingan.
+                        {t("dash_dosen_no_project_desc")}
                       </p>
                     </div>
                   )}
@@ -598,7 +598,7 @@ const DosenDashboard = ({
                   <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center text-teal-500 shadow-inner">
                     <Edit className="w-5 h-5" />
                   </div>
-                  Pengaturan Profil Dosen
+                  {t("dash_dosen_profile_settings")}
                 </h2>
                 <form onSubmit={handleProfileSubmit} className="space-y-6">
                   <div className="flex flex-col md:flex-row gap-8">
@@ -629,14 +629,14 @@ const DosenDashboard = ({
                         </label>
                       </div>
                       <p className="text-[10px] font-black uppercase text-teal-800/40 text-center tracking-widest">
-                        Klik foto untuk mengganti
+                        {t("dash_dosen_click_photo")}
                       </p>
                     </div>
 
                     <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">
-                          Nama Lengkap
+                          {t("dash_dosen_fullname")}
                         </label>
                         <input
                           value={profileForm.nama}
@@ -652,7 +652,7 @@ const DosenDashboard = ({
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">
-                          Keahlian / Fokus Riset
+                          {t("dash_dosen_expertise")}
                         </label>
                         <input
                           value={profileForm.keahlian}
@@ -668,7 +668,7 @@ const DosenDashboard = ({
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">
-                          Nomor HP / WA
+                          {t("dash_dosen_contact_number")}
                         </label>
                         <input
                           value={profileForm.kontak}
@@ -685,7 +685,7 @@ const DosenDashboard = ({
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">
-                      Bio Singkat
+                      {t("dash_dosen_short_bio")}
                     </label>
                     <textarea
                       value={profileForm.bio}
@@ -699,7 +699,7 @@ const DosenDashboard = ({
                     type="submit"
                     className="w-full py-5 bg-teal-500 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg flex items-center justify-center gap-2"
                   >
-                    <Save className="w-4 h-4" /> SIMPAN PERUBAHAN PROFIL
+                    <Save className="w-4 h-4" /> {t("dash_dosen_save_profile")}
                   </button>
                 </form>
               </div>
@@ -718,12 +718,12 @@ const DosenDashboard = ({
                   <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center text-teal-500 shadow-inner">
                     <Lock className="w-5 h-5" />
                   </div>
-                  Keamanan Akun
+                  {t("dash_dosen_account_security")}
                 </h2>
                 <form onSubmit={handlePasswordSubmit} className="space-y-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">
-                      Password Saat Ini
+                      {t("dash_dosen_current_password")}
                     </label>
                     <input
                       type="password"
@@ -740,7 +740,7 @@ const DosenDashboard = ({
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">
-                      Password Baru
+                      {t("dash_dosen_new_password")}
                     </label>
                     <input
                       type="password"
@@ -757,7 +757,7 @@ const DosenDashboard = ({
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">
-                      Konfirmasi Password Baru
+                      {t("dash_dosen_confirm_password")}
                     </label>
                     <input
                       type="password"
@@ -776,7 +776,7 @@ const DosenDashboard = ({
                     type="submit"
                     className="w-full py-5 bg-teal-950 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-teal-800 transition-all shadow-lg flex items-center justify-center gap-2"
                   >
-                    <RefreshCcw className="w-4 h-4" /> PERBARUI PASSWORD
+                    <RefreshCcw className="w-4 h-4" /> {t("dash_dosen_update_password")}
                   </button>
                 </form>
               </div>

@@ -10,17 +10,30 @@ import {
   GraduationCap,
   XCircle,
   Menu,
+  Languages,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
+import { useLanguage } from "@/src/lib/LanguageContext";
 
 const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { lang, setLang, t } = useLanguage();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isLangOpen, setIsLangOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [visible, setVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+
+  const languages = [
+    { code: "id", label: "Bahasa Indonesia", flag: "🇮🇩" },
+    { code: "en", label: "English", flag: "🇺🇸" },
+    { code: "zh", label: "Chinese", flag: "🇨🇳" },
+    { code: "ja", label: "Japanese", flag: "🇯🇵" },
+    { code: "ko", label: "Korean", flag: "🇰🇷" },
+  ];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -50,26 +63,26 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
   }, [lastScrollY]);
 
   const navLinks = [
-    { name: "Beranda", path: "/", icon: <Globe className="w-4 h-4" /> },
+    { name: t("nav_home"), path: "/", icon: <Globe className="w-4 h-4" /> },
     {
-      name: "Portfolio",
+      name: t("nav_portfolio"),
       path: "/portfolio",
       icon: <Star className="w-4 h-4" />,
     },
     {
-      name: "Bimbingan",
+      name: t("nav_dashboard"),
       path: "/dashboard",
       icon: <Users className="w-4 h-4" />,
       role: "STUDENT",
     },
     {
-      name: "Panel Dosen",
+      name: t("nav_dosen_panel"),
       path: "/dosen-dashboard",
       icon: <Calendar className="w-4 h-4" />,
       role: "DOSEN",
     },
     {
-      name: "Admin",
+      name: t("nav_admin"),
       path: "/admin",
       icon: <Settings className="w-4 h-4" />,
       role: "ADMIN",
@@ -141,6 +154,45 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
 
         {/* User Section / Auth Button */}
         <div className="flex items-center gap-4">
+          {/* Language Switcher */}
+          <div className="relative hidden sm:block">
+            <button 
+              onClick={() => {
+                setIsLangOpen(!isLangOpen);
+                setIsProfileMenuOpen(false);
+              }}
+              className="flex items-center gap-2 px-3 py-2 bg-teal-50/50 hover:bg-teal-100/50 rounded-xl transition-all"
+            >
+              <Languages className="w-4 h-4 text-teal-600" />
+              <span className="text-[10px] font-black text-teal-900 uppercase">{lang}</span>
+              <ChevronDown className={`w-3 h-3 text-teal-600 transition-transform ${isLangOpen ? "rotate-180" : ""}`} />
+            </button>
+            <AnimatePresence>
+              {isLangOpen && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  className="absolute top-full mt-3 right-0 w-48 bg-white/95 backdrop-blur-xl border border-teal-50 rounded-2xl shadow-2xl p-2 z-[120]"
+                >
+                  {languages.map((l) => (
+                    <button
+                      key={l.code}
+                      onClick={() => {
+                        setLang(l.code);
+                        setIsLangOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-all ${lang === l.code ? "bg-teal-50 text-teal-950" : "hover:bg-slate-50 text-teal-800/60"}`}
+                    >
+                      <span className="text-lg">{l.flag}</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest">{l.label}</span>
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
           {user ? (
             <div className="flex items-center gap-3">
               <div className="hidden md:block text-right">
@@ -153,7 +205,10 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
               </div>
               <div className="relative">
                 <button
-                  onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                  onClick={() => {
+                    setIsProfileMenuOpen(!isProfileMenuOpen);
+                    setIsLangOpen(false);
+                  }}
                   className="w-10 h-10 rounded-2xl overflow-hidden border border-teal-100 shadow-sm hover:ring-2 hover:ring-teal-500 transition-all duration-300"
                   title="Profile Menu"
                 >
@@ -181,7 +236,7 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
                         className="w-full px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-teal-800 hover:bg-teal-50 flex items-center gap-3 transition-colors"
                       >
                         <Settings className="w-4 h-4 text-teal-500" />
-                        Pengaturan
+                        {t("nav_settings")}
                       </button>
                       <button
                         onClick={() => {
@@ -191,7 +246,7 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
                         className="w-full px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-rose-500 hover:bg-rose-50 flex items-center gap-3 transition-colors"
                       >
                         <XCircle className="w-4 h-4" />
-                        Keluar
+                        {t("logout")}
                       </button>
                     </motion.div>
                   )}
@@ -203,7 +258,7 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
               onClick={() => navigate("/login")}
               className="px-6 py-2.5 bg-teal-950 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-teal-950/20 hover:bg-teal-600 hover:-translate-y-0.5 transition-all active:scale-95"
             >
-              Login Portal
+              {t("nav_login_portal")}
             </button>
           )}
 
@@ -258,7 +313,7 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
                   className="w-full px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-4 text-rose-500 hover:bg-rose-50 transition-all"
                 >
                   <XCircle className="w-5 h-5" />
-                  Logout
+                  {t("logout")}
                 </button>
               )}
             </div>

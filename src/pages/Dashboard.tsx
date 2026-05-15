@@ -26,6 +26,7 @@ import html2canvas from "html2canvas";
 import { socket } from "@/src/lib/socket";
 import { cn } from "@/src/lib/utils";
 import { useToast } from "@/src/components/ToastProvider";
+import { useLanguage } from "@/src/lib/LanguageContext";
 
 const Dashboard = ({
   user: initialUser,
@@ -38,6 +39,7 @@ const Dashboard = ({
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [dosenList, setDosenList] = useState<any[]>([]);
   const [config, setConfig] = useState<any>(null);
   const [studentData, setStudentData] = useState<any>(null);
@@ -475,7 +477,7 @@ const Dashboard = ({
               <AlertCircle className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-orange-400 mb-1">Informasi Penting</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-orange-400 mb-1">{t("dash_student_info_important")}</h4>
               <p className="text-sm font-bold text-orange-800 leading-tight">
                 {config.announcement}
               </p>
@@ -492,17 +494,17 @@ const Dashboard = ({
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-6">
                   <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-300">Status Pemilihan</h3>
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-300">{t("dash_student_status")}</h3>
                 </div>
 
                 <div className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-3xl mb-8">
-                  <p className="text-[10px] font-black uppercase text-teal-400/60 mb-4 tracking-widest">Dosen Pembimbing Pilihan</p>
+                  <p className="text-[10px] font-black uppercase text-teal-400/60 mb-4 tracking-widest">{t("dash_student_dosen_choice")}</p>
                   <div className="flex items-center gap-4 bg-gradient-to-r from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 p-4 rounded-2xl">
                     <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/50">
                       <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[10px] uppercase font-black text-emerald-400/70 tracking-widest">TERPILIH</span>
+                      <span className="text-[10px] uppercase font-black text-emerald-400/70 tracking-widest">{t("dash_student_selected")}</span>
                       <span className="text-sm font-black text-emerald-50 leading-tight">{studentData.dosen.nama}</span>
                     </div>
                   </div>
@@ -519,7 +521,7 @@ const Dashboard = ({
                     )}
                   >
                     <RefreshCcw className={cn("w-4 h-4 group-hover:-rotate-180 transition-transform duration-500", loading && "animate-spin")} />
-                    {loading ? "MEMBATALKAN..." : "Batalkan Pilihan"}
+                    {loading ? "MEMBATALKAN..." : t("dash_student_cancel")}
                   </button>
                 )}
               </div>
@@ -533,7 +535,7 @@ const Dashboard = ({
 
               <div className="flex-1 w-full">
                 <div className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-3xl">
-                   <p className="text-[10px] font-black uppercase text-teal-400/60 mb-2 tracking-widest">Status Bimbingan</p>
+                   <p className="text-[10px] font-black uppercase text-teal-400/60 mb-2 tracking-widest">{t("dash_student_guidance_status")}</p>
                    <div className={cn(
                      "inline-flex items-center gap-2 px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-widest",
                      studentData.statusBimbingan === "APPROVED" 
@@ -541,10 +543,10 @@ const Dashboard = ({
                       : "bg-orange-500/20 text-orange-400 border border-orange-500/30"
                    )}>
                       {(studentData.statusBimbingan === "APPROVED" || studentData.dosenId) ? <CheckCircle2 className="w-3 h-3" /> : <RefreshCcw className="w-3 h-3 animate-spin" />}
-                      {(studentData.statusBimbingan === "APPROVED" || studentData.dosenId) ? "TERDAFTAR" : "MENUNGGU VALIDASI"}
+                      {(studentData.statusBimbingan === "APPROVED" || studentData.dosenId) ? t("status_registered") : t("status_pending")}
                    </div>
                    <div className="mt-4">
-                      <p className="text-[10px] font-black uppercase text-teal-400/30 mb-1 tracking-widest">Angkatan</p>
+                      <p className="text-[10px] font-black uppercase text-teal-400/30 mb-1 tracking-widest">{t("dash_student_angkatan")}</p>
                       <p className="text-sm font-bold text-teal-100">{studentData.periode || config?.periode || "-"}</p>
                    </div>
                    <button 
@@ -552,7 +554,7 @@ const Dashboard = ({
                       disabled={loading}
                       className="w-full mt-6 py-3 bg-emerald-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
                     >
-                      <Download className="w-4 h-4" /> {loading ? "MENGOLAH..." : "UNDUH BUKTI (PDF)"}
+                      <Download className="w-4 h-4" /> {loading ? "MENGOLAH..." : t("download_proof")}
                    </button>
                 </div>
               </div>
@@ -563,11 +565,11 @@ const Dashboard = ({
               <div id="bukti-pemilihan" className="p-16 bg-white w-[800px] text-teal-950 font-sans">
                 <div className="flex items-center justify-between border-b-4 border-teal-500 pb-8 mb-10">
                   <div>
-                    <h1 className="text-4xl font-black tracking-tighter">BUKTI PEMILIHAN</h1>
+                    <h1 className="text-4xl font-black tracking-tighter">{t("dash_student_proof_title")}</h1>
                     <p className="text-sm font-bold text-teal-500 tracking-[0.3em] uppercase">War Dosen PTI UNESA</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] font-black text-teal-300 uppercase tracking-widest">Tanggal Cetak</p>
+                    <p className="text-[10px] font-black text-teal-300 uppercase tracking-widest">{t("dash_student_print_date")}</p>
                     <p className="text-sm font-bold">{new Date().toLocaleString()}</p>
                   </div>
                 </div>
@@ -575,17 +577,17 @@ const Dashboard = ({
                 <div className="grid grid-cols-2 gap-12 mb-12">
                   <div className="space-y-6">
                     <div>
-                      <h3 className="text-[10px] font-black text-teal-300 uppercase tracking-widest mb-1">Data Mahasiswa</h3>
+                      <h3 className="text-[10px] font-black text-teal-300 uppercase tracking-widest mb-1">{t("dash_student_data")}</h3>
                       <p className="text-xl font-black">{studentData.nama}</p>
                       <p className="text-sm font-bold text-teal-600">NIM. {studentData.nim}</p>
                     </div>
                     <div>
-                      <h3 className="text-[10px] font-black text-teal-300 uppercase tracking-widest mb-1">Periode</h3>
+                      <h3 className="text-[10px] font-black text-teal-300 uppercase tracking-widest mb-1">{t("dash_student_periode")}</h3>
                       <p className="text-sm font-bold">{studentData.periode || config?.periode || "-"}</p>
                     </div>
                   </div>
                   <div className="p-8 bg-teal-50 rounded-3xl border border-teal-100">
-                    <h3 className="text-[10px] font-black text-teal-400 uppercase tracking-widest mb-3">Dosen Pembimbing Terpilih</h3>
+                    <h3 className="text-[10px] font-black text-teal-400 uppercase tracking-widest mb-3">{t("dash_student_dosen_selected")}</h3>
                     <div className="flex items-center gap-4">
                       <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-teal-500 shadow-sm border border-teal-100 overflow-hidden">
                         {studentData.dosen?.foto ? (
@@ -603,7 +605,7 @@ const Dashboard = ({
                 </div>
 
                 <div className="p-8 border-2 border-dashed border-teal-100 rounded-3xl mb-12">
-                  <h3 className="text-[10px] font-black text-teal-300 uppercase tracking-widest mb-2">Rencana Judul / Topik</h3>
+                  <h3 className="text-[10px] font-black text-teal-300 uppercase tracking-widest mb-2">{t("dash_student_title_plan")}</h3>
                   <p className="text-sm font-medium italic text-teal-800 leading-relaxed">
                     "{studentData.rencanaJudul || "Belum ditentukan"}"
                   </p>
@@ -612,7 +614,7 @@ const Dashboard = ({
                 <div className="flex justify-between items-end pt-10 border-t border-teal-50">
                   <div className="space-y-1">
                     <p className="text-[10px] font-black text-teal-300 uppercase tracking-widest">Status</p>
-                    <div className="px-4 py-1.5 bg-emerald-500 text-white text-[10px] font-black rounded-full inline-block">TERVERIFIKASI SISTEM</div>
+                    <div className="px-4 py-1.5 bg-emerald-500 text-white text-[10px] font-black rounded-full inline-block">{t("dash_student_verified")}</div>
                   </div>
                   <div className="text-center w-48">
                     <div className="h-20 mb-2 border-b border-teal-100"></div>
@@ -634,7 +636,7 @@ const Dashboard = ({
             <div className="flex items-center gap-4 py-4">
               <div className="h-px bg-teal-100 flex-1"></div>
               <span className="text-[10px] font-black uppercase text-teal-800/50 tracking-[0.5em]">
-                Database Dosen Pembimbing
+                {t("dash_student_database_dosen")}
               </span>
               <div className="h-px bg-teal-100 flex-1"></div>
             </div>
@@ -647,7 +649,7 @@ const Dashboard = ({
                 type="text"
                 value={searchDosen}
                 onChange={(e) => setSearchDosen(e.target.value)}
-                placeholder="Cari dosen berdasarkan nama atau keahlian..."
+                placeholder={t("dash_student_search_placeholder")}
                 className="w-full pl-11 pr-4 py-4 bg-white border border-teal-100 rounded-[1.5rem] text-sm font-bold text-teal-950 placeholder:text-teal-300 focus:outline-none focus:ring-4 focus:ring-teal-500/10 shadow-sm transition-all"
               />
               {searchDosen && (
@@ -699,13 +701,13 @@ const Dashboard = ({
                     <div className="p-6 bg-teal-50/50 rounded-[2.5rem] border border-teal-100/50 space-y-4">
                       <div className="flex justify-between items-center">
                         <div>
-                          <p className="text-[9px] uppercase font-black text-teal-800/30 tracking-widest mb-1">Ketersediaan</p>
+                          <p className="text-[9px] uppercase font-black text-teal-800/30 tracking-widest mb-1">{t("dash_student_availability")}</p>
                           <p className={cn("text-3xl font-black font-mono tracking-tighter", dosen.kuotaMax - dosen._count.mahasiswa > 0 ? "text-teal-950" : "text-rose-500")}>
                             {dosen.kuotaMax - dosen._count.mahasiswa} <span className="text-[10px] text-teal-800/30">SLOT</span>
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-[9px] uppercase font-black text-teal-800/30 tracking-widest mb-1">Kapasitas</p>
+                          <p className="text-[9px] uppercase font-black text-teal-800/30 tracking-widest mb-1">{t("dash_student_capacity")}</p>
                           <p className="text-xs font-black text-teal-800/60">{dosen._count.mahasiswa} / {dosen.kuotaMax}</p>
                         </div>
                       </div>
@@ -734,10 +736,10 @@ const Dashboard = ({
                     >
                       <span className="relative z-10 flex items-center justify-center gap-2">
                         {loading ? <RefreshCcw className="w-4 h-4 animate-spin" /> : 
-                          (config?.isForcedClosed ? "SISTEM DITUTUP (EMERGENCY)" :
-                          (!isWarActive ? "MENUNGGU WAR" : 
-                          (!isBatchAllowed() ? "AKSES DITOLAK (ANGKATAN)" :
-                          (dosen.kuotaMax - dosen._count.mahasiswa <= 0 ? "KUOTA PENUH" : "PILIH PEMBIMBING"))))}
+                          (config?.isForcedClosed ? t("dash_student_system_closed") :
+                          (!isWarActive ? t("dash_student_waiting_war") : 
+                          (!isBatchAllowed() ? t("dash_student_access_denied") :
+                          (dosen.kuotaMax - dosen._count.mahasiswa <= 0 ? t("dash_student_quota_full") : t("dash_student_pick_advisor")))))}
                       </span>
                     </button>
                   </div>
@@ -758,11 +760,11 @@ const Dashboard = ({
                    <div className="w-16 h-16 bg-teal-50 rounded-2xl flex items-center justify-center text-teal-500 mx-auto mb-6">
                      <Info className="w-8 h-8" />
                    </div>
-                   <h2 className="text-2xl font-black text-teal-950 leading-tight">Konfirmasi Pilihan?</h2>
+                   <h2 className="text-2xl font-black text-teal-950 leading-tight">{t("dash_student_confirm_choice")}</h2>
                    <p className="text-sm text-teal-800/60 font-medium">Anda akan memilih <span className="font-black text-teal-900">{confirmingDosen.nama}</span> sebagai dosen pembimbing.</p>
                    <div className="flex flex-col gap-3">
-                     <button onClick={() => handlePickDosen(confirmingDosen.id, rencanaJudulInput)} className="w-full py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg">YA, SAYA YAKIN</button>
-                     <button onClick={() => setConfirmingDosen(null)} className="w-full py-4 bg-teal-50 text-teal-800/40 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-100 transition-all">BATAL</button>
+                     <button onClick={() => handlePickDosen(confirmingDosen.id, rencanaJudulInput)} className="w-full py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg">{t("dash_student_yes_sure")}</button>
+                     <button onClick={() => setConfirmingDosen(null)} className="w-full py-4 bg-teal-50 text-teal-800/40 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-100 transition-all">{t("dash_student_cancel")}</button>
                    </div>
                  </div>
                </motion.div>
@@ -779,8 +781,8 @@ const Dashboard = ({
                       <BookOpen className="w-8 h-8" />
                     </div>
                     <div className="space-y-1">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-500">Langkah 1 dari 2</h3>
-                      <h2 className="text-2xl font-black text-teal-950">Rencana Judul Skripsi</h2>
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-500">{t("dash_student_step_1")}</h3>
+                      <h2 className="text-2xl font-black text-teal-950">{t("dash_student_thesis_plan")}</h2>
                       <p className="text-sm text-teal-800/60 font-medium pt-1">Beritahu <span className="font-black text-teal-700">{selectingDosenForJudul.nama}</span> topik riset Anda.</p>
                     </div>
                     <textarea
@@ -792,7 +794,7 @@ const Dashboard = ({
                     />
                     <div className="flex flex-col gap-3">
                       <button onClick={() => { setConfirmingDosen(selectingDosenForJudul); setSelectingDosenForJudul(null); }} className="w-full py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg flex items-center justify-center gap-2">LANJUT KONFIRMASI <ChevronRight className="w-4 h-4" /></button>
-                      <button onClick={() => setSelectingDosenForJudul(null)} className="w-full py-4 bg-teal-50 text-teal-800/40 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-100 transition-all">BATAL</button>
+                      <button onClick={() => setSelectingDosenForJudul(null)} className="w-full py-4 bg-teal-50 text-teal-800/40 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-100 transition-all">{t("dash_student_cancel")}</button>
                     </div>
                  </div>
                </motion.div>
@@ -806,7 +808,7 @@ const Dashboard = ({
                <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-lg bg-white rounded-[2.5rem] p-10 shadow-2xl max-h-[90vh] overflow-y-auto">
                  <div className="space-y-8">
                    <div className="flex justify-between items-center">
-                     <h2 className="text-2xl font-black text-teal-950">Kustomisasi Profil</h2>
+                     <h2 className="text-2xl font-black text-teal-950">{t("dash_student_profile_custom")}</h2>
                      <button onClick={() => setIsProfileModalOpen(false)} className="p-2 hover:bg-teal-50 rounded-xl transition-all"><XCircle className="w-6 h-6 text-teal-200" /></button>
                    </div>
 
@@ -819,25 +821,25 @@ const Dashboard = ({
                           <label htmlFor="photo-upload" className="absolute inset-0 flex items-center justify-center bg-teal-950/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-3xl"><Camera className="w-6 h-6 text-white" /></label>
                           <input id="photo-upload" type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
                         </div>
-                        <p className="text-[10px] font-black uppercase text-teal-500 tracking-widest">Ganti Foto Profil</p>
+                        <p className="text-[10px] font-black uppercase text-teal-500 tracking-widest">{t("dash_student_change_photo")}</p>
                      </div>
 
                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Nama Lengkap</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">{t("dash_student_fullname")}</label>
                         <input value={profileForm.nama} onChange={(e) => setProfileForm({...profileForm, nama: e.target.value})} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" required />
                      </div>
 
                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">WhatsApp / Kontak</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">{t("dash_student_contact")}</label>
                         <input value={profileForm.kontak} onChange={(e) => setProfileForm({...profileForm, kontak: e.target.value})} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" placeholder="08..." />
                      </div>
 
                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Bio Singkat</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">{t("dash_student_bio")}</label>
                         <textarea value={profileForm.bio} onChange={(e) => setProfileForm({...profileForm, bio: e.target.value})} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none min-h-[100px]" placeholder="Ceritakan sedikit tentang ketertarikan riset Anda..." />
                      </div>
 
-                     <button type="submit" disabled={loading} className="w-full py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg">{loading ? "MENYIMPAN..." : "SIMPAN PERUBAHAN"}</button>
+                     <button type="submit" disabled={loading} className="w-full py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg">{loading ? t("dash_student_saving") : t("dash_student_save_changes")}</button>
                    </form>
                  </div>
                </motion.div>

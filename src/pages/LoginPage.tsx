@@ -11,12 +11,14 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
+import { useLanguage } from "@/src/lib/LanguageContext";
 
 const LoginPage = ({
   onLogin,
 }: {
   onLogin: (token: string, user: any) => void;
 }) => {
+  const { t } = useLanguage();
   const [isRegister, setIsRegister] = useState(false);
   const [isDosenLogin, setIsDosenLogin] = useState(false);
   const navigate = useNavigate();
@@ -167,13 +169,13 @@ const LoginPage = ({
                 transition={{ duration: 0.3 }}
               >
                 <h1 className="text-5xl font-black text-teal-950 tracking-tighter leading-none mb-3">
-                  {isDosenLogin ? "DOSEN" : "STUDENT"} <br />
+                  {isDosenLogin ? t("login_dosen").split(" ")[0].toUpperCase() : t("login_student").split(" ")[0].toUpperCase()} <br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-orange-500 italic">
                     PORTAL
                   </span>
                 </h1>
                 <p className="text-teal-800/40 text-[10px] uppercase font-black tracking-[0.4em]">
-                  War Dosen Pembimbing v2.0
+                  {t("login_welcome")} v2.0
                 </p>
               </motion.div>
             </AnimatePresence>
@@ -195,7 +197,7 @@ const LoginPage = ({
                   : "text-teal-800/40 hover:text-teal-600",
               )}
             >
-              Mahasiswa
+              {t("login_student").split(" ")[0]}
             </button>
             <button
               type="button"
@@ -211,7 +213,7 @@ const LoginPage = ({
                   : "text-teal-800/40 hover:text-teal-600",
               )}
             >
-              Dosen
+              {t("login_dosen").split(" ")[0]}
             </button>
           </div>
 
@@ -228,7 +230,7 @@ const LoginPage = ({
                 <div className="space-y-2 relative">
                   <div className="flex justify-between items-center px-2">
                     <label className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">
-                      {isDosenLogin ? "NIP DOSEN" : "NIM MAHASISWA"}
+                      {isDosenLogin ? t("login_nip") : t("login_nim")}
                     </label>
                     <span className="text-[9px] text-teal-800/50 font-mono tracking-tighter bg-teal-50/50 px-2 py-0.5 rounded-md border border-teal-100/30">
                       {isDosenLogin ? "19800101" : "18000101"}
@@ -241,8 +243,8 @@ const LoginPage = ({
                     className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 rounded-[1.5rem] px-6 py-5 text-teal-950 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all placeholder:text-teal-800/30 shadow-inner"
                     placeholder={
                       isDosenLogin
-                        ? "Nomor Induk Pegawai"
-                        : "Nomor Induk Mahasiswa"
+                        ? t("login_nip")
+                        : t("login_nim")
                     }
                     required
                   />
@@ -257,7 +259,7 @@ const LoginPage = ({
                   >
                     <div className="flex justify-between items-center px-2">
                       <label className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">
-                        Nama Lengkap
+                        {t("login_fullname")}
                       </label>
                     </div>
                     <input
@@ -274,7 +276,7 @@ const LoginPage = ({
                 <div className="space-y-2 relative">
                   <div className="flex justify-between items-center px-2">
                     <label className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">
-                      Password
+                      {t("login_password")}
                     </label>
                     <span className="text-[9px] text-teal-800/50 font-mono tracking-tighter bg-teal-50/50 px-2 py-0.5 rounded-md border border-teal-100/30">
                       mhs123
@@ -315,7 +317,7 @@ const LoginPage = ({
               ) : (
                 <>
                   <LogIn className="w-4 h-4 group-hover:rotate-12 transition-transform" />{" "}
-                  {isRegister ? "DAFTAR SEKARANG" : "MASUK KE PORTAL"}
+                  {isRegister ? t("login_btn_register") : t("login_btn_enter")}
                 </>
               )}
             </button>
@@ -328,7 +330,7 @@ const LoginPage = ({
                   <div className="w-full border-t border-teal-100/30" />
                 </div>
                 <span className="relative px-4 bg-white/80 backdrop-blur-md rounded-full text-[9px] font-black text-teal-800/30 uppercase tracking-[0.4em]">
-                  Otentikasi SSO
+                  {t("login_or_sso")}
                 </span>
               </div>
             )}
@@ -354,8 +356,8 @@ const LoginPage = ({
                 className="text-[10px] font-black text-teal-600 hover:text-orange-500 uppercase tracking-[0.2em] transition-colors flex items-center justify-center gap-2 mx-auto group"
               >
                 {isRegister
-                  ? "Sudah Punya Akun? Login"
-                  : "Belum Punya Akun? Daftar Disini"}
+                  ? t("login_has_account")
+                  : t("login_no_account")}
                 <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>

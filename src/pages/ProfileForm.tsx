@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion } from "motion/react";
 import { Users, AlertCircle, RefreshCcw } from "lucide-react";
 import GlassCard from "@/src/components/GlassCard";
+import { useLanguage } from "@/src/lib/LanguageContext";
 
 const ProfileForm = ({
   user,
@@ -12,6 +13,7 @@ const ProfileForm = ({
   token: string;
   onComplete: (updatedStudent: any) => void;
 }) => {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     nama: user.mahasiswa?.nama || "",
     angkatan: user.mahasiswa?.angkatan || ("20" + user.username.substring(0, 2)),
@@ -23,7 +25,7 @@ const ProfileForm = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nama || !formData.angkatan || !formData.kontak) {
-      setError("Semua field wajib diisi.");
+      setError(t("dash_profile_required"));
       return;
     }
 
@@ -44,7 +46,7 @@ const ProfileForm = ({
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Gagal menyimpan profil.");
+      if (!res.ok) throw new Error(data.error || t("dash_profile_save_failed"));
 
       onComplete(data);
     } catch (err: any) {
@@ -67,18 +69,17 @@ const ProfileForm = ({
               <Users className="w-8 h-8" />
             </div>
             <h1 className="text-2xl font-black text-teal-950">
-              Lengkapi Profil Anda
+              {t("dash_profile_complete_title")}
             </h1>
             <p className="text-teal-800/60 text-sm font-medium italic">
-              Anda wajib melengkapi data berikut sebelum masuk ke Dashboard
-              pemilihan.
+              {t("dash_profile_complete_desc")}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase text-teal-800/60 ml-1">
-                NIM (Auto)
+                {t("dash_profile_nim_auto")}
               </label>
               <input
                 value={user.username}
@@ -88,14 +89,14 @@ const ProfileForm = ({
             </div>
             <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase text-teal-800/60 ml-1">
-                Nama Lengkap
+                {t("dash_profile_fullname")}
               </label>
               <input
                 value={formData.nama}
                 onChange={(e) =>
                   setFormData({ ...formData, nama: e.target.value })
                 }
-                placeholder="Sesuaikan dengan KTP/KTM"
+                placeholder={t("dash_profile_fullname_placeholder")}
                 className="w-full p-4 bg-[#f8fdfc] border border-teal-100 rounded-2xl text-teal-950 text-sm focus:ring-4 focus:ring-teal-100 transition-all outline-none shadow-inner placeholder:text-teal-800/30 font-bold"
                 required
               />
@@ -103,7 +104,7 @@ const ProfileForm = ({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase text-teal-800/60 ml-1">
-                  Angkatan
+                  {t("dash_profile_batch")}
                 </label>
                 <input
                   type="text"
@@ -118,7 +119,7 @@ const ProfileForm = ({
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase text-teal-800/60 ml-1">
-                  Kontak / No. HP
+                  {t("dash_profile_contact")}
                 </label>
                 <input
                   value={formData.kontak}
@@ -146,10 +147,10 @@ const ProfileForm = ({
             >
               {loading ? (
                 <>
-                  <RefreshCcw className="w-4 h-4 animate-spin" /> MENYIMPAN...
+                  <RefreshCcw className="w-4 h-4 animate-spin" /> {t("dash_profile_saving")}
                 </>
               ) : (
-                "SIMPAN & LANJUT KE DASHBOARD"
+                t("dash_profile_save_continue")
               )}
             </button>
           </form>

@@ -12,8 +12,10 @@ import {
   CheckCircle2,
   HelpCircle,
   ChevronDown,
-  Languages
+  Languages,
+  GraduationCap
 } from "lucide-react";
+import { cn } from "@/src/lib/utils";
 import { socket } from "@/src/lib/socket";
 import { useLanguage } from "@/src/lib/LanguageContext";
 
@@ -60,11 +62,21 @@ const LandingPage = () => {
     <div className="min-h-screen bg-white text-teal-950 font-sans selection:bg-teal-100 selection:text-teal-900 overflow-x-hidden">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-teal-50 px-6 py-4 md:px-12 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-teal-950 rounded-xl flex items-center justify-center text-teal-400 shadow-lg shadow-teal-950/20">
-            <Zap className="w-6 h-6" />
+        <div
+          className="flex items-center gap-3 cursor-pointer group"
+          onClick={() => navigate("/")}
+        >
+          <div className="w-10 h-10 bg-gradient-to-br from-teal-600 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/20 group-hover:rotate-6 transition-all duration-500">
+            <GraduationCap className="text-white w-6 h-6" />
           </div>
-          <span className="text-xl font-black tracking-tighter uppercase">WarDosen<span className="text-teal-500">.</span></span>
+          <div className="hidden sm:block">
+            <h1 className="text-lg font-black tracking-tighter text-teal-950 leading-none">
+              WAR<span className="text-orange-500">DOSEN</span>
+            </h1>
+            <p className="text-[8px] font-black text-teal-800/40 uppercase tracking-widest">
+              PTI Unesa Ecosystem
+            </p>
+          </div>
         </div>
         
         <div className="hidden md:flex items-center gap-8">
@@ -189,19 +201,19 @@ const LandingPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { icon: Clock, title: t("f1_t"), desc: t("f1_d") },
-              { icon: MessageSquare, title: t("f2_t"), desc: t("f2_d") },
-              { icon: LayoutDashboard, title: t("f3_t"), desc: t("f3_d") },
-              { icon: ShieldCheck, title: t("f4_t"), desc: t("f4_d") },
-              { icon: Zap, title: t("f5_t"), desc: t("f5_d") },
-              { icon: CheckCircle2, title: t("f6_t"), desc: t("f6_d") }
+              { icon: Clock, title: t("f1_t"), desc: t("f1_d"), color: "bg-blue-50 text-blue-500" },
+              { icon: MessageSquare, title: t("f2_t"), desc: t("f2_d"), color: "bg-purple-50 text-purple-500" },
+              { icon: LayoutDashboard, title: t("f3_t"), desc: t("f3_d"), color: "bg-orange-50 text-orange-500" },
+              { icon: ShieldCheck, title: t("f4_t"), desc: t("f4_d"), color: "bg-emerald-50 text-emerald-500" },
+              { icon: Zap, title: t("f5_t"), desc: t("f5_d"), color: "bg-pink-50 text-pink-500" },
+              { icon: CheckCircle2, title: t("f6_t"), desc: t("f6_d"), color: "bg-indigo-50 text-indigo-500" }
             ].map((f, i) => (
               <motion.div 
                 key={i}
                 whileHover={{ y: -10 }}
                 className="bg-white p-10 rounded-[3rem] border border-teal-50 shadow-xl shadow-teal-500/5 group"
               >
-                <div className="w-14 h-14 bg-teal-50 rounded-2xl flex items-center justify-center text-teal-500 mb-6 group-hover:bg-teal-950 group-hover:text-teal-400 transition-colors">
+                <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 group-hover:scale-110", f.color)}>
                   <f.icon className="w-7 h-7" />
                 </div>
                 <h3 className="text-xl font-black mb-3">{f.title}</h3>
@@ -258,10 +270,12 @@ const LandingPage = () => {
       {/* Footer */}
       <footer className="py-12 border-t border-teal-50 px-6 text-center">
         <div className="flex items-center justify-center gap-3 mb-6">
-          <div className="w-8 h-8 bg-teal-950 rounded-lg flex items-center justify-center text-teal-400">
-            <Zap className="w-5 h-5" />
+          <div className="w-8 h-8 bg-teal-500 rounded-lg flex items-center justify-center shadow-lg shadow-teal-500/20">
+            <GraduationCap className="text-white w-5 h-5" />
           </div>
-          <span className="text-lg font-black tracking-tighter uppercase">WarDosen<span className="text-teal-500">.</span></span>
+          <span className="text-lg font-black tracking-tighter text-teal-950 leading-none">
+            WAR<span className="text-orange-500">DOSEN</span>
+          </span>
         </div>
         <p className="text-[10px] font-black text-teal-800/30 uppercase tracking-[0.3em]">
           &copy; 2024 PTI UNESA. All Rights Reserved. Crafted for Excellence.
