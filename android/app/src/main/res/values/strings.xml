@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">WarDosen</string>
+    <string name="title_activity_main">WarDosen</string>
+    <string name="package_name">com.wardosen.app</string>
+    <string name="custom_url_scheme">com.wardosen.app</string>
+</resources>

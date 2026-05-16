@@ -268,6 +268,15 @@ app.get("/api/auth/google/callback", async (req, res) => {
     if (!user) {
         // Create user
         const username = email.split('@')[0];
+        let extractedNim = username;
+        let extractedAngkatan = "";
+        
+        // Smart Extraction for UNESA NIM (usually 11 digits, first 2 are year)
+        if (/^\d+$/.test(username) && username.length >= 2) {
+            extractedNim = username;
+            extractedAngkatan = "20" + username.substring(0, 2);
+        }
+
         const randomPassword = await bcrypt.hash(Math.random().toString(36).slice(-8), 10);
         user = await prisma.user.create({
             data: {
@@ -278,9 +287,10 @@ app.get("/api/auth/google/callback", async (req, res) => {
                 role: 'STUDENT',
                 mahasiswa: {
                     create: {
-                        nim: username,
+                        nim: extractedNim,
                         nama: name || username,
-                        foto: picture
+                        foto: picture,
+                        angkatan: extractedAngkatan
                     }
                 }
             },
