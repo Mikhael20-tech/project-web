@@ -114,6 +114,7 @@ const AdminDashboard = ({
     id: string;
     name: string;
   } | null>(null);
+  const [resetModalOpen, setResetModalOpen] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -2039,8 +2040,9 @@ const AdminDashboard = ({
                   </div>
                 </form>
               </div>
-            </motion.div>
-          )}
+            </div>
+          </motion.div>
+        )}
 
           {activeTab === "broadcast" && (
             <motion.div
