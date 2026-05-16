@@ -326,40 +326,6 @@ app.get("/api/auth/google/callback", async (req, res) => {
   }
 });
 
-// --- IMAGE PROXY (To bypass CORS for PDF generation) ---
-app.get("/api/proxy-image", async (req, res) => {
-  let imageUrl = req.query.url as string;
-  if (!imageUrl) return res.status(400).send("URL is required");
-
-  // Handle relative URLs
-  if (imageUrl.startsWith("/")) {
-    const protocol = req.protocol;
-    const host = req.get("host");
-    imageUrl = `${protocol}://${host}${imageUrl}`;
-  }
-
-  console.log("📂 Proxying image request:", imageUrl);
-
-  try {
-    const response = await fetch(imageUrl);
-    if (!response.ok) {
-      console.error(`❌ Proxy fetch failed: ${response.status} ${response.statusText}`);
-      throw new Error("Failed to fetch image");
-    }
-    
-    const arrayBuffer = await response.arrayBuffer();
-    const contentType = response.headers.get("content-type") || "image/jpeg";
-    
-    res.setHeader("Content-Type", contentType);
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Cache-Control", "public, max-age=3600");
-    res.send(Buffer.from(arrayBuffer));
-  } catch (error) {
-    console.error("❌ Proxy error for URL:", imageUrl, error);
-    res.status(500).send("Failed to proxy image");
-  }
-});
-
 // --- STUDENT PROFILE ---
 app.get("/api/me", authenticate, async (req: any, res) => {
   try {
