@@ -21,6 +21,10 @@ const supabaseUrl = (process.env.SUPABASE_URL || "").replace(/^["']|["']$/g, "")
 const supabaseKey = (process.env.SUPABASE_SERVICE_KEY || "").replace(/^["']|["']$/g, "").trim();
 const supabase = createSupabaseClient(supabaseUrl, supabaseKey);
 
+// Initialize Google Generative AI
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
 let _prisma: PrismaClient | null = null;
 const prisma = new Proxy({} as PrismaClient, {
   get: (target, prop) => {
@@ -1114,9 +1118,6 @@ app.post("/api/admin/broadcast/ai", authenticate, isAdmin, async (req, res) => {
   const targetLang = langNames[lang] || "Bahasa Indonesia";
 
   try {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
-
     const fullPrompt = `Kamu adalah asisten admin akademik prodi PTI UNESA. 
     Tugasmu adalah menyusun pesan pengumuman WhatsApp yang sangat informatif, rapi, dan menarik (gunakan emoji yang sesuai).
     Admin memberikan instruksi singkat: "${prompt}"
@@ -1124,7 +1125,7 @@ app.post("/api/admin/broadcast/ai", authenticate, isAdmin, async (req, res) => {
     Sertakan header pengumuman dan penutup yang sopan.
     Hanya berikan teks pesannya saja tanpa komentar apapun.`;
 
-    const result = await model.generateContent(fullPrompt);
+    const result = await aiModel.generateContent(fullPrompt);
     const response = await result.response;
     const text = response.text().trim();
     
@@ -1147,10 +1148,10 @@ app.post("/api/admin/broadcast/send", authenticate, isAdmin, async (req: any, re
   try {
     // 1. Get recipients
     let students;
-    if (targetAngkatan === "All") {
+    if (targetAngkatan === "All" || !targetAngkatan) {
       students = await prisma.mahasiswa.findMany({ where: { NOT: { kontak: null } } });
     } else {
-      const allowed = targetAngkatan.split(",").map((a: string) => a.trim());
+      const allowed = String(targetAngkatan).split(",").map((a: string) => a.trim());
       students = await prisma.mahasiswa.findMany({ 
         where: { 
           angkatan: { in: allowed },

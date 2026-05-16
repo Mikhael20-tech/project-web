@@ -166,6 +166,7 @@ const Dashboard = ({
     if (!config) return;
 
     const timer = setInterval(() => {
+      if (!config) return;
       const start = new Date(config.startTime).getTime();
       const end = new Date(config.endTime).getTime();
       const now = new Date().getTime();
@@ -174,7 +175,7 @@ const Dashboard = ({
         setTimeLeft(start - now);
         setIsWarActive(false);
       } else if (now < end) {
-        setTimeLeft(0);
+        setTimeLeft(end - now);
         setIsWarActive(true);
       } else {
         setTimeLeft(-1);
@@ -430,9 +431,7 @@ const Dashboard = ({
               >
                 {timeLeft === -1
                   ? "OVER"
-                  : isWarActive
-                    ? "LIVE"
-                    : formatCountdown(timeLeft)}
+                  : formatCountdown(timeLeft)}
               </span>
               <div className="flex items-center gap-2 justify-center md:justify-end mt-4">
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
