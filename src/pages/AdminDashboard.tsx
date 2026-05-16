@@ -2037,7 +2037,7 @@ const AdminDashboard = ({
                       </button>
                     </div>
                   </div>
-                </div>
+                </form>
               </div>
             </motion.div>
           )}
