@@ -13,6 +13,7 @@ import PageTransition from "./components/PageTransition";
 
 // Components
 import Navbar from "./components/Navbar";
+import LoadingOverlay from "./components/LoadingOverlay";
 
 // Pages
 import LandingPage from "./pages/LandingPage";
@@ -29,15 +30,17 @@ const AppContent = ({
   handleLogin,
   logout,
   updateProfile,
-  darkMode,
-  setDarkMode,
 }: any) => {
   const location = useLocation();
   const isLoginPage = location.pathname === "/login";
   const isLandingPage = location.pathname === "/";
 
   return (
-    <div className={`${darkMode ? "dark" : ""} bg-[#f8fdfc] dark:bg-slate-950 min-h-screen font-sans antialiased text-teal-950 dark:text-slate-200 transition-colors`}>
+    <div className={`bg-[#f8fdfc] min-h-screen font-sans antialiased text-teal-950 transition-colors`}>
+      <AnimatePresence mode="wait">
+        {!currentUser && !isLoginPage && !isLandingPage && <LoadingOverlay />}
+      </AnimatePresence>
+      
       {(!isLoginPage && !isLandingPage) && <Navbar user={currentUser} onLogout={logout} />}
       
       <AnimatePresence mode="wait">
@@ -108,14 +111,6 @@ const AppContent = ({
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </AnimatePresence>
-
-      {/* Dark Mode Toggle */}
-      <button 
-        onClick={() => setDarkMode(!darkMode)}
-        className="fixed bottom-8 left-8 w-12 h-12 bg-white dark:bg-slate-800 border border-teal-50 dark:border-slate-700 rounded-full flex items-center justify-center shadow-xl z-50 text-teal-500 dark:text-teal-400 hover:scale-110 transition-all"
-      >
-        {darkMode ? <Zap className="w-5 h-5 fill-current" /> : <Zap className="w-5 h-5" />}
-      </button>
     </div>
   );
 };
@@ -130,20 +125,10 @@ export default function App() {
     }
   });
   
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem("theme") === "dark" || 
-      (!localStorage.getItem("theme") && window.matchMedia("(prefers-color-scheme: dark)").matches);
-  });
-
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  }, [darkMode]);
+    document.documentElement.classList.remove("dark");
+    localStorage.removeItem("theme");
+  }, []);
 
   const handleLogin = (newToken: string, newUser: any) => {
     localStorage.setItem("token", newToken);
@@ -175,8 +160,6 @@ export default function App() {
         handleLogin={handleLogin}
         logout={logout}
         updateProfile={updateProfile}
-        darkMode={darkMode}
-        setDarkMode={setDarkMode}
       />
     </BrowserRouter>
   );

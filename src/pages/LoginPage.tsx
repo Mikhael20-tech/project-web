@@ -49,7 +49,7 @@ const LoginPage = ({
         `/api/auth/google/url?origin=${parentOrigin}`,
       );
       if (!response.ok) {
-        throw new Error("Gagal mendapatkan URL otentikasi Google");
+        throw new Error(t("toast_google_auth_failed"));
       }
       const { url } = await response.json();
 
@@ -60,7 +60,7 @@ const LoginPage = ({
       );
       if (!authWindow) {
         alert(
-          "Tolong izinkan pop-up untuk situs ini agar bisa login dengan SSO.",
+          t("alert_popup_blocked"),
         );
       }
     } catch (err: any) {
@@ -87,11 +87,11 @@ const LoginPage = ({
 
         if (!res.ok) {
           const data = await res.json();
-          throw new Error(data.error || "Terjadi kesalahan saat registrasi.");
+          throw new Error(data.error || t("toast_register_failed"));
         }
 
         alert(
-          "Pendaftaran berhasil! Silakan login dengan akun yang baru dibuat.",
+          t("toast_register_success"),
         );
         setIsRegister(false);
       } else {

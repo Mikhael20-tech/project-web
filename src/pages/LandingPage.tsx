@@ -134,7 +134,7 @@ const LandingPage = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6">
+      <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full pointer-events-none">
           <div className="absolute top-20 right-0 w-96 h-96 bg-teal-100 rounded-full blur-[100px] opacity-50" />
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-100 rounded-full blur-[100px] opacity-30" />
@@ -147,7 +147,7 @@ const LandingPage = () => {
             className="inline-flex items-center gap-2 px-4 py-2 bg-teal-50 rounded-full text-teal-700 mb-8 border border-teal-100"
           >
             <Zap className="w-4 h-4" />
-            <span className="text-[10px] font-black uppercase tracking-widest italic">The Future of Lecturer Selection</span>
+            <span className="text-[10px] font-black uppercase tracking-widest italic">{t("hero_tagline")}</span>
           </motion.div>
           
           <motion.h1 
@@ -282,18 +282,6 @@ const LandingPage = () => {
         </p>
       </footer>
 
-      {/* Floating Support Button */}
-      <a 
-        href="https://wa.me/628123456789" 
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="fixed bottom-8 right-8 w-16 h-16 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-2xl shadow-emerald-500/40 hover:bg-emerald-600 hover:-translate-y-2 transition-all z-[60] group"
-      >
-        <MessageSquare className="w-7 h-7 group-hover:scale-110 transition-transform" />
-        <span className="absolute right-20 px-4 py-2 bg-teal-950 text-white text-[10px] font-black uppercase tracking-widest rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-xl">
-          {t("support_hint")}
-        </span>
-      </a>
     </div>
   );
 };

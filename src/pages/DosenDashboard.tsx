@@ -101,7 +101,7 @@ const DosenDashboard = ({
   };
 
   const handleKickStudent = async (mahasiswaId: string, nama: string) => {
-    if (!confirm(`Keluarkan ${nama} dari daftar bimbingan? Mahasiswa akan bisa memilih dosen lain.`)) return;
+    if (!confirm(`${t("dash_dosen_kick")} ${nama}? ${t("confirm_kick_student")}`)) return;
     setManagingStudentId(mahasiswaId);
     try {
       const res = await fetch(`/api/dosen/kick-student/${mahasiswaId}`, {
@@ -135,7 +135,7 @@ const DosenDashboard = ({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal memperbarui profil.");
 
-      setMessage({ type: "success", text: "Profil berhasil diperbarui!" });
+      setMessage({ type: "success", text: t("toast_profile_updated_desc") });
       fetchDosen();
       if (onProfileUpdate) onProfileUpdate(data);
     } catch (err: any) {
@@ -168,7 +168,7 @@ const DosenDashboard = ({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal mengubah password.");
 
-      setMessage({ type: "success", text: "Password berhasil diubah!" });
+      setMessage({ type: "success", text: t("toast_password_changed") });
       setPasswordForm({
         currentPassword: "",
         newPassword: "",
@@ -223,7 +223,7 @@ const DosenDashboard = ({
         fetchDosen();
         setMessage({
           type: "success",
-          text: "Penelitian berhasil ditambahkan!",
+          text: t("toast_research_added"),
         });
       }
     } catch (err) {
@@ -244,7 +244,7 @@ const DosenDashboard = ({
   };
 
   const handleDeleteResearch = async (id: string) => {
-    if (!confirm("Hapus judul penelitian ini?")) return;
+    if (!confirm(t("confirm_delete_research"))) return;
     try {
       const res = await fetch(`/api/dosen/penelitian/${id}`, {
         method: "DELETE",
@@ -267,7 +267,7 @@ const DosenDashboard = ({
   if (!dosenData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F0FAF8]">
-        Gagal memuat data dosen.
+        {t("error_load_dosen")}
       </div>
     );
   }

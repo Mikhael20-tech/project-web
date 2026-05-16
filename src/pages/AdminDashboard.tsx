@@ -21,6 +21,7 @@ import {
   Upload,
   Info,
   Zap,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useLanguage } from "@/src/lib/LanguageContext";
@@ -62,6 +63,7 @@ const AdminDashboard = ({
   } | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [searchMonitoring, setSearchMonitoring] = useState("");
+  const [activities, setActivities] = useState<any[]>([]);
 
   // Forms State
   const [dosenForm, setDosenForm] = useState({
@@ -92,8 +94,10 @@ const AdminDashboard = ({
     isForcedClosed: false
   });
   const [filterAngkatan, setFilterAngkatan] = useState("All");
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [searchStudent, setSearchStudent] = useState("");
   const [filterStudentAngkatan, setFilterStudentAngkatan] = useState("All");
+  const [isStudentFilterDropdownOpen, setIsStudentFilterDropdownOpen] = useState(false);
   const [resetAngkatan, setResetAngkatan] = useState("");
   const [broadcastForm, setBroadcastForm] = useState({
     prompt: "",
@@ -153,8 +157,17 @@ const AdminDashboard = ({
   useEffect(() => {
     fetchData();
     socket.on("quota_update", () => fetchData());
+    
+    socket.on("new_selection", (data: any) => {
+      setActivities(prev => [
+        { id: Date.now(), ...data },
+        ...prev.slice(0, 49) // Keep last 50
+      ]);
+    });
+
     return () => {
       socket.off("quota_update");
+      socket.off("new_selection");
     };
   }, []);
 
@@ -269,7 +282,7 @@ const AdminDashboard = ({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal menyimpan data dosen.");
 
-      setMessage({ type: "success", text: "Data dosen berhasil disimpan!" });
+      setMessage({ type: "success", text: t("toast_dosen_saved") });
       setDosenForm({
         id: "",
         nama: "",
@@ -316,8 +329,8 @@ const AdminDashboard = ({
       setMessage({
         type: "success",
         text: isEdit
-          ? "Data mahasiswa berhasil diubah!"
-          : "Mahasiswa berhasil didaftarkan!",
+          ? t("toast_student_saved")
+          : t("toast_student_registered"),
       });
       setStudentForm({ id: "", nim: "", nama: "", kontak: "", password: "", angkatan: "" });
       fetchData();
@@ -327,7 +340,7 @@ const AdminDashboard = ({
   };
 
   const handleCancelSelection = async (mahasiswaId: string, studentName: string) => {
-    if (!window.confirm(`Apakah Anda yakin ingin membatalkan pilihan dosen untuk ${studentName}?`)) return;
+    if (!window.confirm(`${t("confirm_cancel_advisor")} ${studentName}?`)) return;
     setMessage(null);
     setLoading(true);
     try {
@@ -476,7 +489,7 @@ const AdminDashboard = ({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal memperbarui jadwal.");
 
-      setMessage({ type: "success", text: "Jadwal war berhasil diperbarui!" });
+      setMessage({ type: "success", text: t("toast_schedule_updated") });
       fetchData();
     } catch (err: any) {
       setMessage({ type: "error", text: err.message });
@@ -503,7 +516,7 @@ const AdminDashboard = ({
 
   const handleSendBroadcast = async () => {
     if (!broadcastForm.message) return;
-    if (!window.confirm("Kirim pengumuman ini ke semua mahasiswa target?")) return;
+    if (!window.confirm(t("confirm_broadcast_send"))) return;
     
     setBroadcastForm({ ...broadcastForm, status: "sending" });
     try {
@@ -552,18 +565,17 @@ const AdminDashboard = ({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal mengganti password.");
 
-      setMessage({ type: "success", text: "Password berhasil diganti!" });
+      setMessage({ type: "success", text: t("toast_password_changed") });
       setPasswordForm({ newPassword: "", confirmPassword: "" });
     } catch (err: any) {
       setMessage({ type: "error", text: err.message });
     }
   };
 
-  const handleResetAngkatan = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleResetAngkatan = async () => {
     if (!resetAngkatan) return;
-    if (!confirm(`Apakah Anda yakin ingin mereset data bimbingan untuk mahasiswa angkatan ${resetAngkatan}? Tindakan ini tidak dapat dibatalkan.`)) return;
     
+    setLoading(true);
     setMessage(null);
     try {
       const res = await fetch("/api/admin/reset-angkatan", {
@@ -578,9 +590,12 @@ const AdminDashboard = ({
       if (!res.ok) throw new Error(data.error || "Gagal me-reset data.");
       setMessage({ type: "success", text: data.message });
       setResetAngkatan("");
+      setResetModalOpen(false);
       fetchData();
     } catch (err: any) {
       setMessage({ type: "error", text: err.message });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -674,7 +689,7 @@ const AdminDashboard = ({
         throw new Error(profileData.error || "Gagal memperbarui foto profil.");
 
       onUserUpdate({ foto: data.url });
-      setMessage({ type: "success", text: "Foto profil berhasil diperbarui!" });
+      setMessage({ type: "success", text: t("toast_photo_updated") });
     } catch (err: any) {
       if (err.message.includes("Failed to fetch")) {
         setMessage({
@@ -720,12 +735,12 @@ const AdminDashboard = ({
             </div>
             <div>
               <h2 className="text-[10px] font-black uppercase tracking-[1em] text-teal-400 mb-2">
-                Control Room
+                {t("dash_admin_control_room")}
               </h2>
               <h1 className="text-3xl sm:text-4xl font-black tracking-tighter text-white">
                 {t("dash_admin_dashboard").split(" ")[0] || "Admin"}{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-orange-400 italic pr-2">
-                  Dashboard
+                  {t("dash_admin_dashboard").split(" ")[1] || "Dashboard"}
                 </span>
               </h1>
             </div>
@@ -794,10 +809,10 @@ const AdminDashboard = ({
                 <div className="p-8 md:p-10 border-b border-teal-50 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[#f8fdfc]">
                   <div>
                     <h3 className="text-2xl font-black text-teal-950 tracking-tight mb-2">
-                      Status Quota Real-time
+                        {t("dash_admin_monitor_title")}
                     </h3>
                     <p className="text-sm text-teal-800/60 font-medium">
-                      Monitoring keterisian dospem oleh mahasiswa.
+                        {t("dash_admin_monitor_subtitle")}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -806,44 +821,55 @@ const AdminDashboard = ({
                       className="flex items-center gap-2 px-5 py-3 bg-white border border-teal-100 rounded-2xl text-[10px] font-black text-teal-800 hover:bg-teal-50 hover:border-teal-200 transition-all uppercase tracking-widest shadow-sm group"
                     >
                       <Download className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />{" "}
-                      Export Semua
+                      {t("dash_admin_export_all")}
                     </button>
                     <button
                       onClick={exportBelumMemilih}
                       className="flex items-center gap-2 px-5 py-3 bg-rose-50 border border-rose-100 rounded-2xl text-[10px] font-black text-rose-600 hover:bg-rose-100 hover:border-rose-200 transition-all uppercase tracking-widest shadow-sm group"
                     >
                       <Download className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />{" "}
-                      Belum Memilih
+                      {t("dash_admin_export_not_picked")}
                     </button>
                     <div className="flex items-center gap-2 text-teal-500 text-xs font-black bg-teal-50 px-5 py-3 rounded-2xl border border-teal-100 shadow-sm shadow-teal-100">
                       <div className="w-2.5 h-2.5 rounded-full bg-teal-500 animate-pulse shadow-[0_0_8px_rgba(79,70,229,0.5)]" />
-                      LIVE UPDATE
+                      {t("dash_admin_live_update")}
                     </div>
                   </div>
                 </div>
 
                 {/* Statistics Charts */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-6 md:p-10">
                   <div className="lg:col-span-2 bg-white border border-teal-50 rounded-[2.5rem] p-8 shadow-sm">
                     <div className="flex items-center justify-between mb-8">
                       <h4 className="text-sm font-black text-teal-900 uppercase tracking-widest flex items-center gap-2">
-                        <Zap className="w-4 h-4 text-teal-500" /> Okupansi Per Dosen
+                        <Zap className="w-4 h-4 text-teal-500" /> {t("dash_admin_occupancy_per_dosen")}
                       </h4>
                       <span className="text-[10px] font-black text-teal-300 uppercase tracking-widest">{t("dash_admin_top_10")}</span>
                     </div>
                     <div className="h-[300px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={reports.slice(0, 10).map(d => ({ name: d.nama.split(" ")[0], terisi: d.mahasiswa.length, kuota: d.kuotaMax }))}>
+                          <defs>
+                            <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#14B8A6" stopOpacity={1} />
+                              <stop offset="100%" stopColor="#0D9488" stopOpacity={0.8} />
+                            </linearGradient>
+                            <linearGradient id="fullGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#F43F5E" stopOpacity={1} />
+                              <stop offset="100%" stopColor="#E11D48" stopOpacity={0.8} />
+                            </linearGradient>
+                          </defs>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F0FAF8" />
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: "#0D2E28" }} />
-                          <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: "#0D2E28" }} />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 900, fill: "#0D2E28" }} />
+                          <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 900, fill: "#0D2E28" }} />
                           <Tooltip 
+                            cursor={{ fill: '#F8FDF9' }}
                             contentStyle={{ borderRadius: "1.5rem", border: "none", boxShadow: "0 10px 30px rgba(0,0,0,0.1)", padding: "1rem" }}
-                            itemStyle={{ fontSize: "12px", fontWeight: "bold" }}
+                            itemStyle={{ fontSize: "11px", fontWeight: "bold" }}
                           />
-                          <Bar dataKey="terisi" radius={[10, 10, 0, 0]}>
-                            {reports.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.mahasiswa.length >= entry.kuotaMax ? "#F43F5E" : "#14B8A6"} />
+                          <Bar dataKey="terisi" radius={[8, 8, 0, 0]} animationDuration={1500}>
+                            {reports.slice(0, 10).map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.mahasiswa.length >= entry.kuotaMax ? "url(#fullGradient)" : "url(#barGradient)"} />
                             ))}
                           </Bar>
                         </BarChart>
@@ -851,45 +877,130 @@ const AdminDashboard = ({
                     </div>
                   </div>
 
-                  <div className="bg-white border border-teal-50 rounded-[2.5rem] p-8 shadow-sm">
-                    <h4 className="text-sm font-black text-teal-900 uppercase tracking-widest mb-8 flex items-center gap-2">
-                      <Users className="w-4 h-4 text-teal-500" /> Total Progress
+                  <div className="bg-white border border-teal-50 rounded-[2.5rem] p-8 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-teal-500/10 transition-colors" />
+                    
+                    <h4 className="text-[10px] font-black text-teal-800/40 uppercase tracking-widest mb-6 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
+                      {t("dash_admin_total_progress")}
                     </h4>
-                    <div className="h-[250px] w-full relative">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={[
-                              { name: "Terisi", value: reports.reduce((acc, d) => acc + d.mahasiswa.length, 0) },
-                              { name: "Kosong", value: reports.reduce((acc, d) => acc + d.kuotaMax, 0) - reports.reduce((acc, d) => acc + d.mahasiswa.length, 0) }
-                            ]}
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={5}
-                            dataKey="value"
-                          >
-                            <Cell fill="#14B8A6" />
-                            <Cell fill="#F0FAF8" />
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span className="text-3xl font-black text-teal-950">
-                          {Math.round((reports.reduce((acc, d) => acc + d.mahasiswa.length, 0) / reports.reduce((acc, d) => acc + d.kuotaMax, 0)) * 100)}%
-                        </span>
-                        <span className="text-[10px] font-black text-teal-300 uppercase">{t("dash_admin_filled")}</span>
+
+                    {(() => {
+                      const totalFilled = reports.reduce((acc, d) => acc + d.mahasiswa.length, 0);
+                      const totalQuota = reports.reduce((acc, d) => acc + d.kuotaMax, 0);
+                      const percentage = Math.round((totalFilled / (totalQuota || 1)) * 100);
+
+                      return (
+                        <>
+                          <div className="flex items-end gap-2 mb-2">
+                            <motion.span 
+                              initial={{ opacity: 0, scale: 0.5 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              key={percentage}
+                              className="text-5xl font-black text-teal-950 tracking-tighter"
+                            >
+                              {percentage}%
+                            </motion.span>
+                            <span className="text-xs font-bold text-teal-500 mb-2 uppercase tracking-widest">
+                              {t("dash_admin_filled")}
+                            </span>
+                          </div>
+
+                          <div className="h-[220px] w-full relative mt-4">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <defs>
+                                  <linearGradient id="pieGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#14B8A6" />
+                                    <stop offset="100%" stopColor="#0D9488" />
+                                  </linearGradient>
+                                </defs>
+                                <Pie
+                                  data={[
+                                    { name: t("dash_admin_filled"), value: totalFilled },
+                                    { name: "Empty", value: Math.max(0, totalQuota - totalFilled) }
+                                  ]}
+                                  innerRadius={70}
+                                  outerRadius={90}
+                                  paddingAngle={8}
+                                  dataKey="value"
+                                  stroke="none"
+                                  startAngle={90}
+                                  endAngle={450}
+                                >
+                                  <Cell fill="url(#pieGradient)" />
+                                  <Cell fill="#F0FAF8" />
+                                </Pie>
+                                <Tooltip 
+                                  contentStyle={{ borderRadius: "1.25rem", border: "none", boxShadow: "0 10px 30px rgba(0,0,0,0.05)" }}
+                                />
+                              </PieChart>
+                            </ResponsiveContainer>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                <Users className="w-6 h-6 text-teal-100 mb-1" />
+                                <span className="text-[10px] font-black text-teal-800/20 uppercase tracking-[0.2em]">LIVE</span>
+                            </div>
+                          </div>
+
+                          <div className="mt-8 space-y-4 pt-6 border-t border-teal-50/50">
+                            <div className="flex justify-between items-center bg-teal-50/30 p-4 rounded-2xl border border-teal-50/50">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm text-teal-500">
+                                  <CheckCircle2 className="w-4 h-4" />
+                                </div>
+                                <span className="text-xs font-bold text-teal-800/60 uppercase tracking-wide">{t("dash_admin_total_students")}</span>
+                              </div>
+                              <span className="text-lg font-black text-teal-950">{totalFilled}</span>
+                            </div>
+                            <div className="flex justify-between items-center bg-orange-50/30 p-4 rounded-2xl border border-orange-50/50">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm text-orange-500">
+                                  <Users className="w-4 h-4" />
+                                </div>
+                                <span className="text-xs font-bold text-teal-800/60 uppercase tracking-wide">{t("dash_admin_total_quota")}</span>
+                              </div>
+                              <span className="text-lg font-black text-teal-950">{totalQuota}</span>
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+
+                  <div className="bg-teal-950 border border-teal-900 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden flex flex-col">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 blur-3xl rounded-full" />
+                    <h3 className="text-xl font-black text-teal-950 uppercase tracking-tighter flex items-center gap-3">
+                      <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-500 shadow-inner">
+                        <Zap className="w-5 h-5" />
                       </div>
-                    </div>
-                    <div className="mt-4 space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs font-bold text-teal-800/60">{t("dash_admin_total_students")}</span>
-                        <span className="text-sm font-black text-teal-950">{reports.reduce((acc, d) => acc + d.mahasiswa.length, 0)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs font-bold text-teal-800/60">{t("dash_admin_total_quota")}</span>
-                        <span className="text-sm font-black text-teal-950">{reports.reduce((acc, d) => acc + d.kuotaMax, 0)}</span>
-                      </div>
+                      {t("dash_admin_recent_activity")}
+                    </h3>
+                    
+                    <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar relative z-10 mt-6">
+                      {activities.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center opacity-20 py-10">
+                          <Zap className="w-8 h-8 text-teal-400 mb-2" />
+                          <p className="text-[8px] font-black uppercase tracking-widest">{t("dash_admin_activity_waiting")}</p>
+                        </div>
+                      ) : (
+                        <AnimatePresence initial={false}>
+                          {activities.map((act) => (
+                            <motion.div
+                              key={act.id}
+                              initial={{ opacity: 0, x: 20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              className="bg-white/5 border border-white/5 p-4 rounded-2xl"
+                            >
+                              <p className="text-[9px] font-bold text-teal-200/80 leading-relaxed">
+                                <span className="text-teal-400">{t("dash_admin_activity_prefix")}</span> {t("dash_admin_activity_suffix")} <span className="text-white">{act.lecturerName}</span>
+                              </p>
+                              <p className="text-[7px] font-black text-teal-500 mt-2 uppercase tracking-widest">
+                                {new Date(act.timestamp).toLocaleTimeString()}
+                              </p>
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -897,19 +1008,65 @@ const AdminDashboard = ({
                 <div className="w-full flex flex-col">
                   {/* Search Bar for Monitoring */}
                   <div className="px-6 md:px-10 py-6 border-b border-teal-50 bg-[#f8fdfc] flex flex-wrap items-center gap-4">
-                    {/* Filter Angkatan */}
-                    <div className="flex items-center gap-3 bg-white border border-teal-100 px-4 py-2 rounded-2xl shadow-sm">
-                      <span className="text-[10px] font-black uppercase text-teal-800/40 tracking-widest">{t("dash_admin_filter")}</span>
-                      <select 
-                        value={filterAngkatan}
-                        onChange={(e) => setFilterAngkatan(e.target.value)}
-                        className="bg-transparent border-none text-xs font-bold text-teal-950 focus:ring-0 cursor-pointer"
+                    {/* Filter Angkatan Custom Dropdown */}
+                    <div className="relative">
+                      <button 
+                        onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                        className="flex items-center gap-3 bg-white border border-teal-100 px-5 py-2.5 rounded-2xl shadow-sm hover:border-teal-300 transition-all group min-w-[180px] justify-between"
                       >
-                        <option value="All">{t("dash_admin_all_batch")}</option>
-                        {[...new Set(reports.flatMap(d => d.mahasiswa.map((m: any) => m.angkatan)))].filter(Boolean).sort().map(a => (
-                          <option key={a} value={a}>Angkatan {a}</option>
-                        ))}
-                      </select>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] font-black uppercase text-teal-800/40 tracking-widest">{t("dash_admin_filter")}</span>
+                          <span className="text-xs font-black text-teal-950">
+                            {filterAngkatan === "All" ? t("dash_admin_all_batch") : `Angkatan ${filterAngkatan}`}
+                          </span>
+                        </div>
+                        <ChevronDown className={cn("w-4 h-4 text-teal-400 transition-transform duration-300", isFilterDropdownOpen && "rotate-180")} />
+                      </button>
+
+                      <AnimatePresence>
+                        {isFilterDropdownOpen && (
+                          <>
+                            <div className="fixed inset-0 z-[110]" onClick={() => setIsFilterDropdownOpen(false)} />
+                            <motion.div
+                              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                              className="absolute top-full left-0 mt-3 w-full min-w-[220px] bg-white/95 backdrop-blur-xl border border-teal-50 rounded-[1.5rem] shadow-2xl p-2 z-[120] overflow-hidden"
+                            >
+                              <button
+                                onClick={() => {
+                                  setFilterAngkatan("All");
+                                  setIsFilterDropdownOpen(false);
+                                }}
+                                className={cn(
+                                  "w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-all",
+                                  filterAngkatan === "All" ? "bg-teal-50 text-teal-950" : "hover:bg-slate-50 text-teal-800/60"
+                                )}
+                              >
+                                <span className="text-[10px] font-black uppercase tracking-widest">{t("dash_admin_all_batch")}</span>
+                                {filterAngkatan === "All" && <CheckCircle2 className="w-3 h-3 text-teal-500" />}
+                              </button>
+                              
+                              {[...new Set(reports.flatMap(d => d.mahasiswa.map((m: any) => m.angkatan)))].filter(Boolean).sort().map(a => (
+                                <button
+                                  key={a}
+                                  onClick={() => {
+                                    setFilterAngkatan(a);
+                                    setIsFilterDropdownOpen(false);
+                                  }}
+                                  className={cn(
+                                    "w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-all mt-1",
+                                    filterAngkatan === a ? "bg-teal-50 text-teal-950" : "hover:bg-slate-50 text-teal-800/60"
+                                  )}
+                                >
+                                  <span className="text-[10px] font-black uppercase tracking-widest">Angkatan {a}</span>
+                                  {filterAngkatan === a && <CheckCircle2 className="w-3 h-3 text-teal-500" />}
+                                </button>
+                              ))}
+                            </motion.div>
+                          </>
+                        )}
+                      </AnimatePresence>
                     </div>
 
                     <div className="relative flex-grow max-w-md">
@@ -968,7 +1125,7 @@ const AdminDashboard = ({
                               {dosen.nama}
                             </span>
                             <span className="text-[10px] font-black uppercase text-teal-800/60 tracking-widest bg-teal-50/50 px-2 py-0.5 rounded-md">
-                              NIP. {dosen.nip}
+                              {t("login_nip")}: {dosen.nip}
                             </span>
                           </div>
                         </div>
@@ -986,54 +1143,54 @@ const AdminDashboard = ({
                                 dosen.mahasiswa.length / dosen.kuotaMax >= 1
                                   ? "bg-rose-500"
                                   : "bg-teal-500",
-                              )}
-                              style={{
-                                width: `${Math.min((dosen.mahasiswa.length / dosen.kuotaMax) * 100, 100)}%`,
-                              }}
-                            />
+                                )}
+                                style={{
+                                  width: `${Math.min((dosen.mahasiswa.length / dosen.kuotaMax) * 100, 100)}%`,
+                                }}
+                              />
+                            </div>
                           </div>
-                        </div>
-
-                        {/* Mahasiswa Section */}
-                        <div className="col-span-6 flex flex-col justify-center mt-4 lg:mt-0">
-                          <span className="text-[10px] font-black uppercase text-teal-800/40 lg:hidden mb-3">{t("dash_admin_student_data")}</span>
-                          <div className="flex flex-wrap gap-2">
-                            {dosen.mahasiswa.length > 0 ? (
-                              dosen.mahasiswa.filter((m: any) => filterAngkatan === "All" || m.angkatan === filterAngkatan).map((m: any) => (
-                                <div
-                                  key={m.id}
-                                  className="flex flex-col px-4 py-2.5 bg-white border border-teal-100 rounded-xl shadow-sm hover:border-teal-200 hover:shadow-teal-100 transition-all cursor-default group/group flex-grow sm:flex-grow-0"
-                                >
-                                  <div className="flex items-center justify-between gap-3">
-                                    <div className="flex flex-col">
-                                      <span className="text-[10px] font-black text-teal-800/40 uppercase tracking-widest mb-0.5">
-                                        NIM:{" "}
-                                        <span className="text-teal-800 text-xs">
-                                          {m.nim}
+  
+                          {/* Mahasiswa Section */}
+                          <div className="col-span-6 flex flex-col justify-center mt-4 lg:mt-0">
+                            <span className="text-[10px] font-black uppercase text-teal-800/40 lg:hidden mb-3">{t("dash_admin_student_data")}</span>
+                            <div className="flex flex-wrap gap-2">
+                              {dosen.mahasiswa.length > 0 ? (
+                                dosen.mahasiswa.filter((m: any) => filterAngkatan === "All" || m.angkatan === filterAngkatan).map((m: any) => (
+                                  <div
+                                    key={m.id}
+                                    className="flex flex-col px-4 py-2.5 bg-white border border-teal-100 rounded-xl shadow-sm hover:border-teal-200 hover:shadow-teal-100 transition-all cursor-default group/group flex-grow sm:flex-grow-0"
+                                  >
+                                    <div className="flex items-center justify-between gap-3">
+                                      <div className="flex flex-col">
+                                        <span className="text-[10px] font-black text-teal-800/40 uppercase tracking-widest mb-0.5">
+                                          NIM:{" "}
+                                          <span className="text-teal-800 text-xs">
+                                            {m.nim}
+                                          </span>
                                         </span>
-                                      </span>
-                                      <span className="text-[11px] font-bold text-teal-600 truncate max-w-[120px] group-hover/group:text-teal-700">
-                                        {m.nama}
-                                      </span>
+                                        <span className="text-[11px] font-bold text-teal-600 truncate max-w-[120px] group-hover/group:text-teal-700">
+                                          {m.nama}
+                                        </span>
+                                      </div>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleCancelSelection(m.id, m.nama);
+                                        }}
+                                        className="p-1.5 hover:bg-rose-50 text-teal-300 hover:text-rose-500 rounded-lg transition-colors group/btn shrink-0"
+                                        title={t("dash_student_cancel")}
+                                      >
+                                        <X className="w-3.5 h-3.5" />
+                                      </button>
                                     </div>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleCancelSelection(m.id, m.nama);
-                                      }}
-                                      className="p-1.5 hover:bg-rose-50 text-teal-300 hover:text-rose-500 rounded-lg transition-colors group/btn shrink-0"
-                                      title="Batalkan Pilihan"
-                                    >
-                                      <X className="w-3.5 h-3.5" />
-                                    </button>
                                   </div>
-                                </div>
-                              ))
-                            ) : (
-                              <span className="text-[10px] font-black text-teal-800/30 uppercase tracking-widest px-4 py-2 border border-dashed border-teal-100 rounded-xl bg-teal-50/50">
-                                Belum Ada Mahasiswa
-                              </span>
-                            )}
+                                ))
+                              ) : (
+                                <span className="text-[10px] font-black text-teal-800/30 uppercase tracking-widest px-4 py-2 border border-dashed border-teal-100 rounded-xl bg-teal-50/50">
+                                  {t("dash_dosen_no_student")}
+                                </span>
+                              )}
                           </div>
                         </div>
                       </div>
@@ -1239,8 +1396,8 @@ const AdminDashboard = ({
                         className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
                         placeholder={
                           dosenForm.id
-                            ? "Ketik password baru..."
-                            : "Password akun dosen..."
+                            ? t("dash_admin_pass_new_placeholder")
+                            : t("dash_admin_pass_lecturer_placeholder")
                         }
                         required={!dosenForm.id}
                       />
@@ -1250,7 +1407,7 @@ const AdminDashboard = ({
                       className="w-full py-5 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-teal-500/10 hover:bg-teal-950 transition-all flex items-center justify-center gap-2 mt-4 group"
                     >
                       <Save className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />{" "}
-                      {dosenForm.id ? "SIMPAN PERUBAHAN" : "TAMBAH DOSEN"}
+                      {dosenForm.id ? t("dash_admin_save") : t("dash_admin_add_lecturer")}
                     </button>
                     {dosenForm.id && (
                       <button
@@ -1270,7 +1427,7 @@ const AdminDashboard = ({
                         }
                         className="w-full text-[10px] font-black text-teal-800/40 hover:text-rose-500 tracking-widest uppercase transition-colors"
                       >
-                        Batal Edit
+                        {t("dash_admin_cancel_edit")}
                       </button>
                     )}
                   </form>
@@ -1364,8 +1521,8 @@ const AdminDashboard = ({
                   <div>
                     <h3 className="text-2xl font-black text-teal-950 tracking-tight">
                       {studentForm.id
-                        ? "Edit Mahasiswa"
-                        : "Registrasi Mahasiswa Baru"}
+                        ? t("dash_admin_edit_mahasiswa")
+                        : t("dash_admin_reg_mahasiswa")}
                     </h3>
                     <p className="text-sm text-teal-800/60 font-medium">
                       {studentForm.id
@@ -1380,7 +1537,7 @@ const AdminDashboard = ({
                 >
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                      NIM (Username)
+                      {t("dash_admin_student_id")}
                     </label>
                     <input
                       value={studentForm.nim}
@@ -1443,7 +1600,7 @@ const AdminDashboard = ({
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                      Angkatan
+                      {t("dash_admin_batch_label")}
                     </label>
                     <input
                       value={studentForm.angkatan}
@@ -1489,12 +1646,11 @@ const AdminDashboard = ({
 
               <div className="bg-white border border-teal-50 rounded-[3rem] overflow-hidden shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]">
                 <div className="p-8 md:p-10 border-b border-teal-50 flex justify-between items-center bg-[#f8fdfc]">
-                  <h4 className="font-extrabold text-teal-950 uppercase text-xs tracking-widest flex items-center gap-2">
-                    <Users className="w-4 h-4 text-teal-500" /> Database
-                    Mahasiswa
-                  </h4>
+                  <h3 className="text-xs font-black text-teal-950 uppercase tracking-widest mb-8 flex items-center gap-2">
+                    <Users className="w-4 h-4 text-teal-500" /> {t("dash_admin_db_mahasiswa")}
+                  </h3>
                   <span className="px-4 py-2 bg-teal-950 text-white rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg">
-                    {students.length} TERDAFTAR
+                    {students.length} {t("dash_admin_registered")}
                   </span>
                 </div>
                 
@@ -1505,22 +1661,69 @@ const AdminDashboard = ({
                       type="text"
                       value={searchStudent}
                       onChange={(e) => setSearchStudent(e.target.value)}
-                      placeholder="Cari NIM atau nama mahasiswa..."
+                      placeholder={t("dash_admin_search_student")}
                       className="w-full pl-11 pr-4 py-2.5 bg-white border border-teal-100 rounded-2xl text-sm font-bold text-teal-950 placeholder:text-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-500/20 shadow-inner"
                     />
                   </div>
-                  <div className="flex items-center gap-3 bg-white border border-teal-100 px-4 py-2 rounded-2xl shadow-sm border-b-2 border-b-teal-500/10">
-                    <span className="text-[10px] font-black uppercase text-teal-800/40 tracking-widest">Filter Angkatan:</span>
-                    <select 
-                      value={filterStudentAngkatan}
-                      onChange={(e) => setFilterStudentAngkatan(e.target.value)}
-                      className="bg-transparent border-none text-xs font-bold text-teal-950 focus:ring-0 cursor-pointer"
+                  {/* Custom Student Filter Dropdown */}
+                  <div className="relative">
+                    <button 
+                      onClick={() => setIsStudentFilterDropdownOpen(!isStudentFilterDropdownOpen)}
+                      className="flex items-center gap-3 bg-white border border-teal-100 px-5 py-2.5 rounded-2xl shadow-sm hover:border-teal-300 transition-all group min-w-[180px] justify-between"
                     >
-                      <option value="All">{t("dash_admin_all_batch")}</option>
-                      {[...new Set(students.map(s => s.angkatan))].filter(Boolean).sort().map(a => (
-                        <option key={a} value={a}>{a}</option>
-                      ))}
-                    </select>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-black uppercase text-teal-800/40 tracking-widest">{t("dash_admin_filter")}</span>
+                        <span className="text-xs font-black text-teal-950">
+                          {filterStudentAngkatan === "All" ? t("dash_admin_all_batch") : `Angkatan ${filterStudentAngkatan}`}
+                        </span>
+                      </div>
+                      <ChevronDown className={cn("w-4 h-4 text-teal-400 transition-transform duration-300", isStudentFilterDropdownOpen && "rotate-180")} />
+                    </button>
+
+                    <AnimatePresence>
+                      {isStudentFilterDropdownOpen && (
+                        <>
+                          <div className="fixed inset-0 z-[110]" onClick={() => setIsStudentFilterDropdownOpen(false)} />
+                          <motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            className="absolute top-full right-0 mt-3 w-full min-w-[220px] bg-white/95 backdrop-blur-xl border border-teal-50 rounded-[1.5rem] shadow-2xl p-2 z-[120] overflow-hidden"
+                          >
+                            <button
+                              onClick={() => {
+                                setFilterStudentAngkatan("All");
+                                setIsStudentFilterDropdownOpen(false);
+                              }}
+                              className={cn(
+                                "w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-all",
+                                filterStudentAngkatan === "All" ? "bg-teal-50 text-teal-950" : "hover:bg-slate-50 text-teal-800/60"
+                              )}
+                            >
+                              <span className="text-[10px] font-black uppercase tracking-widest">{t("dash_admin_all_batch")}</span>
+                              {filterStudentAngkatan === "All" && <CheckCircle2 className="w-3 h-3 text-teal-500" />}
+                            </button>
+                            
+                            {[...new Set(students.map(s => s.angkatan))].filter(Boolean).sort().map(a => (
+                              <button
+                                key={a}
+                                onClick={() => {
+                                  setFilterStudentAngkatan(a);
+                                  setIsStudentFilterDropdownOpen(false);
+                                }}
+                                className={cn(
+                                  "w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-all mt-1",
+                                  filterStudentAngkatan === a ? "bg-teal-50 text-teal-950" : "hover:bg-slate-50 text-teal-800/60"
+                                )}
+                              >
+                                <span className="text-[10px] font-black uppercase tracking-widest">Angkatan {a}</span>
+                                {filterStudentAngkatan === a && <CheckCircle2 className="w-3 h-3 text-teal-500" />}
+                              </button>
+                            ))}
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </div>
 
@@ -1528,9 +1731,9 @@ const AdminDashboard = ({
                   <table className="w-full text-left">
                     <thead>
                       <tr className="bg-[#f8fdfc] border-b border-teal-50 text-[10px] font-black uppercase text-teal-800/40 tracking-widest">
-                        <th className="px-10 py-6">Mahasiswa</th>
-                        <th className="px-10 py-6">NIM</th>
-                        <th className="px-10 py-6">Dosen Terpilih</th>
+                        <th className="px-10 py-6">{t("dash_admin_student_data").split(" ")[0]}</th>
+                        <th className="px-10 py-6">{t("dash_admin_student_id").split(" ")[0]}</th>
+                        <th className="px-10 py-6">{t("dash_admin_advisor_selected")}</th>
                         <th className="px-10 py-6 text-right">{t("dash_admin_action")}</th>
                       </tr>
                     </thead>
@@ -1563,7 +1766,7 @@ const AdminDashboard = ({
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 text-teal-800/40 rounded-lg text-[10px] uppercase font-black border border-dashed border-teal-100">
-                                <Timer className="w-3 h-3" /> Belum Memilih
+                                <Timer className="w-3 h-3" /> {t("dash_admin_not_selecting")}
                               </span>
                             )}
                           </td>
@@ -1622,11 +1825,10 @@ const AdminDashboard = ({
                     </div>
                     <div>
                       <h3 className="text-3xl font-black text-teal-950 tracking-tight leading-tight">
-                        Jadwal Pemilihan
+                        {t("dash_admin_schedule_title")}
                       </h3>
                       <p className="text-sm text-teal-800/60 font-medium mt-1">
-                        Tentukan kapan sistem portal *"war dosen"* dibuka dan
-                        ditutup kembali.
+                        {t("dash_admin_schedule_subtitle")}
                       </p>
                     </div>
                   </div>
@@ -1634,7 +1836,7 @@ const AdminDashboard = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                          Waktu Mulai (START)
+                          {t("dash_admin_start_time")}
                         </label>
                         <input
                           type="datetime-local"
@@ -1651,7 +1853,7 @@ const AdminDashboard = ({
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                          Waktu Selesai (END)
+                          {t("dash_admin_end_time")}
                         </label>
                         <input
                           type="datetime-local"
@@ -1671,7 +1873,7 @@ const AdminDashboard = ({
                     <div className="space-y-4 text-left">
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                          Nama Periode (Display Only)
+                          {t("dash_admin_period_name")}
                         </label>
                         <input
                           type="text"
@@ -1679,36 +1881,79 @@ const AdminDashboard = ({
                           onChange={(e) =>
                             setConfigForm({ ...configForm, periode: e.target.value } as any)
                           }
-                          placeholder="Contoh: 2024/2025"
+                          placeholder={t("dash_admin_period_name")}
                           className="w-full p-4 bg-teal-50 border border-teal-100 rounded-[1.25rem] text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
                         />
                       </div>
-
-                      <div className="space-y-2">
+                      <div className="space-y-4">
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                          Target Angkatan (Akses War)
+                          {t("dash_admin_target_batch")}
                         </label>
-                        <input
-                          type="text"
-                          value={(configForm as any).targetAngkatan || ""}
-                          onChange={(e) =>
-                            setConfigForm({ ...configForm, targetAngkatan: e.target.value } as any)
-                          }
-                          placeholder="Contoh: 2021, 2022 (atau 'All')"
-                          className="w-full p-4 bg-teal-50 border border-teal-100 rounded-[1.25rem] text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
-                        />
+                        <div className="flex flex-wrap gap-3 p-6 bg-teal-50/30 border border-teal-100/50 rounded-[1.5rem] shadow-inner">
+                          <button
+                            type="button"
+                            onClick={() => setConfigForm({ ...configForm, targetAngkatan: "All" } as any)}
+                            className={cn(
+                              "px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2",
+                              (configForm as any).targetAngkatan === "All"
+                                ? "bg-teal-500 text-white border-teal-500 shadow-lg shadow-teal-500/20"
+                                : "bg-white text-teal-400 border-teal-100 hover:border-teal-300 hover:text-teal-600"
+                            )}
+                          >
+                            ALL
+                          </button>
+                          {Array.from(new Set(students.map((s) => s.angkatan)))
+                            .filter(Boolean)
+                            .sort()
+                            .map((angkatan) => {
+                              const currentSelected = (configForm as any).targetAngkatan || "All";
+                              const selectedArray = currentSelected === "All" ? [] : currentSelected.split(", ").filter(Boolean);
+                              const isSelected = selectedArray.includes(angkatan);
+                              
+                              return (
+                                <button
+                                  key={angkatan}
+                                  type="button"
+                                  onClick={() => {
+                                    let newSelected;
+                                    if (currentSelected === "All") {
+                                      newSelected = [angkatan];
+                                    } else if (isSelected) {
+                                      newSelected = selectedArray.filter(a => a !== angkatan);
+                                    } else {
+                                      newSelected = [...selectedArray, angkatan];
+                                    }
+                                    
+                                    const finalValue = newSelected.length === 0 ? "All" : newSelected.sort().join(", ");
+                                    setConfigForm({ ...configForm, targetAngkatan: finalValue } as any);
+                                  }}
+                                  className={cn(
+                                    "px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2",
+                                    isSelected && currentSelected !== "All"
+                                      ? "bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20"
+                                      : "bg-white text-teal-400 border-teal-100 hover:border-teal-300 hover:text-teal-600"
+                                  )}
+                                >
+                                  {angkatan}
+                                </button>
+                              );
+                            })}
+                        </div>
+                        <p className="text-[10px] font-medium text-teal-800/40 ml-1 italic">
+                          * {(configForm as any).targetAngkatan === "All" ? "Semua angkatan dapat mengakses portal." : `Hanya angkatan ${(configForm as any).targetAngkatan} yang dapat mengakses.`}
+                        </p>
                       </div>
 
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                          Pengumuman Khusus (Khusus Angkatan Aktif)
+                          {t("dash_admin_announcement_label")}
                         </label>
                         <textarea
                           value={(configForm as any).announcement || ""}
                           onChange={(e) =>
                             setConfigForm({ ...configForm, announcement: e.target.value } as any)
                           }
-                          placeholder="Pesan yang akan muncul di dashboard mahasiswa..."
+                          placeholder={t("dash_admin_announcement_placeholder")}
                           rows={3}
                           className="w-full p-4 bg-teal-50 border border-teal-100 rounded-[1.25rem] text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner resize-none"
                         />
@@ -1718,9 +1963,7 @@ const AdminDashboard = ({
                     <div className="p-6 bg-orange-50/50 rounded-[1.5rem] border border-orange-100 text-left flex gap-5 shadow-sm">
                       <Info className="w-6 h-6 text-orange-400 flex-shrink-0 mt-0.5" />
                       <p className="text-sm text-orange-800 leading-relaxed font-medium">
-                        Mahasiswa hanya dapat memilih dosen dalam rentang waktu
-                        yang diatur. Countdown di dashboard mahasiswa akan
-                        menyesuaikan secara otomatis secara *real-time*.
+                        {t("dash_admin_schedule_info")}
                       </p>
                     </div>
 
@@ -1728,7 +1971,7 @@ const AdminDashboard = ({
                       <div className="flex items-center justify-between p-6 bg-rose-50/50 rounded-3xl border border-rose-100/50">
                         <div className="space-y-1">
                           <h4 className="text-sm font-black text-rose-900 flex items-center gap-2">
-                            <Zap className="w-4 h-4" /> EMERGENCY STOP
+                            <Zap className="w-4 h-4" /> {t("dash_admin_emergency_stop")}
                           </h4>
                           <p className="text-[10px] font-medium text-rose-700/60 uppercase tracking-wider">{t("dash_admin_force_close")}</p>
                         </div>
@@ -1751,35 +1994,48 @@ const AdminDashboard = ({
                       <Calendar className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />{" "}
                       SIMPAN KONFIGURASI
                     </button>
-                  </form>
-
                   {/* Reset Angkatan Section */}
                   <div className="mt-12 pt-12 border-t border-teal-50">
                     <h3 className="text-xl font-black text-teal-950 mb-6 flex items-center gap-3">
                       <div className="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center text-rose-500">
                         <Trash2 className="w-5 h-5" />
                       </div>
-                      Reset Data per Angkatan
+                      {t("dash_admin_reset_data")}
                     </h3>
-                    <p className="text-xs text-teal-800/60 font-medium mb-6">
-                      Menghapus semua pilihan dosen untuk mahasiswa pada angkatan tertentu. Berguna saat memulai periode baru.
+                    <p className="text-xs text-teal-800/60 font-medium mb-8 leading-relaxed max-w-xl">
+                      {t("dash_admin_reset_desc")}
                     </p>
-                    <form onSubmit={handleResetAngkatan} className="flex gap-4">
-                      <input 
-                        type="text" 
-                        value={resetAngkatan}
-                        onChange={(e) => setResetAngkatan(e.target.value)}
-                        placeholder="Contoh: 2021"
-                        className="flex-grow p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none"
-                      />
+                    <div className="space-y-6">
+                      <div className="flex flex-wrap gap-3">
+                        {Array.from(new Set(students.map((s) => s.angkatan)))
+                          .filter(Boolean)
+                          .sort()
+                          .map((angkatan) => (
+                            <button
+                              key={angkatan}
+                              type="button"
+                              onClick={() => setResetAngkatan(angkatan)}
+                              className={cn(
+                                "px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border-2",
+                                resetAngkatan === angkatan
+                                  ? "bg-rose-500 text-white border-rose-500 shadow-xl shadow-rose-500/20 scale-105"
+                                  : "bg-white text-rose-400 border-rose-100 hover:border-rose-300 hover:text-rose-600 shadow-sm"
+                              )}
+                            >
+                              {angkatan}
+                            </button>
+                          ))}
+                      </div>
+                      
                       <button 
-                        type="submit"
+                        type="button"
+                        onClick={() => setResetModalOpen(true)}
                         disabled={!resetAngkatan}
-                        className="px-8 bg-rose-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-600 transition-all disabled:opacity-50"
+                        className="w-full sm:w-auto px-12 py-5 bg-rose-500 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-rose-600 transition-all disabled:opacity-20 shadow-2xl shadow-rose-500/20"
                       >
-                        RESET
+                        {t("dash_admin_reset_btn")}
                       </button>
-                    </form>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1817,7 +2073,7 @@ const AdminDashboard = ({
                     <div className="space-y-6">
                       <div className="space-y-3">
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 flex items-center gap-2">
-                          <Edit className="w-3 h-3" /> Instruksi Pengumuman (Bahasa Indonesia)
+                          <Edit className="w-3 h-3" /> {t("dash_admin_broadcast_instruction")}
                         </label>
                         <textarea
                           value={broadcastForm.prompt}
@@ -1837,7 +2093,7 @@ const AdminDashboard = ({
                         ) : (
                           <Zap className="w-4 h-4 text-teal-400" />
                         )}
-                        {broadcastForm.status === "generating" ? "MENYUSUN PESAN..." : "BANTU TULIS DENGAN AI"}
+                        {broadcastForm.status === "generating" ? t("dash_admin_broadcast_generating") : t("dash_admin_broadcast_ai_btn")}
                       </button>
                     </div>
 
@@ -1845,7 +2101,7 @@ const AdminDashboard = ({
                     <div className="space-y-6">
                       <div className="space-y-3">
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 flex items-center gap-2">
-                          <CheckCircle2 className="w-3 h-3" /> Preview Pesan WhatsApp
+                          <CheckCircle2 className="w-3 h-3" /> {t("dash_admin_broadcast_preview")}
                         </label>
                         <textarea
                           value={broadcastForm.message}
@@ -1880,7 +2136,7 @@ const AdminDashboard = ({
                           ) : (
                             <Upload className="w-4 h-4" />
                           )}
-                          {broadcastForm.status === "sending" ? "MENGIRIM..." : "BLAST WHATSAPP"}
+                          {broadcastForm.status === "sending" ? t("dash_admin_saving") : t("dash_admin_broadcast_send_btn")}
                         </button>
                       </div>
                     </div>
@@ -2061,6 +2317,67 @@ const AdminDashboard = ({
                     className="w-full py-4 bg-teal-50 text-teal-800/40 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-100 transition-all"
                   >
                     BATALKAN
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {resetModalOpen && (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setResetModalOpen(false)}
+                className="absolute inset-0 bg-teal-950/60 backdrop-blur-md"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="relative w-full max-w-lg bg-white rounded-[3rem] p-12 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] space-y-8"
+              >
+                <div className="flex items-center gap-6">
+                  <div className="w-20 h-20 bg-rose-50 rounded-[1.75rem] flex items-center justify-center text-rose-500 shadow-inner">
+                    <AlertCircle className="w-10 h-10" />
+                  </div>
+                  <div>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 mb-2">
+                      DANGER ZONE
+                    </h3>
+                    <h2 className="text-3xl font-black text-teal-950 leading-tight">
+                      Reset Data {resetAngkatan}
+                    </h2>
+                  </div>
+                </div>
+
+                <div className="p-6 bg-rose-50/50 rounded-3xl border border-rose-100">
+                    <p className="text-sm text-rose-900 leading-relaxed font-medium">
+                        Tindakan ini akan **MENGHAPUS SEMUA PILIHAN DOSEN** untuk seluruh mahasiswa angkatan **{resetAngkatan}**. 
+                        Mahasiswa yang terdampak harus melakukan pemilihan ulang.
+                    </p>
+                </div>
+
+                <div className="flex flex-col gap-4 pt-4">
+                  <button
+                    onClick={handleResetAngkatan}
+                    disabled={loading}
+                    className="w-full py-6 bg-rose-500 text-white rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-rose-500/20 hover:bg-rose-600 hover:-translate-y-1 transition-all disabled:opacity-50 group flex items-center justify-center gap-3"
+                  >
+                    {loading ? (
+                        <RefreshCcw className="w-5 h-5 animate-spin" />
+                    ) : (
+                        <Trash2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                    )}
+                    {loading ? "PROSES RESET..." : "IYA, RESET SEKARANG"}
+                  </button>
+                  <button
+                    onClick={() => setResetModalOpen(false)}
+                    disabled={loading}
+                    className="w-full py-6 bg-teal-50 text-teal-800/40 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-teal-100 transition-all"
+                  >
+                    TIDAK, BATALKAN
                   </button>
                 </div>
               </motion.div>

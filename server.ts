@@ -474,13 +474,17 @@ Silakan cek dashboard Anda untuk mendownload bukti pemilihan. Tetap semangat! ðŸ
       }).catch(err => console.error("Triggered WA Error:", err));
     }
 
-    return result;
-
     // Broadcast update
     const allLecturers = await prisma.dosen.findMany({
       include: { _count: { select: { mahasiswa: true } } },
     });
     io.emit("quota_update", allLecturers);
+    
+    // Broadcast for Live Activity Feed
+    io.emit("new_selection", { 
+      lecturerName: result.lecturerName,
+      timestamp: new Date()
+    });
 
     res.json(result);
   } catch (err: any) {

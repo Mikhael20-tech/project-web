@@ -28,6 +28,8 @@ import { cn } from "@/src/lib/utils";
 import { useToast } from "@/src/components/ToastProvider";
 import { useLanguage } from "@/src/lib/LanguageContext";
 import LoadingOverlay from "@/src/components/LoadingOverlay";
+import DosenCardSkeleton from "@/src/components/DosenCardSkeleton";
+import confetti from "canvas-confetti";
 
 const Dashboard = ({
   user: initialUser,
@@ -47,6 +49,7 @@ const Dashboard = ({
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isWarActive, setIsWarActive] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [confirmingDosen, setConfirmingDosen] = useState<any>(null);
   const [profileForm, setProfileForm] = useState({
@@ -96,8 +99,8 @@ const Dashboard = ({
       if (!res.ok) throw new Error(data.error || "Gagal membatalkan pemilihan.");
 
       toast({
-        title: "DIBATALKAN",
-        description: "PEMILIHAN DOSEN BERHASIL DIBATALKAN.",
+        title: t("toast_deleted_title"),
+        description: t("toast_deleted_desc"),
         variant: "success",
       });
       await Promise.all([fetchStudentData(), fetchDosen()]);
@@ -135,9 +138,12 @@ const Dashboard = ({
   };
 
   useEffect(() => {
-    fetchDosen();
-    fetchConfig();
-    fetchStudentData();
+    const init = async () => {
+      setInitialLoading(true);
+      await Promise.all([fetchDosen(), fetchConfig(), fetchStudentData()]);
+      setInitialLoading(false);
+    };
+    init();
 
     socket.on("quota_update", (updatedList: any[]) => {
       setDosenList(updatedList);
@@ -198,10 +204,18 @@ const Dashboard = ({
       }
 
       toast({
-        title: "BERHASIL",
-        description: `ANDA MENDAPATKAN ${data.lecturerName}.`,
+        title: t("toast_success_title"),
+        description: `${t("dash_student_selected_desc")} ${data.lecturerName}.`,
         variant: "success",
       });
+      
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ["#0d9488", "#34d399", "#fb923c"]
+      });
+
       fetchDosen();
       fetchStudentData();
     } catch (err: any) {
@@ -231,8 +245,8 @@ const Dashboard = ({
       });
       if (!res.ok) throw new Error("Gagal memperbarui profil.");
       toast({
-        title: "PROFIL DIPERBARUI",
-        description: "PROFIL BERHASIL DIPERBARUI!",
+        title: t("toast_profile_updated_title"),
+        description: t("toast_profile_updated_desc"),
         variant: "success",
       });
       setIsProfileModalOpen(false);
@@ -281,8 +295,8 @@ const Dashboard = ({
     
     if (file.size > 2 * 1024 * 1024) {
       toast({
-        title: "FILE TERLALU BESAR",
-        description: "UKURAN FOTO MAKSIMAL 2MB",
+        title: t("toast_file_too_large_title"),
+        description: t("toast_file_too_large_desc"),
         variant: "error",
       });
       return;
@@ -305,8 +319,8 @@ const Dashboard = ({
       if (!res.ok) throw new Error(data.error || "Gagal upload foto.");
       setProfileForm({ ...profileForm, foto: data.url });
       toast({
-        title: "UPLOAD BERHASIL",
-        description: "Foto profil berhasil diperbarui.",
+        title: t("toast_upload_success_title"),
+        description: t("toast_upload_success_desc"),
         variant: "success",
       });
     } catch (err: any) {
@@ -369,7 +383,7 @@ const Dashboard = ({
             <div className="grid grid-cols-1 gap-4 mt-8 pt-8 border-t border-teal-50">
               <div className="text-center">
                 <p className="text-[8px] font-black text-teal-800/50 uppercase tracking-widest mb-1">
-                  NOMOR INDUK MHS
+                  {t("dash_student_nim_label")}
                 </p>
                 <p className="text-xl font-mono font-black text-teal-950">
                   {studentData?.nim || "-----"}
@@ -665,91 +679,95 @@ const Dashboard = ({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {dosenList.filter(d =>
-                d.nama?.toLowerCase().includes(searchDosen.toLowerCase()) ||
-                d.keahlian?.toLowerCase().includes(searchDosen.toLowerCase())
-              ).map((dosen, index) => (
-                <motion.div
-                  key={dosen.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="group bg-white border border-teal-50 rounded-[3rem] p-10 shadow-sm hover:shadow-xl hover:border-teal-200 hover:-translate-y-3 transition-all duration-700 flex flex-col relative overflow-hidden"
-                >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-teal-400/5 blur-[60px]" />
+              {initialLoading ? (
+                Array.from({ length: 6 }).map((_, i) => <DosenCardSkeleton key={i} />)
+              ) : (
+                dosenList.filter(d =>
+                  d.nama?.toLowerCase().includes(searchDosen.toLowerCase()) ||
+                  d.keahlian?.toLowerCase().includes(searchDosen.toLowerCase())
+                ).map((dosen, index) => (
+                  <motion.div
+                    key={dosen.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="group bg-white border border-teal-50 rounded-[3rem] p-10 shadow-sm hover:shadow-xl hover:border-teal-200 hover:-translate-y-3 transition-all duration-700 flex flex-col relative overflow-hidden"
+                  >
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-teal-400/5 blur-[60px]" />
 
-                  <div className="flex flex-col items-center text-center mb-10 relative">
-                    <div className="relative mb-6">
-                      <div className="w-28 h-28 rounded-[2.25rem] bg-white p-1 relative z-10 shadow-xl border border-teal-50 overflow-hidden">
-                        <img
-                          src={dosen.foto || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&h=300&fit=crop"}
-                          alt={dosen.nama}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
-                        />
-                      </div>
-                      <div className={cn(
-                        "absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-4 border-white shadow-lg z-20",
-                        dosen.kuotaMax - dosen._count.mahasiswa > 0 ? "bg-teal-500" : "bg-rose-500"
-                      )} />
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 rounded-full border border-teal-100">
-                        <p className="text-[8px] text-teal-600 uppercase tracking-[0.2em] font-black">NIP. {dosen.nip}</p>
-                      </div>
-                      <h3 className="font-black text-2xl text-teal-950 group-hover:text-teal-600 transition-colors tracking-tighter leading-tight">{dosen.nama}</h3>
-                      <p className="text-[10px] font-bold text-teal-800/40 uppercase tracking-widest">{dosen.keahlian || "Pendidikan Teknologi Informasi"}</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-6 flex-1 relative">
-                    <div className="p-6 bg-teal-50/50 rounded-[2.5rem] border border-teal-100/50 space-y-4">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="text-[9px] uppercase font-black text-teal-800/30 tracking-widest mb-1">{t("dash_student_availability")}</p>
-                          <p className={cn("text-3xl font-black font-mono tracking-tighter", dosen.kuotaMax - dosen._count.mahasiswa > 0 ? "text-teal-950" : "text-rose-500")}>
-                            {dosen.kuotaMax - dosen._count.mahasiswa} <span className="text-[10px] text-teal-800/30">SLOT</span>
-                          </p>
+                    <div className="flex flex-col items-center text-center mb-10 relative">
+                      <div className="relative mb-6">
+                        <div className="w-28 h-28 rounded-[2.25rem] bg-white p-1 relative z-10 shadow-xl border border-teal-50 overflow-hidden">
+                          <img
+                            src={dosen.foto || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&h=300&fit=crop"}
+                            alt={dosen.nama}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                          />
                         </div>
-                        <div className="text-right">
-                          <p className="text-[9px] uppercase font-black text-teal-800/30 tracking-widest mb-1">{t("dash_student_capacity")}</p>
-                          <p className="text-xs font-black text-teal-800/60">{dosen._count.mahasiswa} / {dosen.kuotaMax}</p>
-                        </div>
+                        <div className={cn(
+                          "absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-4 border-white shadow-lg z-20",
+                          dosen.kuotaMax - dosen._count.mahasiswa > 0 ? "bg-teal-500" : "bg-rose-500"
+                        )} />
                       </div>
 
                       <div className="space-y-2">
-                        <div className="w-full h-2 bg-white rounded-full overflow-hidden p-0.5 border border-teal-100">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            whileInView={{ width: `${(dosen._count.mahasiswa / dosen.kuotaMax) * 100}%` }}
-                            transition={{ duration: 1 }}
-                            className={cn("h-full rounded-full", dosen.kuotaMax - dosen._count.mahasiswa > 0 ? "bg-teal-500" : "bg-rose-500")}
-                          />
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 rounded-full border border-teal-100">
+                          <p className="text-[8px] text-teal-600 uppercase tracking-[0.2em] font-black">NIP. {dosen.nip}</p>
                         </div>
+                        <h3 className="font-black text-2xl text-teal-950 group-hover:text-teal-600 transition-colors tracking-tighter leading-tight">{dosen.nama}</h3>
+                        <p className="text-[10px] font-bold text-teal-800/40 uppercase tracking-widest">{dosen.keahlian || "Pendidikan Teknologi Informasi"}</p>
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => setSelectingDosenForJudul(dosen)}
-                      disabled={!isWarActive || config?.isForcedClosed || dosen.kuotaMax - dosen._count.mahasiswa <= 0 || loading || !isBatchAllowed()}
-                      className={cn(
-                        "w-full py-6 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all duration-500 shadow-xl overflow-hidden relative",
-                        isWarActive && !config?.isForcedClosed && dosen.kuotaMax - dosen._count.mahasiswa > 0 && isBatchAllowed()
-                          ? "bg-teal-950 text-white hover:bg-teal-500 shadow-teal-950/20 hover:-translate-y-2"
-                          : "bg-teal-50 text-teal-800/20 cursor-not-allowed border border-teal-100"
-                      )}
-                    >
-                      <span className="relative z-10 flex items-center justify-center gap-2">
-                        {loading ? <RefreshCcw className="w-4 h-4 animate-spin" /> : 
-                          (config?.isForcedClosed ? t("dash_student_system_closed") :
-                          (!isWarActive ? t("dash_student_waiting_war") : 
-                          (!isBatchAllowed() ? t("dash_student_access_denied") :
-                          (dosen.kuotaMax - dosen._count.mahasiswa <= 0 ? t("dash_student_quota_full") : t("dash_student_pick_advisor")))))}
-                      </span>
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
+                    <div className="space-y-6 flex-1 relative">
+                      <div className="p-6 bg-teal-50/50 rounded-[2.5rem] border border-teal-100/50 space-y-4">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="text-[9px] uppercase font-black text-teal-800/30 tracking-widest mb-1">{t("dash_student_availability")}</p>
+                            <p className={cn("text-3xl font-black font-mono tracking-tighter", dosen.kuotaMax - dosen._count.mahasiswa > 0 ? "text-teal-950" : "text-rose-500")}>
+                              {dosen.kuotaMax - dosen._count.mahasiswa} <span className="text-[10px] text-teal-800/30">SLOT</span>
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[9px] uppercase font-black text-teal-800/30 tracking-widest mb-1">{t("dash_student_capacity")}</p>
+                            <p className="text-xs font-black text-teal-800/60">{dosen._count.mahasiswa} / {dosen.kuotaMax}</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="w-full h-2 bg-white rounded-full overflow-hidden p-0.5 border border-teal-100">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              whileInView={{ width: `${(dosen._count.mahasiswa / dosen.kuotaMax) * 100}%` }}
+                              transition={{ duration: 1 }}
+                              className={cn("h-full rounded-full", dosen.kuotaMax - dosen._count.mahasiswa > 0 ? "bg-teal-500" : "bg-rose-500")}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => setSelectingDosenForJudul(dosen)}
+                        disabled={!isWarActive || config?.isForcedClosed || dosen.kuotaMax - dosen._count.mahasiswa <= 0 || loading || !isBatchAllowed()}
+                        className={cn(
+                          "w-full py-6 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all duration-500 shadow-xl overflow-hidden relative",
+                          isWarActive && !config?.isForcedClosed && dosen.kuotaMax - dosen._count.mahasiswa > 0 && isBatchAllowed()
+                            ? "bg-teal-950 text-white hover:bg-teal-500 shadow-teal-950/20 hover:-translate-y-2"
+                            : "bg-teal-50 text-teal-800/20 cursor-not-allowed border border-teal-100"
+                        )}
+                      >
+                        <span className="relative z-10 flex items-center justify-center gap-2">
+                          {loading ? <RefreshCcw className="w-4 h-4 animate-spin" /> : 
+                            (config?.isForcedClosed ? t("dash_student_system_closed") :
+                            (!isWarActive ? t("dash_student_waiting_war") : 
+                            (!isBatchAllowed() ? t("dash_student_access_denied") :
+                            (dosen.kuotaMax - dosen._count.mahasiswa <= 0 ? t("dash_student_quota_full") : t("dash_student_pick_advisor")))))}
+                        </span>
+                      </button>
+                    </div>
+                  </motion.div>
+                ))
+              )}
             </div>
           </>
         )}
@@ -788,17 +806,17 @@ const Dashboard = ({
                     <div className="space-y-1">
                       <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-500">{t("dash_student_step_1")}</h3>
                       <h2 className="text-2xl font-black text-teal-950">{t("dash_student_thesis_plan")}</h2>
-                      <p className="text-sm text-teal-800/60 font-medium pt-1">Beritahu <span className="font-black text-teal-700">{selectingDosenForJudul.nama}</span> topik riset Anda.</p>
+                      <p className="text-sm text-teal-800/60 font-medium pt-1">{t("dash_student_plan_desc")}</p>
                     </div>
                     <textarea
                       value={rencanaJudulInput}
                       onChange={(e) => setRencanaJudulInput(e.target.value)}
-                      placeholder="Contoh: Analisis User Interface pada Aplikasi Pendidikan..."
+                      placeholder={t("dash_student_plan_placeholder")}
                       rows={4}
                       className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none resize-none"
                     />
                     <div className="flex flex-col gap-3">
-                      <button onClick={() => { setConfirmingDosen(selectingDosenForJudul); setSelectingDosenForJudul(null); }} className="w-full py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg flex items-center justify-center gap-2">LANJUT KONFIRMASI <ChevronRight className="w-4 h-4" /></button>
+                      <button onClick={() => { setConfirmingDosen(selectingDosenForJudul); setSelectingDosenForJudul(null); }} className="w-full py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg flex items-center justify-center gap-2">{t("dash_student_continue_confirm")} <ChevronRight className="w-4 h-4" /></button>
                       <button onClick={() => setSelectingDosenForJudul(null)} className="w-full py-4 bg-teal-50 text-teal-800/40 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-100 transition-all">{t("dash_student_cancel")}</button>
                     </div>
                  </div>
