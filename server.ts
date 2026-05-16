@@ -326,6 +326,40 @@ app.get("/api/auth/google/callback", async (req, res) => {
   }
 });
 
+// --- IMAGE PROXY (To bypass CORS for PDF generation) ---
+app.get("/api/proxy-image", async (req, res) => {
+  let imageUrl = req.query.url as string;
+  if (!imageUrl) return res.status(400).send("URL is required");
+
+  // Handle relative URLs
+  if (imageUrl.startsWith("/")) {
+    const protocol = req.protocol;
+    const host = req.get("host");
+    imageUrl = `${protocol}://${host}${imageUrl}`;
+  }
+
+  console.log("📂 Proxying image request:", imageUrl);
+
+  try {
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      console.error(`❌ Proxy fetch failed: ${response.status} ${response.statusText}`);
+      throw new Error("Failed to fetch image");
+    }
+    
+    const arrayBuffer = await response.arrayBuffer();
+    const contentType = response.headers.get("content-type") || "image/jpeg";
+    
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.send(Buffer.from(arrayBuffer));
+  } catch (error) {
+    console.error("❌ Proxy error for URL:", imageUrl, error);
+    res.status(500).send("Failed to proxy image");
+  }
+});
+
 // --- STUDENT PROFILE ---
 app.get("/api/me", authenticate, async (req: any, res) => {
   try {
@@ -357,7 +391,7 @@ app.get("/api/me-dosen", authenticate, async (req: any, res) => {
 });
 
 app.post("/api/profile", authenticate, async (req: any, res) => {
-  const { nama, kontak, peminatan, bio, foto, angkatan } = req.body;
+  const { nama, kontak, peminatan, bio, foto, angkatan, rencanaJudul } = req.body;
   try {
     const student = await prisma.mahasiswa.upsert({
       where: { userId: req.user.id },
@@ -367,7 +401,8 @@ app.post("/api/profile", authenticate, async (req: any, res) => {
         peminatan, 
         bio, 
         foto: foto || null, 
-        angkatan 
+        angkatan,
+        rencanaJudul
       },
       create: {
         userId: req.user.id,
@@ -377,7 +412,8 @@ app.post("/api/profile", authenticate, async (req: any, res) => {
         peminatan,
         bio,
         foto: foto || null,
-        angkatan
+        angkatan,
+        rencanaJudul
       },
     });
 
@@ -504,49 +540,14 @@ Silakan cek dashboard Anda untuk mendownload bukti pemilihan. Tetap semangat! �
 
 
 app.post("/api/war/cancel", authenticate, async (req: any, res) => {
-  try {
-    const result = await prisma.$transaction(async (tx) => {
-      // 1. Check War Time
-      const config = await tx.warConfig.findUnique({ where: { id: "global_config" } });
-      if (!config) throw new Error("Konfigurasi jadwal belum disetel.");
-      
-      const now = new Date();
-      if (now < config.startTime || now > config.endTime) {
-        throw new Error("Membatalkan dosen hanya diperbolehkan saat periode pemilihan aktif.");
-      }
-
-      // 2. Check Profile
-      const student = await tx.mahasiswa.findUnique({
-        where: { userId: req.user.id },
-      });
-
-      if (!student) {
-        throw new Error("Profil mahasiswa tidak ditemukan.");
-      }
-
-      if (!student.dosenId) {
-        throw new Error("Anda belum memilih dosen.");
-      }
-
-      // 3. Update
-      await tx.mahasiswa.update({
-        where: { id: student.id },
-        data: { dosenId: null, statusBimbingan: "PENDING", rencanaJudul: null },
-      });
-
-      return { success: true };
+  // ⛔ Mahasiswa tidak diizinkan membatalkan pemilihan sendiri.
+  // Hanya Admin (via reset endpoint) atau Dosen (via kick endpoint) yang berwenang.
+  if (req.user.role === "STUDENT") {
+    return res.status(403).json({ 
+      error: "Akses ditolak. Pembatalan pemilihan hanya dapat dilakukan oleh Dosen Pembimbing atau Admin Prodi." 
     });
-
-    // Broadcast
-    const allLecturers = await prisma.dosen.findMany({
-      include: { _count: { select: { mahasiswa: true } } },
-    });
-    io.emit("quota_update", allLecturers);
-
-    res.json(result);
-  } catch (err: any) {
-    res.status(400).json({ error: err.message });
   }
+  res.status(400).json({ error: "Endpoint ini sudah tidak digunakan." });
 });
 
 // --- DOSEN MANAGEMENT ROUTES ---
@@ -957,27 +958,60 @@ app.put("/api/admin/war-config", authenticate, isAdmin, async (req, res) => {
       throw new Error("Waktu mulai harus lebih awal dari waktu selesai.");
     }
 
-    const config = await prisma.warConfig.upsert({
-      where: { id: "global_config" },
-      update: { 
+    const updateData: any = { 
         startTime: new Date(startTime), 
         endTime: new Date(endTime),
         periode: periode || "Ganjil 2024/2025",
         targetAngkatan: req.body.targetAngkatan || "All",
         announcement: req.body.announcement || null,
         isForcedClosed: req.body.isForcedClosed ?? false
-      },
-      create: { 
-        id: "global_config",
-        startTime: new Date(startTime), 
-        endTime: new Date(endTime),
-        periode: periode || "Ganjil 2024/2025",
-        targetAngkatan: req.body.targetAngkatan || "All",
-        announcement: req.body.announcement || null,
-        isForcedClosed: req.body.isForcedClosed ?? false
-      }
-    });
-    res.json(config);
+    };
+
+    // Only add category if it's provided and we want to be safe with DB schema
+    if (req.body.category) {
+        updateData.category = req.body.category;
+    }
+
+    try {
+        const config = await prisma.warConfig.upsert({
+          where: { id: "global_config" },
+          update: updateData,
+          create: { 
+            id: "global_config",
+            ...updateData
+          }
+        });
+        res.json(config);
+    } catch (err: any) {
+        if (err.message.includes("category") || err.code === 'P2025' || err.message.includes("column")) {
+            console.log("⚠️ Database belum tersinkronisasi. Menyimpan tanpa kolom category...");
+            const { category, ...safeData } = updateData;
+            
+            // Define explicit selection to avoid Prisma querying the non-existent 'category' column
+            const safeSelection = {
+                id: true,
+                startTime: true,
+                endTime: true,
+                periode: true,
+                targetAngkatan: true,
+                announcement: true,
+                isForcedClosed: true
+            };
+
+            const config = await prisma.warConfig.upsert({
+              where: { id: "global_config" },
+              update: safeData,
+              create: { 
+                id: "global_config",
+                ...safeData
+              },
+              select: safeSelection
+            });
+            return res.json(config);
+        }
+        console.error("Upsert WarConfig Error:", err);
+        res.status(400).json({ error: err.message });
+    }
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }
@@ -1322,7 +1356,27 @@ app.get("/api/war-config", async (req, res) => {
   try {
     const config = await prisma.warConfig.findUnique({ where: { id: "global_config" } });
     res.json(config);
-  } catch (err) {
+  } catch (err: any) {
+    // Fallback if category column does not exist in DB yet
+    if (err.message && (err.message.includes("category") || err.message.includes("column"))) {
+        try {
+            const config = await prisma.warConfig.findUnique({
+                where: { id: "global_config" },
+                select: {
+                    id: true,
+                    startTime: true,
+                    endTime: true,
+                    periode: true,
+                    targetAngkatan: true,
+                    announcement: true,
+                    isForcedClosed: true
+                }
+            });
+            return res.json(config);
+        } catch (innerErr) {
+            return res.status(500).json({ error: "Failed to fetch config (fallback)" });
+        }
+    }
     res.status(500).json({ error: "Failed to fetch config" });
   }
 });

@@ -197,7 +197,7 @@ const LoginPage = ({
                   : "text-teal-800/40 hover:text-teal-600",
               )}
             >
-              {t("login_student").split(" ")[0]}
+              {t("type_student")}
             </button>
             <button
               type="button"
@@ -213,7 +213,7 @@ const LoginPage = ({
                   : "text-teal-800/40 hover:text-teal-600",
               )}
             >
-              {t("login_dosen").split(" ")[0]}
+              {t("type_dosen")}
             </button>
           </div>
 

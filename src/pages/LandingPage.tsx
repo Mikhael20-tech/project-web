@@ -224,6 +224,43 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Academic Modules Section */}
+      <section className="py-24 px-6 overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row items-end justify-between mb-16 gap-4">
+            <div className="max-w-xl">
+              <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-4">{t("landing_modules_title")}</h2>
+              <p className="text-sm md:text-lg text-teal-800/60 font-medium">{t("landing_modules_subtitle")}</p>
+            </div>
+            <div className="hidden md:block h-px bg-teal-100 flex-1 mx-12 mb-6" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { t: t("module_magang_t"), d: t("module_magang_d"), icon: Users, color: "from-indigo-500 to-indigo-600" },
+              { t: t("module_plp_t"), d: t("module_plp_d"), icon: GraduationCap, color: "from-rose-500 to-rose-600" },
+              { t: t("module_skripsi_t"), d: t("module_skripsi_d"), icon: ShieldCheck, color: "from-emerald-500 to-emerald-600" }
+            ].map((m, i) => (
+              <motion.div
+                key={i}
+                whileHover={{ scale: 1.02, y: -5 }}
+                className="relative group p-1 bg-white rounded-[3rem] shadow-xl shadow-teal-900/5 overflow-hidden"
+              >
+                <div className={cn("absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500", m.color)} />
+                <div className="relative z-10 bg-white p-10 rounded-[2.8rem] h-full flex flex-col items-start transition-all duration-500 group-hover:bg-transparent">
+                  <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center mb-8 shadow-lg group-hover:bg-white/20 group-hover:text-white transition-all", 
+                    i === 0 ? "bg-indigo-50 text-indigo-500" : i === 1 ? "bg-rose-50 text-rose-500" : "bg-emerald-50 text-emerald-500")}>
+                    <m.icon className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-2xl font-black mb-4 group-hover:text-white transition-colors">{m.t}</h3>
+                  <p className="text-sm text-teal-800/60 font-medium leading-relaxed group-hover:text-white/80 transition-colors">{m.d}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* FAQ Section */}
       <section id="faq" className="py-24 px-6">
         <div className="max-w-3xl mx-auto">

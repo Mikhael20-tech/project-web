@@ -22,6 +22,8 @@ import {
   Info,
   Zap,
   ChevronDown,
+  Briefcase,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useLanguage } from "@/src/lib/LanguageContext";
@@ -91,7 +93,8 @@ const AdminDashboard = ({
     periode: "", 
     targetAngkatan: "All", 
     announcement: "",
-    isForcedClosed: false
+    isForcedClosed: false,
+    category: "SKRIPSI_ARTIKEL"
   });
   const [filterAngkatan, setFilterAngkatan] = useState("All");
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
@@ -145,6 +148,7 @@ const AdminDashboard = ({
             targetAngkatan: confData.targetAngkatan || "All",
             announcement: confData.announcement || "",
             isForcedClosed: confData.isForcedClosed || false,
+            category: confData.category || "SKRIPSI_ARTIKEL",
           } as any);
         }
       }
@@ -1833,7 +1837,36 @@ const AdminDashboard = ({
                       </p>
                     </div>
                   </div>
-                  <form onSubmit={handleConfigSubmit} className="space-y-8">
+                  <form onSubmit={handleConfigSubmit} className="space-y-12">
+                    {/* War Category Selection */}
+                    <div className="space-y-4 text-left">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                        {t("dash_admin_war_category")}
+                      </label>
+                        <div className="flex flex-wrap gap-3">
+                          {[
+                            { id: "MAGANG", label: t("cat_magang"), icon: Briefcase, color: "bg-indigo-500", text: "text-indigo-500" },
+                            { id: "PLP", label: t("cat_plp"), icon: GraduationCap, color: "bg-rose-500", text: "text-rose-500" },
+                            { id: "SKRIPSI_ARTIKEL", label: t("cat_skripsi_artikel"), icon: ShieldCheck, color: "bg-emerald-500", text: "text-emerald-500" }
+                          ].map((cat) => (
+                            <button
+                              key={cat.id}
+                              type="button"
+                              onClick={() => setConfigForm({ ...configForm, category: cat.id } as any)}
+                            className={cn(
+                              "flex items-center gap-3 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border-2",
+                              (configForm as any).category === cat.id
+                                ? `${cat.color} text-white border-transparent shadow-xl`
+                                : `bg-white ${cat.text} border-teal-50 hover:border-teal-200`
+                            )}
+                          >
+                            <cat.icon className={cn("w-4 h-4", (configForm as any).category === cat.id ? "text-white" : cat.text)} />
+                            {cat.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">

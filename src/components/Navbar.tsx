@@ -209,13 +209,19 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
                     setIsProfileMenuOpen(!isProfileMenuOpen);
                     setIsLangOpen(false);
                   }}
-                  className="w-10 h-10 rounded-2xl overflow-hidden border border-teal-100 shadow-sm hover:ring-2 hover:ring-teal-500 transition-all duration-300"
+                  className="w-10 h-10 rounded-2xl overflow-hidden border border-teal-100 shadow-sm hover:ring-2 hover:ring-teal-500 transition-all duration-300 bg-teal-50"
                   title="Profile Menu"
                 >
                   <img
-                    src={user.foto || (user.role === 'DOSEN' ? "https://images.unsplash.com/photo-1544717297-fa154da09f9b?w=400&h=400&fit=crop" : "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&h=400&fit=crop")}
+                    src={user.foto || user.dosen?.foto || user.mahasiswa?.foto || (user.role === 'DOSEN' ? "https://images.unsplash.com/photo-1544717297-fa154da09f9b?w=400&h=400&fit=crop" : "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&h=400&fit=crop")}
                     className="w-full h-full object-cover object-top"
                     alt="Profile"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = user.role === 'DOSEN' 
+                        ? "https://images.unsplash.com/photo-1544717297-fa154da09f9b?w=400&h=400&fit=crop" 
+                        : "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&h=400&fit=crop";
+                    }}
                   />
                 </button>
                 <AnimatePresence>

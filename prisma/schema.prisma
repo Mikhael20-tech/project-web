@@ -74,6 +74,12 @@ model Penelitian {
   createdAt   DateTime @default(now())
 }
 
+enum WarCategory {
+  MAGANG
+  PLP
+  SKRIPSI_ARTIKEL
+}
+
 model WarConfig {
   id        String   @id @default("global_config")
   startTime DateTime
@@ -82,4 +88,5 @@ model WarConfig {
   targetAngkatan String?  @default("All")
   announcement   String?
   isForcedClosed Boolean  @default(false)
+  category       WarCategory @default(SKRIPSI_ARTIKEL)
 }
