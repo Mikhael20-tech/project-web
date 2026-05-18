@@ -444,7 +444,7 @@ const AdminDashboard = ({
     link.setAttribute("href", url);
     link.setAttribute(
       "download",
-      `Laporan_WarDosen_PTI_${new Date().toISOString().split("T")[0]}.csv`,
+      `Laporan_dosenkita_PTI_${new Date().toISOString().split("T")[0]}.csv`,
     );
     link.style.visibility = "hidden";
     document.body.appendChild(link);

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useLanguage } from "@/src/lib/LanguageContext";
+import Logo from "@/src/components/Logo";
 
 const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
   const navigate = useNavigate();
@@ -110,22 +111,7 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
         )}
       >
         {/* Logo Section */}
-        <div
-          className="flex items-center gap-3 cursor-pointer group"
-          onClick={() => navigate("/")}
-        >
-          <div className="w-10 h-10 bg-gradient-to-br from-teal-600 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/20 group-hover:rotate-6 transition-all duration-500">
-            <GraduationCap className="text-white w-6 h-6" />
-          </div>
-          <div className="hidden sm:block">
-            <h1 className="text-lg font-black tracking-tighter text-teal-950 leading-none">
-              WAR<span className="text-orange-500">DOSEN</span>
-            </h1>
-            <p className="text-[8px] font-black text-teal-800/40 uppercase tracking-widest">
-              PTI Unesa Ecosystem
-            </p>
-          </div>
-        </div>
+        <Logo onClick={() => navigate("/")} className="cursor-pointer" />
 
         {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center gap-2">

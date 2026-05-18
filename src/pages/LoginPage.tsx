@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useLanguage } from "@/src/lib/LanguageContext";
+import { LogoIcon } from "@/src/components/Logo";
 
 const LoginPage = ({
   onLogin,
@@ -154,10 +155,10 @@ const LoginPage = ({
               initial={{ rotate: -180, scale: 0, opacity: 0 }}
               animate={{ rotate: 0, scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 260, damping: 20 }}
-              className="w-20 h-20 bg-gradient-to-br from-teal-500 to-orange-500 rounded-[1.5rem] flex items-center justify-center shadow-2xl shadow-teal-500/30 mx-auto mb-6 relative overflow-hidden group"
+              className="w-20 h-20 bg-white rounded-[1.5rem] flex items-center justify-center shadow-2xl shadow-teal-500/10 mx-auto mb-6 border border-slate-50 relative overflow-hidden group"
             >
-              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-              <Lock className="w-10 h-10 text-white relative z-10" />
+              <div className="absolute inset-0 bg-teal-50/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+              <LogoIcon className="w-14 h-14 relative z-10" />
             </motion.div>
 
             <AnimatePresence mode="wait">

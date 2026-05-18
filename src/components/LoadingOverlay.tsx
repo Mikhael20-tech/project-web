@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
-import { GraduationCap } from "lucide-react";
+import { LogoIcon } from "@/src/components/Logo";
 
 const LoadingOverlay: React.FC = () => {
   return (
@@ -20,7 +20,7 @@ const LoadingOverlay: React.FC = () => {
         
         {/* Logo in center */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <GraduationCap className="w-8 h-8 text-teal-600" />
+          <LogoIcon className="w-9 h-9" />
         </div>
       </div>
       
@@ -30,7 +30,7 @@ const LoadingOverlay: React.FC = () => {
         transition={{ delay: 0.2 }}
         className="mt-6 text-[10px] font-black uppercase tracking-[0.3em] text-teal-900/40"
       >
-        Loading WarDosen...
+        Loading IT Edunesa...
       </motion.p>
     </motion.div>
   );

@@ -594,7 +594,7 @@ const Dashboard = ({
                 <div className="flex items-center justify-between border-b-4 border-teal-500 pb-8 mb-10">
                   <div>
                     <h1 className="text-4xl font-black tracking-tighter">{t("dash_student_proof_title")}</h1>
-                    <p className="text-sm font-bold text-teal-500 tracking-[0.3em] uppercase">War Dosen PTI UNESA</p>
+                    <p className="text-sm font-bold text-teal-500 tracking-[0.3em] uppercase">IT Edunesa</p>
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] font-black text-teal-300 uppercase tracking-widest">{t("dash_student_print_date")}</p>
@@ -651,7 +651,7 @@ const Dashboard = ({
                 </div>
                 
                 <div className="mt-16 text-center">
-                  <p className="text-[8px] font-bold text-teal-200 uppercase tracking-[0.5em]">Dokumen ini dihasilkan secara otomatis oleh sistem WarDosen PTI UNESA</p>
+                  <p className="text-[8px] font-bold text-teal-200 uppercase tracking-[0.5em]">Dokumen ini dihasilkan secara otomatis oleh sistem IT Edunesa</p>
                 </div>
               </div>
             </div>

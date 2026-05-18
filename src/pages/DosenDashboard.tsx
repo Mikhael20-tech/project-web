@@ -585,7 +585,7 @@ const DosenDashboard = ({
                           "p-6 rounded-[2rem] border transition-all flex items-center justify-between gap-6",
                           p.isActive
                             ? "bg-white border-teal-100 shadow-sm"
-                            : "bg-slate-50 border-slate-100 opacity-60",
+                            : "bg-slate-50 border-slate-200/80 shadow-sm",
                         )}
                       >
                         <div className="flex-1">
@@ -601,17 +601,30 @@ const DosenDashboard = ({
                           <button
                             onClick={() => handleToggleResearch(p.id)}
                             className={cn(
-                              "px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border",
+                              "px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-3 border shadow-md hover:scale-[1.03] active:scale-95 cursor-pointer",
                               p.isActive
-                                ? "bg-emerald-50 text-emerald-600 border-emerald-100"
-                                : "bg-slate-100 text-slate-400 border-slate-200",
+                                ? "bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-600 shadow-emerald-500/20"
+                                : "bg-white hover:bg-slate-50 text-slate-500 border-slate-200 hover:text-slate-800 shadow-sm"
                             )}
                           >
-                            {p.isActive ? t("dash_dosen_active") : t("dash_dosen_inactive")}
+                            <span className="font-extrabold">
+                              {p.isActive ? t("dash_dosen_active") : t("dash_dosen_inactive")}
+                            </span>
+                            <div className={cn(
+                              "w-9 h-5 rounded-full p-0.5 transition-colors duration-300 relative flex items-center shrink-0",
+                              p.isActive ? "bg-white/30" : "bg-slate-200"
+                            )}>
+                              <div className={cn(
+                                "w-4 h-4 rounded-full shadow-md transition-transform duration-300 transform",
+                                p.isActive 
+                                  ? "bg-white translate-x-4" 
+                                  : "bg-slate-400 translate-x-0"
+                              )} />
+                            </div>
                           </button>
                           <button
                             onClick={() => handleDeleteResearch(p.id)}
-                            className="p-3 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all border border-rose-100"
+                            className="p-3.5 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all border border-rose-100 shadow-sm hover:scale-[1.03] active:scale-95 cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>

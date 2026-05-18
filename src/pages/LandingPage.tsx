@@ -18,6 +18,7 @@ import {
 import { cn } from "@/src/lib/utils";
 import { socket } from "@/src/lib/socket";
 import { useLanguage } from "@/src/lib/LanguageContext";
+import Logo from "@/src/components/Logo";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -62,22 +63,7 @@ const LandingPage = () => {
     <div className="min-h-screen bg-white text-teal-950 font-sans selection:bg-teal-100 selection:text-teal-900 overflow-x-hidden">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-teal-50 px-6 py-4 md:px-12 flex items-center justify-between">
-        <div
-          className="flex items-center gap-3 cursor-pointer group"
-          onClick={() => navigate("/")}
-        >
-          <div className="w-10 h-10 bg-gradient-to-br from-teal-600 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/20 group-hover:rotate-6 transition-all duration-500">
-            <GraduationCap className="text-white w-6 h-6" />
-          </div>
-          <div className="hidden sm:block">
-            <h1 className="text-lg font-black tracking-tighter text-teal-950 leading-none">
-              WAR<span className="text-orange-500">DOSEN</span>
-            </h1>
-            <p className="text-[8px] font-black text-teal-800/40 uppercase tracking-widest">
-              PTI Unesa Ecosystem
-            </p>
-          </div>
-        </div>
+        <Logo onClick={() => navigate("/")} className="cursor-pointer" />
         
         <div className="hidden md:flex items-center gap-8">
           <a href="#features" className="text-xs font-black uppercase tracking-widest text-teal-800/60 hover:text-teal-950 transition-colors">{t("view_features")}</a>
@@ -306,14 +292,7 @@ const LandingPage = () => {
 
       {/* Footer */}
       <footer className="py-12 border-t border-teal-50 px-6 text-center">
-        <div className="flex items-center justify-center gap-3 mb-6">
-          <div className="w-8 h-8 bg-teal-500 rounded-lg flex items-center justify-center shadow-lg shadow-teal-500/20">
-            <GraduationCap className="text-white w-5 h-5" />
-          </div>
-          <span className="text-lg font-black tracking-tighter text-teal-950 leading-none">
-            WAR<span className="text-orange-500">DOSEN</span>
-          </span>
-        </div>
+        <Logo showText={true} className="justify-center mb-6" iconSize="w-8 h-8" />
         <p className="text-[10px] font-black text-teal-800/30 uppercase tracking-[0.3em]">
           &copy; 2024 PTI UNESA. All Rights Reserved. Crafted for Excellence.
         </p>
