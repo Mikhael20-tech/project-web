@@ -544,10 +544,25 @@ const Dashboard = ({
                       <span className="text-base font-black text-emerald-50 leading-tight">{studentData.dosen.nama}</span>
                       <span className="text-[10px] font-bold text-teal-400">NIP. {studentData.dosen.nip}</span>
                       {studentData.dosen.kontak && (
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <Smartphone className="w-3 h-3 text-teal-500" />
-                          <span className="text-[10px] font-bold text-teal-300">{studentData.dosen.kontak}</span>
-                        </div>
+                        <a
+                          href={(() => {
+                            let cleaned = studentData.dosen.kontak.replace(/\D/g, "");
+                            if (cleaned.startsWith("0")) {
+                              cleaned = "62" + cleaned.slice(1);
+                            } else if (cleaned.startsWith("8")) {
+                              cleaned = "62" + cleaned;
+                            }
+                            return `https://wa.me/${cleaned}`;
+                          })()}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 mt-1 hover:text-emerald-400 transition-colors group/phone cursor-pointer"
+                        >
+                          <Smartphone className="w-3 h-3 text-teal-500 group-hover/phone:text-emerald-400" />
+                          <span className="text-[10px] font-bold text-teal-300 group-hover/phone:text-emerald-400 border-b border-dashed border-teal-300/30 group-hover/phone:border-emerald-400">
+                            {studentData.dosen.kontak}
+                          </span>
+                        </a>
                       )}
                     </div>
                   </div>
