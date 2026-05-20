@@ -41,7 +41,7 @@ const AppContent = ({
         {!currentUser && !isLoginPage && !isLandingPage && <LoadingOverlay />}
       </AnimatePresence>
       
-      {(!isLoginPage && !isLandingPage) && <Navbar user={currentUser} onLogout={logout} />}
+      {!isLoginPage && <Navbar user={currentUser} onLogout={logout} />}
       
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>

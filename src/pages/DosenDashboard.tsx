@@ -56,9 +56,11 @@ const DosenDashboard = ({
   const [managingStudentId, setManagingStudentId] = useState<string | null>(null);
 
   const [config, setConfig] = useState<any>(null);
+  const [submittingProfile, setSubmittingProfile] = useState(false);
+  const [submittingPassword, setSubmittingPassword] = useState(false);
 
-  const fetchDosen = async () => {
-    setLoading(true);
+  const fetchDosen = async (showLoadingOverlay = true) => {
+    if (showLoadingOverlay) setLoading(true);
     try {
       const res = await fetch("/api/me-dosen", {
         headers: { Authorization: `Bearer ${token}` },
@@ -77,7 +79,7 @@ const DosenDashboard = ({
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      if (showLoadingOverlay) setLoading(false);
     }
   };
 
@@ -98,6 +100,15 @@ const DosenDashboard = ({
     fetchConfig();
   }, [token]);
 
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => {
+        setMessage(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
+
   const handleApproveStudent = async (mahasiswaId: string) => {
     setManagingStudentId(mahasiswaId);
     try {
@@ -108,7 +119,7 @@ const DosenDashboard = ({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setMessage({ type: "success", text: data.message });
-      fetchDosen();
+      fetchDosen(false);
     } catch (err: any) {
       setMessage({ type: "error", text: err.message });
     } finally {
@@ -127,7 +138,7 @@ const DosenDashboard = ({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setMessage({ type: "success", text: data.message });
-      fetchDosen();
+      fetchDosen(false);
     } catch (err: any) {
       setMessage({ type: "error", text: err.message });
     } finally {
@@ -138,7 +149,7 @@ const DosenDashboard = ({
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
-    setLoading(true);
+    setSubmittingProfile(true);
     try {
       const res = await fetch("/api/dosen/profile", {
         method: "PUT",
@@ -152,12 +163,12 @@ const DosenDashboard = ({
       if (!res.ok) throw new Error(data.error || "Gagal memperbarui profil.");
 
       setMessage({ type: "success", text: t("toast_profile_updated_desc") });
-      fetchDosen();
+      fetchDosen(false);
       if (onProfileUpdate) onProfileUpdate(data);
     } catch (err: any) {
       setMessage({ type: "error", text: err.message });
     } finally {
-      setLoading(false);
+      setSubmittingProfile(false);
     }
   };
 
@@ -168,7 +179,7 @@ const DosenDashboard = ({
       setMessage({ type: "error", text: "Konfirmasi password tidak cocok." });
       return;
     }
-    setLoading(true);
+    setSubmittingPassword(true);
     try {
       const res = await fetch("/api/dosen/password", {
         method: "PUT",
@@ -193,7 +204,7 @@ const DosenDashboard = ({
     } catch (err: any) {
       setMessage({ type: "error", text: err.message });
     } finally {
-      setLoading(false);
+      setSubmittingPassword(false);
     }
   };
 
@@ -235,11 +246,12 @@ const DosenDashboard = ({
         body: JSON.stringify({ judul: researchJudul }),
       });
       if (res.ok) {
+        const data = await res.json();
         setResearchJudul("");
-        fetchDosen();
+        fetchDosen(false);
         setMessage({
           type: "success",
-          text: t("toast_research_added"),
+          text: `Projek penelitian "${data.judul}" berhasil ditambahkan dan telah aktif.`,
         });
       }
     } catch (err) {
@@ -248,14 +260,34 @@ const DosenDashboard = ({
   };
 
   const handleToggleResearch = async (id: string) => {
+    setDosenData((prev: any) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        penelitian: prev.penelitian.map((p: any) =>
+          p.id === id ? { ...p, isActive: !p.isActive } : p
+        ),
+      };
+    });
+
     try {
       const res = await fetch(`/api/dosen/penelitian/${id}/toggle`, {
         method: "PATCH",
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) fetchDosen();
+      if (res.ok) {
+        const data = await res.json();
+        fetchDosen(false);
+        setMessage({
+          type: "success",
+          text: `Projek penelitian "${data.judul}" telah ${data.isActive ? "DIAKTIFKAN" : "DINONAKTIFKAN"}`,
+        });
+      } else {
+        fetchDosen(false);
+      }
     } catch (err) {
       console.error(err);
+      fetchDosen(false);
     }
   };
 
@@ -266,7 +298,13 @@ const DosenDashboard = ({
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) fetchDosen();
+      if (res.ok) {
+        fetchDosen(false);
+        setMessage({
+          type: "success",
+          text: "Projek penelitian berhasil dihapus.",
+        });
+      }
     } catch (err) {
       console.error(err);
     }
@@ -434,18 +472,43 @@ const DosenDashboard = ({
           </button>
         </div>
 
-        {message && (
-          <div
-            className={cn(
-              "p-4 rounded-2xl text-center font-bold text-sm shadow-sm",
-              message.type === "success"
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                : "bg-rose-50 text-rose-700 border border-rose-100",
-            )}
-          >
-            {message.text}
-          </div>
-        )}
+        <AnimatePresence>
+          {message && (
+            <motion.div
+              initial={{ opacity: 0, y: 50, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.9 }}
+              className="fixed bottom-6 right-6 z-[999] max-w-sm w-full bg-white/70 backdrop-blur-xl border border-white/50 p-5 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] flex items-start gap-4"
+            >
+              <div className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-inner",
+                message.type === "success" 
+                  ? "bg-teal-50 text-teal-600 border border-teal-100" 
+                  : "bg-rose-50 text-rose-600 border border-rose-100"
+              )}>
+                {message.type === "success" ? (
+                  <CheckCircle2 className="w-5 h-5 animate-bounce" style={{ animationDuration: '2s' }} />
+                ) : (
+                  <XCircle className="w-5 h-5 animate-pulse" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-xs font-black uppercase tracking-wider text-teal-950 mb-1">
+                  {message.type === "success" ? "Sukses" : "Pemberitahuan"}
+                </h4>
+                <p className="text-xs text-teal-900/70 font-semibold leading-relaxed">
+                  {message.text}
+                </p>
+              </div>
+              <button
+                onClick={() => setMessage(null)}
+                className="text-teal-400 hover:text-teal-950 transition-colors p-1"
+              >
+                <XCircle className="w-4 h-4" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <AnimatePresence mode="wait">
           {activeTab === "overview" && (
@@ -758,9 +821,15 @@ const DosenDashboard = ({
                   </div>
                   <button
                     type="submit"
-                    className="w-full py-5 bg-teal-500 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg flex items-center justify-center gap-2"
+                    disabled={submittingProfile}
+                    className="w-full py-5 bg-teal-500 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    <Save className="w-4 h-4" /> {t("dash_dosen_save_profile")}
+                    {submittingProfile ? (
+                      <RefreshCcw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    {submittingProfile ? "MENYIMPAN..." : t("dash_dosen_save_profile")}
                   </button>
                 </form>
               </div>
@@ -835,9 +904,11 @@ const DosenDashboard = ({
                   </div>
                   <button
                     type="submit"
-                    className="w-full py-5 bg-teal-950 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-teal-800 transition-all shadow-lg flex items-center justify-center gap-2"
+                    disabled={submittingPassword}
+                    className="w-full py-5 bg-teal-950 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-teal-800 transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    <RefreshCcw className="w-4 h-4" /> {t("dash_dosen_update_password")}
+                    <RefreshCcw className={cn("w-4 h-4", submittingPassword && "animate-spin")} />
+                    {submittingPassword ? "MEMPROSES..." : t("dash_dosen_update_password")}
                   </button>
                 </form>
               </div>

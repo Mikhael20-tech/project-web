@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { 
   Zap, 
   ShieldCheck, 
@@ -22,10 +22,23 @@ import Logo from "@/src/components/Logo";
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { lang, setLang, t } = useLanguage();
   const [onlineCount, setOnlineCount] = useState(0);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [isLangOpen, setIsLangOpen] = useState(false);
+
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.substring(1);
+      const element = document.getElementById(id);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      }
+    }
+  }, [location.pathname, location.hash]);
 
   const languages = [
     { code: "id", label: "Bahasa Indonesia", flag: "🇮🇩" },
@@ -60,70 +73,23 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white text-teal-950 font-sans selection:bg-teal-100 selection:text-teal-900 overflow-x-hidden">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-teal-50 px-6 py-4 md:px-12 flex items-center justify-between">
-        <Logo onClick={() => navigate("/")} className="cursor-pointer" />
-        
-        <div className="hidden md:flex items-center gap-8">
-          <a href="#features" className="text-xs font-black uppercase tracking-widest text-teal-800/60 hover:text-teal-950 transition-colors">{t("view_features")}</a>
-          <a href="#faq" className="text-xs font-black uppercase tracking-widest text-teal-800/60 hover:text-teal-950 transition-colors">{t("nav_faq")}</a>
-          
-          {/* Language Switcher */}
-          <div className="relative">
-            <button 
-              onClick={() => setIsLangOpen(!isLangOpen)}
-              className="flex items-center gap-2 px-3 py-2 bg-teal-50 rounded-xl hover:bg-teal-100 transition-all"
-            >
-              <Languages className="w-4 h-4 text-teal-500" />
-              <span className="text-[10px] font-black text-teal-900 uppercase">{lang}</span>
-              <ChevronDown className={`w-3 h-3 transition-transform ${isLangOpen ? "rotate-180" : ""}`} />
-            </button>
-            <AnimatePresence>
-              {isLangOpen && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="absolute top-full mt-2 right-0 w-48 bg-white border border-teal-50 rounded-2xl shadow-2xl p-2 z-[70]"
-                >
-                  {languages.map((l) => (
-                    <button
-                      key={l.code}
-                      onClick={() => {
-                        setLang(l.code);
-                        setIsLangOpen(false);
-                      }}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-all ${lang === l.code ? "bg-teal-50 text-teal-950" : "hover:bg-slate-50 text-teal-800/60"}`}
-                    >
-                      <span className="text-lg">{l.flag}</span>
-                      <span className="text-xs font-bold">{l.label}</span>
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <div className="flex items-center gap-2 px-3 py-1 bg-teal-50 rounded-full">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-            <span className="text-[10px] font-black text-teal-700 uppercase">{onlineCount} {t("online_status")}</span>
-          </div>
-        </div>
-
-        <button 
-          onClick={() => navigate("/login")}
-          className="px-6 py-2.5 bg-teal-950 text-white rounded-full text-xs font-black uppercase tracking-widest hover:bg-teal-800 transition-all shadow-lg shadow-teal-950/10 active:scale-95"
-        >
-          {t("login")}
-        </button>
-      </nav>
+    <div className="min-h-screen bg-[#F0FAF8] text-teal-950 font-sans selection:bg-teal-100 selection:text-teal-900 overflow-x-hidden relative">
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full pointer-events-none">
-          <div className="absolute top-20 right-0 w-96 h-96 bg-teal-100 rounded-full blur-[100px] opacity-50" />
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-100 rounded-full blur-[100px] opacity-30" />
+      <section className="relative pt-44 pb-20 md:pt-56 md:pb-32 px-6 overflow-hidden">
+        {/* Deep Background Decorations for scrollable feel */}
+        <div className="absolute inset-0 w-full h-full pointer-events-none z-0">
+          <div
+            className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-gradient-to-br from-teal-200/40 to-orange-200/40 blur-[120px] rounded-full -translate-x-1/2 -translate-y-1/2 animate-pulse"
+            style={{ animationDuration: "6s" }}
+          />
+          <div
+            className="absolute top-1/3 right-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-yellow-200/40 to-teal-200/40 blur-[120px] rounded-full translate-x-1/2 -translate-y-1/2 animate-pulse"
+            style={{ animationDuration: "8s", animationDelay: "1s" }}
+          />
+
+          <div className="absolute top-[80vh] left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-teal-100/30 blur-[150px] rounded-full" />
+          <div className="absolute top-[100vh] right-0 w-64 h-64 bg-orange-100/20 blur-[100px] rounded-full" />
         </div>
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
@@ -142,8 +108,13 @@ const LandingPage = () => {
             transition={{ delay: 0.1 }}
             className="text-5xl md:text-8xl font-black tracking-tight leading-[0.9] mb-8"
           >
-            {t("hero_title")} <br/>
-            <span className="text-teal-500">PTI UNESA.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-950 via-teal-800 to-indigo-950">
+              {t("hero_title")}
+            </span>
+            <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 via-emerald-500 to-orange-500 pr-2">
+              PTI UNESA.
+            </span>
           </motion.h1>
 
           <motion.p 
@@ -152,7 +123,32 @@ const LandingPage = () => {
             transition={{ delay: 0.2 }}
             className="text-lg md:text-xl text-teal-800/60 font-medium mb-12 max-w-2xl mx-auto leading-relaxed"
           >
-            {t("hero_subtitle")}
+            {lang === "id" ? (
+              <>
+                Sistem pemilihan dosen pembimbing skripsi yang{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-orange-500 font-extrabold">
+                  cepat
+                </span>{" "}
+                dan{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-teal-500 font-extrabold">
+                  transparan
+                </span>.
+              </>
+            ) : lang === "en" ? (
+              <>
+                A{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-orange-500 font-extrabold">
+                  fast
+                </span>{" "}
+                and{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-teal-500 font-extrabold">
+                  transparent
+                </span>{" "}
+                thesis advisor selection system.
+              </>
+            ) : (
+              t("hero_subtitle")
+            )}
           </motion.p>
 
           <motion.div 
@@ -178,7 +174,7 @@ const LandingPage = () => {
       </section>
 
       {/* Features Grid */}
-      <section id="features" className="py-24 bg-teal-50/30 px-6">
+      <section id="features" className="py-24 px-6 relative z-10 bg-transparent">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-20">
             <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-4">{t("why_wardosen")}</h2>
@@ -197,7 +193,7 @@ const LandingPage = () => {
               <motion.div 
                 key={i}
                 whileHover={{ y: -10 }}
-                className="bg-white p-10 rounded-[3rem] border border-teal-50 shadow-xl shadow-teal-500/5 group"
+                className="bg-white/70 backdrop-blur-md p-10 rounded-[3rem] border border-white/50 shadow-xl shadow-teal-500/5 group hover:bg-white/90 hover:shadow-2xl transition-all duration-300 relative z-10"
               >
                 <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 group-hover:scale-110", f.color)}>
                   <f.icon className="w-7 h-7" />
@@ -230,10 +226,10 @@ const LandingPage = () => {
               <motion.div
                 key={i}
                 whileHover={{ scale: 1.02, y: -5 }}
-                className="relative group p-1 bg-white rounded-[3rem] shadow-xl shadow-teal-900/5 overflow-hidden"
+                className="relative group p-1 bg-white/50 backdrop-blur-md rounded-[3rem] border border-white/35 shadow-xl shadow-teal-900/5 overflow-hidden"
               >
                 <div className={cn("absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500", m.color)} />
-                <div className="relative z-10 bg-white p-10 rounded-[2.8rem] h-full flex flex-col items-start transition-all duration-500 group-hover:bg-transparent">
+                <div className="relative z-10 bg-white/70 backdrop-blur-md p-10 rounded-[2.8rem] h-full flex flex-col items-start transition-all duration-500 group-hover:bg-transparent">
                   <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center mb-8 shadow-lg group-hover:bg-white/20 group-hover:text-white transition-all", 
                     i === 0 ? "bg-indigo-50 text-indigo-500" : i === 1 ? "bg-rose-50 text-rose-500" : "bg-emerald-50 text-emerald-500")}>
                     <m.icon className="w-8 h-8" />
@@ -261,7 +257,7 @@ const LandingPage = () => {
             {faqs.map((faq, i) => (
               <div 
                 key={i}
-                className="bg-white border border-teal-50 rounded-[2rem] overflow-hidden shadow-sm"
+                className="bg-white/80 backdrop-blur-md border border-white/50 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
               >
                 <button 
                   onClick={() => setActiveFaq(activeFaq === i ? null : i)}

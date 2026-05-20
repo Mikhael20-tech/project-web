@@ -12,6 +12,8 @@ import {
   Menu,
   Languages,
   ChevronDown,
+  Zap,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useLanguage } from "@/src/lib/LanguageContext";
@@ -66,6 +68,18 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
   const navLinks = [
     { name: t("nav_home"), path: "/", icon: <Globe className="w-4 h-4" /> },
     {
+      name: t("view_features"),
+      path: "/#features",
+      icon: <Zap className="w-4 h-4" />,
+      guestOnly: true,
+    },
+    {
+      name: t("nav_faq"),
+      path: "/#faq",
+      icon: <HelpCircle className="w-4 h-4" />,
+      guestOnly: true,
+    },
+    {
       name: t("nav_portfolio"),
       path: "/portfolio",
       icon: <Star className="w-4 h-4" />,
@@ -91,8 +105,36 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
   ];
 
   const filteredLinks = navLinks.filter(
-    (link) => !link.role || (user && user.role === link.role),
+    (link) =>
+      (!link.role || (user && user.role === link.role)) &&
+      (!link.guestOnly || !user)
   );
+
+  const handleNavClick = (path: string) => {
+    if (path.includes("#")) {
+      const targetId = path.split("#")[1];
+      if (location.pathname === "/") {
+        const element = document.getElementById(targetId);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      } else {
+        navigate(path);
+      }
+    } else {
+      navigate(path);
+    }
+  };
+
+  const isActive = (path: string) => {
+    if (path === "/") {
+      return location.pathname === "/" && !location.hash;
+    }
+    if (path.includes("#")) {
+      return location.pathname === "/" && location.hash === "#" + path.split("#")[1];
+    }
+    return location.pathname === path;
+  };
 
   return (
     <nav
@@ -118,17 +160,16 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
           {filteredLinks.map((link) => (
             <button
               key={link.path}
-              onClick={() => navigate(link.path)}
+              onClick={() => handleNavClick(link.path)}
               className={cn(
                 "px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 flex items-center gap-2 relative group",
-                location.pathname === link.path
+                isActive(link.path)
                   ? "bg-teal-950 text-white shadow-xl shadow-teal-950/20"
                   : "text-teal-800/60 hover:text-teal-950 hover:bg-teal-50",
               )}
             >
-              {link.icon}
               {link.name}
-              {location.pathname === link.path && (
+              {isActive(link.path) && (
                 <motion.div
                   layoutId="nav-glow"
                   className="absolute inset-0 bg-white/10 rounded-full"
@@ -282,17 +323,16 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
                 <button
                   key={link.path}
                   onClick={() => {
-                    navigate(link.path);
+                    handleNavClick(link.path);
                     setIsMobileMenuOpen(false);
                   }}
                   className={cn(
                     "w-full px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-4 transition-all",
-                    location.pathname === link.path
+                    isActive(link.path)
                       ? "bg-teal-950 text-white"
                       : "text-teal-800/60 hover:bg-teal-50",
                   )}
                 >
-                  {link.icon}
                   {link.name}
                 </button>
               ))}

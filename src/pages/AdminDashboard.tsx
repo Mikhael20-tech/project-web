@@ -743,9 +743,9 @@ const AdminDashboard = ({
                 {t("dash_admin_control_room")}
               </h2>
               <h1 className="text-3xl sm:text-4xl font-black tracking-tighter text-white">
-                {t("dash_admin_dashboard").split(" ")[0] || "Admin"}{" "}
+                Admin{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-orange-400 italic pr-2">
-                  {t("dash_admin_dashboard").split(" ")[1] || "Dashboard"}
+                  {t("dash_admin_dashboard")}
                 </span>
               </h1>
             </div>
@@ -1470,7 +1470,7 @@ const AdminDashboard = ({
                           </span>
                         </div>
                       </div>
-                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-2 transition-opacity">
                         <button
                           onClick={() =>
                             setDosenForm({
@@ -1788,7 +1788,7 @@ const AdminDashboard = ({
                                 });
                                 window.scrollTo({ top: 0, behavior: "smooth" });
                               }}
-                              className="p-3 text-teal-800/30 bg-white border border-teal-100 hover:border-teal-200 hover:text-teal-600 hover:bg-teal-50 rounded-[1rem] transition-all shadow-sm opacity-0 group-hover:opacity-100"
+                              className="p-3 text-teal-800/30 bg-white border border-teal-100 hover:border-teal-200 hover:text-teal-600 hover:bg-teal-50 rounded-[1rem] transition-all shadow-sm"
                             >
                               <Edit className="w-4 h-4" />
                             </button>
@@ -1800,7 +1800,7 @@ const AdminDashboard = ({
                                   name: std.nama,
                                 })
                               }
-                              className="p-3 text-teal-800/30 bg-white border border-teal-100 hover:border-rose-200 hover:text-rose-500 hover:bg-rose-50 rounded-[1rem] transition-all shadow-sm opacity-0 group-hover:opacity-100"
+                              className="p-3 text-teal-800/30 bg-white border border-teal-100 hover:border-rose-200 hover:text-rose-500 hover:bg-rose-50 rounded-[1rem] transition-all shadow-sm"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
