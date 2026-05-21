@@ -29,7 +29,7 @@ const DosenDashboard = ({
   token: string;
   onProfileUpdate?: (updatedDosen: any) => void;
 }) => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [dosenData, setDosenData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
@@ -54,6 +54,14 @@ const DosenDashboard = ({
   } | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [managingStudentId, setManagingStudentId] = useState<string | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{
+    title: string;
+    message: string;
+    confirmText: string;
+    cancelText: string;
+    isDanger?: boolean;
+    onConfirm: () => void;
+  } | null>(null);
 
   const [config, setConfig] = useState<any>(null);
   const [submittingProfile, setSubmittingProfile] = useState(false);
@@ -127,23 +135,34 @@ const DosenDashboard = ({
     }
   };
 
-  const handleKickStudent = async (mahasiswaId: string, nama: string) => {
-    if (!confirm(`${t("dash_dosen_kick")} ${nama}? ${t("confirm_kick_student")}`)) return;
-    setManagingStudentId(mahasiswaId);
-    try {
-      const res = await fetch(`/api/dosen/kick-student/${mahasiswaId}`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setMessage({ type: "success", text: data.message });
-      fetchDosen(false);
-    } catch (err: any) {
-      setMessage({ type: "error", text: err.message });
-    } finally {
-      setManagingStudentId(null);
-    }
+  const handleKickStudent = (mahasiswaId: string, nama: string) => {
+    setConfirmModal({
+      title: `${t("dash_dosen_kick")} ${nama}?`,
+      message: lang === "id" 
+        ? "Apakah Anda yakin ingin mengeluarkan mahasiswa ini dari bimbingan Anda?" 
+        : "Are you sure you want to remove this student from your guidance?",
+      confirmText: t("dash_dosen_kick"),
+      cancelText: lang === "id" ? "Batal" : "Cancel",
+      isDanger: true,
+      onConfirm: async () => {
+        setConfirmModal(null);
+        setManagingStudentId(mahasiswaId);
+        try {
+          const res = await fetch(`/api/dosen/kick-student/${mahasiswaId}`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+          setMessage({ type: "success", text: data.message });
+          fetchDosen(false);
+        } catch (err: any) {
+          setMessage({ type: "error", text: err.message });
+        } finally {
+          setManagingStudentId(null);
+        }
+      },
+    });
   };
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
@@ -291,23 +310,32 @@ const DosenDashboard = ({
     }
   };
 
-  const handleDeleteResearch = async (id: string) => {
-    if (!confirm(t("confirm_delete_research"))) return;
-    try {
-      const res = await fetch(`/api/dosen/penelitian/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        fetchDosen(false);
-        setMessage({
-          type: "success",
-          text: "Projek penelitian berhasil dihapus.",
-        });
-      }
-    } catch (err) {
-      console.error(err);
-    }
+  const handleDeleteResearch = (id: string) => {
+    setConfirmModal({
+      title: lang === "id" ? "Hapus Penelitian?" : "Delete Research?",
+      message: t("confirm_delete_research"),
+      confirmText: lang === "id" ? "Hapus" : "Delete",
+      cancelText: lang === "id" ? "Batal" : "Cancel",
+      isDanger: true,
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          const res = await fetch(`/api/dosen/penelitian/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            fetchDosen(false);
+            setMessage({
+              type: "success",
+              text: "Projek penelitian berhasil dihapus.",
+            });
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      },
+    });
   };
 
   if (loading) {
@@ -506,6 +534,68 @@ const DosenDashboard = ({
               >
                 <XCircle className="w-4 h-4" />
               </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {confirmModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-[#F0FAF8]/30 backdrop-blur-md"
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ type: "spring", duration: 0.5, bounce: 0.2 }}
+                className="bg-white/75 backdrop-blur-2xl border border-white border-opacity-40 rounded-[2.5rem] p-8 max-w-md w-full shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] relative overflow-hidden"
+              >
+                {/* Decorative gradients */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-teal-500/5 rounded-full blur-2xl pointer-events-none" />
+
+                <div className="relative z-10 text-center">
+                  {/* Warning/Alert Icon */}
+                  <div className={cn(
+                    "w-16 h-16 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 shadow-inner border",
+                    confirmModal.isDanger 
+                      ? "bg-rose-50 text-rose-500 border-rose-100/50" 
+                      : "bg-amber-50 text-amber-500 border-amber-100/50"
+                  )}>
+                    <XCircle className="w-8 h-8 animate-pulse" />
+                  </div>
+
+                  <h3 className="text-xl font-black text-teal-950 tracking-tight mb-2">
+                    {confirmModal.title}
+                  </h3>
+                  <p className="text-xs text-teal-800/60 font-semibold leading-relaxed mb-8 px-4">
+                    {confirmModal.message}
+                  </p>
+
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => setConfirmModal(null)}
+                      className="flex-1 py-4 px-6 bg-slate-100 hover:bg-slate-200/80 text-slate-800 font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all shadow-inner active:scale-98 cursor-pointer"
+                    >
+                      {confirmModal.cancelText}
+                    </button>
+                    <button
+                      onClick={confirmModal.onConfirm}
+                      className={cn(
+                        "flex-1 py-4 px-6 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all shadow-lg active:scale-98 cursor-pointer",
+                        confirmModal.isDanger
+                          ? "bg-rose-500 hover:bg-rose-600 shadow-rose-500/20"
+                          : "bg-amber-500 hover:bg-amber-600 shadow-amber-500/20"
+                      )}
+                    >
+                      {confirmModal.confirmText}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>

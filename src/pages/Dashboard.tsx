@@ -332,6 +332,43 @@ const Dashboard = ({
     const s = Math.floor((ms % (1000 * 60)) / 1000);
     return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
+  const labels = (() => {
+    const cat = config?.category || "SKRIPSI";
+    if (cat === "MAGANG") {
+      return {
+        dosenChoice: "Dosen Pembimbing Magang Pilihan",
+        selected: "Dosen Magang Terpilih",
+        timelineLabel: "Milestone Pemilihan Magang",
+        step2Title: "Input Posisi & Mitra Magang",
+        step2Desc: studentData?.rencanaJudul || "Posisi dan lokasi magang telah terverifikasi",
+        step3Title: "Dosen Magang Dikunci",
+        step3Desc: "Dosen Pembimbing Magang telah resmi dikunci dan disetujui",
+        guidanceStatus: "Status Pembimbing Magang",
+      };
+    } else if (cat === "PLP") {
+      return {
+        dosenChoice: "Dosen Pembimbing PLP Pilihan",
+        selected: "Dosen PLP Terpilih",
+        timelineLabel: "Milestone Pemilihan PLP",
+        step2Title: "Input Lokasi & Mitra PLP",
+        step2Desc: studentData?.rencanaJudul || "Lokasi PLP telah terverifikasi",
+        step3Title: "Dosen PLP Dikunci",
+        step3Desc: "Dosen Pembimbing PLP telah resmi dikunci dan disetujui",
+        guidanceStatus: "Status Pembimbing PLP",
+      };
+    } else {
+      return {
+        dosenChoice: t("dash_student_dosen_choice"),
+        selected: t("dash_student_selected"),
+        timelineLabel: t("dash_student_timeline_label") && !t("dash_student_timeline_label").includes("TIMELINE") ? t("dash_student_timeline_label") : "Milestone Pemilihan Skripsi",
+        step2Title: "Input Rencana Judul",
+        step2Desc: studentData?.rencanaJudul || "Rencana judul skripsi telah terverifikasi",
+        step3Title: "Pilihan Dosen Dikunci",
+        step3Desc: "Kandidat pembimbing skripsi berhasil dikunci dan terdaftar",
+        guidanceStatus: t("dash_student_guidance_status"),
+      };
+    }
+  })();
 
   return (
     <>
@@ -505,44 +542,52 @@ const Dashboard = ({
 
         {/* Selected Lecturer Status */}
         {studentData?.dosen && (
-          <div className="bg-gradient-to-br from-teal-900 to-[#022c22] rounded-[2.5rem] p-8 shadow-2xl shadow-teal-900/20 text-white border border-teal-800 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+          <div className="bg-gradient-to-br from-[#061814] via-[#0b2b24] to-[#04120f] rounded-[2.5rem] p-10 shadow-2xl shadow-teal-950/40 text-white border border-teal-500/20 relative overflow-hidden">
+            {/* Glowing mesh gradient background accents */}
+            <div className="absolute top-0 right-1/4 w-80 h-80 bg-teal-500/10 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute bottom-0 left-10 w-60 h-60 bg-emerald-500/5 rounded-full blur-[80px] pointer-events-none" />
 
-            <div className="relative z-10 flex flex-col md:flex-row justify-between items-stretch gap-6">
+            <div className="relative z-10 flex flex-col xl:flex-row justify-between items-stretch gap-8">
 
               {/* LEFT — Dosen Card with photo */}
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-300">{t("dash_student_status")}</h3>
+              <div className="flex-1 flex flex-col justify-between">
+                <div className="flex items-center gap-2.5 mb-5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_12px_rgba(52,211,153,0.8)]" />
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-teal-400">{t("dash_student_status")}</h3>
                 </div>
 
-                <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-5">
-                  <p className="text-[10px] font-black uppercase text-teal-400/60 mb-4 tracking-widest">{t("dash_student_dosen_choice")}</p>
+                <div className="bg-white/[0.02] backdrop-blur-xl border border-white/5 rounded-[2rem] p-6 shadow-inner flex-1 flex flex-col justify-center">
+                  <p className="text-[9px] font-black uppercase text-teal-500/50 mb-5 tracking-[0.2em]">{labels.dosenChoice}</p>
 
-                  <div className="flex items-center gap-5">
+                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
                     {/* Dosen Photo */}
                     <div className="relative shrink-0">
-                      <div className="w-20 h-20 rounded-2xl overflow-hidden bg-teal-800 border-2 border-emerald-500/40 shadow-lg">
+                      <div className="w-24 h-24 rounded-[1.75rem] overflow-hidden bg-teal-950 border border-teal-500/30 p-1 shadow-2xl ring-1 ring-white/10">
                         {studentData.dosen.foto ? (
-                          <img src={studentData.dosen.foto} alt={studentData.dosen.nama} className="w-full h-full object-cover" />
+                          <img src={studentData.dosen.foto} alt={studentData.dosen.nama} className="w-full h-full object-cover rounded-[1.5rem]" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <GraduationCap className="w-8 h-8 text-teal-400" />
+                          <div className="w-full h-full flex items-center justify-center bg-teal-900 rounded-[1.5rem]">
+                            <GraduationCap className="w-10 h-10 text-teal-400" />
                           </div>
                         )}
                       </div>
                       {/* Online indicator */}
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-teal-900 flex items-center justify-center shadow">
-                        <CheckCircle2 className="w-3 h-3 text-white" />
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border border-teal-950 flex items-center justify-center shadow-lg shadow-emerald-950/50">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                       </div>
                     </div>
 
                     {/* Dosen Info */}
-                    <div className="flex flex-col gap-1 min-w-0">
-                      <span className="text-[9px] uppercase font-black text-emerald-400/70 tracking-widest">{t("dash_student_selected")}</span>
-                      <span className="text-base font-black text-emerald-50 leading-tight">{studentData.dosen.nama}</span>
-                      <span className="text-[10px] font-bold text-teal-400">NIP. {studentData.dosen.nip}</span>
+                    <div className="flex flex-col items-center sm:items-start text-center sm:text-left gap-1 min-w-0">
+                      <div className="inline-flex items-center px-2 py-0.5 bg-teal-500/10 text-teal-300 border border-teal-500/20 rounded-full text-[8px] font-black uppercase tracking-widest mb-1">
+                        {labels.selected}
+                      </div>
+                      <span className="text-xl font-black text-white tracking-tight leading-tight mb-0.5">{studentData.dosen.nama}</span>
+                      <span className="text-[11px] font-semibold text-teal-400/80 font-mono">NIP. {studentData.dosen.nip}</span>
+                      {studentData.dosen.keahlian && (
+                        <span className="text-[10px] font-bold text-teal-500 uppercase tracking-wider mt-1">{studentData.dosen.keahlian}</span>
+                      )}
+                      
                       {studentData.dosen.kontak && (
                         <a
                           href={(() => {
@@ -556,12 +601,10 @@ const Dashboard = ({
                           })()}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 mt-1 hover:text-emerald-400 transition-colors group/phone cursor-pointer"
+                          className="flex items-center gap-2 mt-4 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-300 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 group cursor-pointer shadow-lg shadow-emerald-950/20"
                         >
-                          <Smartphone className="w-3 h-3 text-teal-500 group-hover/phone:text-emerald-400" />
-                          <span className="text-[10px] font-bold text-teal-300 group-hover/phone:text-emerald-400 border-b border-dashed border-teal-300/30 group-hover/phone:border-emerald-400">
-                            {studentData.dosen.kontak}
-                          </span>
+                          <Smartphone className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
+                          <span>{studentData.dosen.kontak}</span>
                         </a>
                       )}
                     </div>
@@ -570,34 +613,79 @@ const Dashboard = ({
               </div>
 
               {/* Divider */}
-              <div className="flex items-center gap-4 py-4 w-full md:w-auto md:flex-col md:h-auto">
-                <div className="h-px bg-teal-800 flex-1 md:w-px md:h-full"></div>
-                <span className="text-[10px] font-black uppercase text-teal-500/30 tracking-[0.5em] md:rotate-90">INFO</span>
-                <div className="h-px bg-teal-800 flex-1 md:w-px md:h-full"></div>
+              <div className="flex items-center gap-4 py-4 w-full xl:w-auto xl:flex-col xl:h-auto xl:justify-center">
+                <div className="h-px bg-gradient-to-r from-transparent via-teal-800 to-transparent flex-1 xl:w-px xl:h-20"></div>
+                <span className="text-[9px] font-black uppercase text-teal-500/30 tracking-[0.6em] xl:rotate-90 py-2">STATUS</span>
+                <div className="h-px bg-gradient-to-r from-transparent via-teal-800 to-transparent flex-1 xl:w-px xl:h-20"></div>
               </div>
 
-              {/* RIGHT — Status & Download */}
-              <div className="flex-1 w-full">
-                <div className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-3xl h-full flex flex-col justify-between">
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-[10px] font-black uppercase text-teal-400/60 mb-2 tracking-widest">{t("dash_student_guidance_status")}</p>
-                      <div className={cn(
-                        "inline-flex items-center gap-2 px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-widest",
-                        studentData.statusBimbingan === "APPROVED"
-                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                          : "bg-orange-500/20 text-orange-400 border border-orange-500/30"
-                      )}>
-                        {(studentData.statusBimbingan === "APPROVED" || studentData.dosenId) ? <CheckCircle2 className="w-3 h-3" /> : <RefreshCcw className="w-3 h-3 animate-spin" />}
-                        {(studentData.statusBimbingan === "APPROVED" || studentData.dosenId) ? t("status_registered") : t("status_pending")}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black uppercase text-teal-400/30 mb-1 tracking-widest">{t("dash_student_angkatan")}</p>
-                      <p className="text-sm font-bold text-teal-100">{studentData.periode || config?.periode || "-"}</p>
+              {/* RIGHT — Status & Milestone Timeline */}
+              <div className="flex-1 w-full flex flex-col justify-between">
+                <div className="flex items-center justify-between gap-4 mb-5">
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-[9px] font-black uppercase text-teal-500/50 tracking-[0.2em]">{labels.guidanceStatus}</p>
+                    <div className={cn(
+                      "inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-black text-[9px] uppercase tracking-widest border mt-1",
+                      studentData.statusBimbingan === "APPROVED"
+                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+                        : "bg-orange-500/10 text-orange-400 border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.1)]"
+                    )}>
+                      {(studentData.statusBimbingan === "APPROVED" || studentData.dosenId) ? <CheckCircle2 className="w-3 h-3" /> : <RefreshCcw className="w-3 h-3 animate-spin" />}
+                      {(studentData.statusBimbingan === "APPROVED" || studentData.dosenId) ? t("status_registered") : t("status_pending")}
                     </div>
                   </div>
 
+                  <div className="text-right">
+                    <p className="text-[9px] font-black uppercase text-teal-500/50 tracking-[0.2em]">{t("dash_student_angkatan")}</p>
+                    <span className="inline-block mt-1 px-3 py-1 bg-white/[0.03] border border-white/5 rounded-lg text-xs font-black text-teal-200 font-mono tracking-tight">
+                      {studentData.periode || config?.periode || "-"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Milestone Stepper / Timeline - Fills the empty space beautifully */}
+                <div className="bg-white/[0.02] backdrop-blur-xl border border-white/5 rounded-[2rem] p-6 shadow-inner flex-1 flex flex-col justify-center gap-4">
+                  <p className="text-[9px] font-black uppercase text-teal-500/50 tracking-[0.2em] mb-1">{labels.timelineLabel}</p>
+                  
+                  <div className="relative pl-6 space-y-5">
+                    {/* Vertical line connecting steps */}
+                    <div className="absolute left-[7px] top-1.5 bottom-1.5 w-[2px] bg-teal-950/80 border-l border-dashed border-teal-500/30" />
+
+                    {/* Step 1: Registrasi Akun */}
+                    <div className="relative flex items-start gap-4">
+                      <div className="absolute -left-[23px] w-4 h-4 rounded-full bg-emerald-500/20 border border-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.3)]">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-black text-white uppercase tracking-wider leading-none mb-1">Registrasi Akun</p>
+                        <p className="text-[10px] font-bold text-teal-400/60 leading-tight">Akun mahasiswa telah aktif dan terverifikasi di prodi</p>
+                      </div>
+                    </div>
+
+                    {/* Step 2: Rencana Judul Skripsi */}
+                    <div className="relative flex items-start gap-4">
+                      <div className="absolute -left-[23px] w-4 h-4 rounded-full bg-emerald-500/20 border border-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.3)]">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-black text-white uppercase tracking-wider leading-none mb-1">{labels.step2Title}</p>
+                        <p className="text-[10px] font-bold text-teal-400/60 leading-tight truncate max-w-[280px]" title={studentData.rencanaJudul || "Belum diisi"}>
+                          {labels.step2Desc}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Step 3: Pilihan Dosen */}
+                    <div className="relative flex items-start gap-4">
+                      <div className="absolute -left-[23px] w-4 h-4 rounded-full bg-emerald-500/20 border border-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.3)]">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-black text-emerald-400 uppercase tracking-wider leading-none mb-1">{labels.step3Title}</p>
+                        <p className="text-[10px] font-bold text-teal-400/60 leading-tight">{labels.step3Desc}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 

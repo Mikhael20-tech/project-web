@@ -97,6 +97,47 @@ const authenticate = async (req: any, res: any, next: any) => {
   }
 };
 
+// Rate Limiter specifically for selection (Max 2 requests per 1 second per user)
+const selectionRateLimits = new Map<string, number[]>();
+const rateLimitSelection = (req: any, res: any, next: any) => {
+  const userId = req.user?.id;
+  if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+  const now = Date.now();
+  const windowMs = 1000;
+  const maxRequests = 2;
+
+  let timestamps = selectionRateLimits.get(userId) || [];
+  timestamps = timestamps.filter(ts => now - ts < windowMs);
+
+  if (timestamps.length >= maxRequests) {
+    return res.status(429).json({ 
+      error: "Terlalu banyak permintaan. Silakan tunggu 1 detik sebelum mencoba lagi." 
+    });
+  }
+
+  timestamps.push(now);
+  selectionRateLimits.set(userId, timestamps);
+  next();
+};
+
+// Debounced Socket.io Broadcast Helper for Lecturer Quota Updates (Max once per 1 second)
+let broadcastTimeout: NodeJS.Timeout | null = null;
+const triggerQuotaUpdate = () => {
+  if (broadcastTimeout) return;
+  broadcastTimeout = setTimeout(async () => {
+    broadcastTimeout = null;
+    try {
+      const allLecturers = await prisma.dosen.findMany({
+        include: { _count: { select: { mahasiswa: true } } },
+      });
+      io.emit("quota_update", allLecturers);
+    } catch (err) {
+      console.error("Failed to broadcast debounced quota update:", err);
+    }
+  }, 1000);
+};
+
 // --- AUTH ROUTES ---
 app.post("/api/register", async (req, res) => {
   try {
@@ -403,71 +444,94 @@ app.post("/api/profile", authenticate, async (req: any, res) => {
 
 
 // --- THE CRITICAL WAR LOGIC: SELECT DOSEN ---
-app.post("/api/war/select", authenticate, async (req: any, res) => {
+app.post("/api/war/select", authenticate, rateLimitSelection, async (req: any, res) => {
   const { dosenId, rencanaJudul } = req.body;
 
   try {
-    const result = await prisma.$transaction(async (tx) => {
-      // 1. Check War Time
-      const config = await tx.warConfig.findUnique({ where: { id: "global_config" } });
-      if (!config) throw new Error("Konfigurasi jadwal pemilihan belum disetel oleh admin.");
-      
-      const now = new Date();
-      if (config.isForcedClosed) {
-        throw new Error("SISTEM DITUTUP SEMENTARA OLEH ADMIN (EMERGENCY STOP).");
-      }
-      if (now < config.startTime) {
-        throw new Error("Sistem pemilihan belum dibuka. Silakan tunggu hingga waktu countdown selesai.");
-      }
-      if (now > config.endTime) {
-        throw new Error("Masa pemilihan dosen telah berakhir.");
-      }
+    // 1. Check War Time
+    const config = await prisma.warConfig.findUnique({ where: { id: "global_config" } });
+    if (!config) throw new Error("Konfigurasi jadwal pemilihan belum disetel oleh admin.");
+    
+    const now = new Date();
+    if (config.isForcedClosed) {
+      throw new Error("SISTEM DITUTUP SEMENTARA OLEH ADMIN (EMERGENCY STOP).");
+    }
+    if (now < config.startTime) {
+      throw new Error("Sistem pemilihan belum dibuka. Silakan tunggu hingga waktu countdown selesai.");
+    }
+    if (now > config.endTime) {
+      throw new Error("Masa pemilihan dosen telah berakhir.");
+    }
 
-      // 2. Check Profile
-      const student = await tx.mahasiswa.findUnique({
-        where: { userId: req.user.id },
-      });
-      
-      if (!student) throw new Error("Profil mahasiswa tidak ditemukan. Silakan lengkapi profil Anda.");
-      
-      // Batch (Angkatan) Check
-      if (config.targetAngkatan && config.targetAngkatan !== "All") {
-        const allowed = config.targetAngkatan.split(",").map(a => a.trim());
-        if (!student.angkatan || !allowed.includes(student.angkatan)) {
-          throw new Error(`Akses ditolak. Pemilihan periode ini hanya dibuka untuk angkatan: ${config.targetAngkatan}`);
-        }
+    // 2. Check Profile
+    const student = await prisma.mahasiswa.findUnique({
+      where: { userId: req.user.id },
+    });
+    
+    if (!student) throw new Error("Profil mahasiswa tidak ditemukan. Silakan lengkapi profil Anda.");
+    
+    // Batch (Angkatan) Check
+    if (config.targetAngkatan && config.targetAngkatan !== "All") {
+      const allowed = config.targetAngkatan.split(",").map(a => a.trim());
+      if (!student.angkatan || !allowed.includes(student.angkatan)) {
+        throw new Error(`Akses ditolak. Pemilihan periode ini hanya dibuka untuk angkatan: ${config.targetAngkatan}`);
       }
+    }
 
-      if (student.dosenId) {
+    if (student.dosenId) {
+      throw new Error("Anda sudah memiliki dosen pembimbing.");
+    }
+
+    // 3. EXECUTE ATOMIC SINGLE-STATEMENT ASSIGNMENT
+    // We update the student row if and only if:
+    // a. The student does not have a lecturer yet (dosenId IS NULL).
+    // b. The count of students assigned to the chosen lecturer is less than kuotaMax.
+    const affectedRows = await prisma.$executeRaw`
+      UPDATE "Mahasiswa"
+      SET "dosenId" = ${dosenId}, 
+          "rencanaJudul" = ${rencanaJudul || null}, 
+          "statusBimbingan" = 'APPROVED', 
+          "periode" = ${config.periode || null}
+      WHERE "id" = ${student.id}
+        AND "dosenId" IS NULL
+        AND (
+          SELECT COUNT(*)::integer FROM "Mahasiswa" WHERE "dosenId" = ${dosenId}
+        ) < (
+          SELECT "kuotaMax" FROM "Dosen" WHERE id = ${dosenId}
+        )
+    `;
+
+    // 4. Precise Error Reporting on Failure
+    if (affectedRows === 0) {
+      const checkStudent = await prisma.mahasiswa.findUnique({ where: { id: student.id } });
+      if (checkStudent?.dosenId) {
         throw new Error("Anda sudah memiliki dosen pembimbing.");
       }
-
-      // 3. PESSIMISTIC LOCKING / ATOMIC CHECK
-      await tx.$executeRawUnsafe(`SELECT id FROM "Dosen" WHERE id = $1 FOR UPDATE`, dosenId);
-
-      const lecturer = await tx.dosen.findUnique({
+      const lecturer = await prisma.dosen.findUnique({
         where: { id: dosenId },
         include: { _count: { select: { mahasiswa: true } } },
       });
-
-      if (!lecturer) throw new Error("Data dosen tidak ditemukan dalam sistem.");
+      if (!lecturer) {
+        throw new Error("Data dosen tidak ditemukan dalam sistem.");
+      }
       if (lecturer._count.mahasiswa >= lecturer.kuotaMax) {
         throw new Error(`Maaf, kuota untuk ${lecturer.nama} sudah penuh.`);
       }
+      throw new Error("Pilihan gagal dilakukan. Silakan coba kembali.");
+    }
 
-      // 4. Update - save rencanaJudul, set status PENDING, and tag with current periode
-      const updatedStudent = await tx.mahasiswa.update({
-        where: { id: student.id },
-        data: { 
-          dosenId: lecturer.id,
-          rencanaJudul: rencanaJudul || null,
-          statusBimbingan: "APPROVED",
-          periode: (config as any).periode || null,
-        },
-      });
-
-      return { updatedStudent, lecturerName: lecturer.nama, studentName: student.nama, studentKontak: student.kontak };
+    // Fetch lecturer details for response & notifications
+    const lecturer = await prisma.dosen.findUnique({
+      where: { id: dosenId }
     });
+    if (!lecturer) throw new Error("Data dosen tidak ditemukan dalam sistem.");
+
+    const result = {
+      updatedStudent: { ...student, dosenId, rencanaJudul, statusBimbingan: "APPROVED", periode: config.periode },
+      lecturerName: lecturer.nama,
+      studentName: student.nama,
+      studentKontak: student.kontak
+    };
 
     // 5. SEND AUTOMATED WA NOTIFICATION (TRIGGERED)
     const fonnteToken = process.env.FONNTE_TOKEN;
@@ -490,13 +554,10 @@ Silakan cek dashboard Anda untuk mendownload bukti pemilihan. Tetap semangat! ðŸ
       }).catch(err => console.error("Triggered WA Error:", err));
     }
 
-    // Broadcast update
-    const allLecturers = await prisma.dosen.findMany({
-      include: { _count: { select: { mahasiswa: true } } },
-    });
-    io.emit("quota_update", allLecturers);
+    // Debounced quota update broadcast
+    triggerQuotaUpdate();
     
-    // Broadcast for Live Activity Feed
+    // Broadcast for Live Activity Feed (instantly)
     io.emit("new_selection", { 
       lecturerName: result.lecturerName,
       timestamp: new Date()
@@ -543,7 +604,7 @@ app.post("/api/dosen/approve-student/:mahasiswaId", authenticate, isDosen, async
       data: { statusBimbingan: "APPROVED" },
     });
 
-    io.emit("quota_update", await prisma.dosen.findMany({ include: { _count: { select: { mahasiswa: true } } } }));
+    triggerQuotaUpdate();
     res.json({ message: `Mahasiswa ${student.nama} berhasil disetujui.` });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -567,7 +628,7 @@ app.post("/api/dosen/kick-student/:mahasiswaId", authenticate, isDosen, async (r
       data: { dosenId: null, statusBimbingan: "PENDING", rencanaJudul: null },
     });
 
-    io.emit("quota_update", await prisma.dosen.findMany({ include: { _count: { select: { mahasiswa: true } } } }));
+    triggerQuotaUpdate();
     res.json({ message: `Mahasiswa ${student.nama} berhasil dikeluarkan dari daftar bimbingan.` });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
