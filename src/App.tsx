@@ -5,6 +5,7 @@ import {
   Route,
   Navigate,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 import { Zap } from "lucide-react";
 
@@ -32,8 +33,14 @@ const AppContent = ({
   updateProfile,
 }: any) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const isLoginPage = location.pathname === "/login";
   const isLandingPage = location.pathname === "/";
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   return (
     <div className={`bg-[#f8fdfc] min-h-screen font-sans antialiased text-teal-950 transition-colors`}>
@@ -41,7 +48,7 @@ const AppContent = ({
         {!currentUser && !isLoginPage && !isLandingPage && <LoadingOverlay />}
       </AnimatePresence>
       
-      {!isLoginPage && <Navbar user={currentUser} onLogout={logout} />}
+      {!isLoginPage && <Navbar user={currentUser} onLogout={handleLogout} />}
       
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
