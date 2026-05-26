@@ -30,7 +30,7 @@ const LoadingOverlay: React.FC = () => {
         transition={{ delay: 0.2 }}
         className="mt-6 text-[10px] font-black uppercase tracking-[0.3em] text-teal-900/40"
       >
-        Loading IT Edunesa...
+        Loading WarDosen...
       </motion.p>
     </motion.div>
   );

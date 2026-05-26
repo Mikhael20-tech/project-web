@@ -8,7 +8,7 @@ export const LogoIcon: React.FC<{ className?: string }> = ({ className = "w-10 h
   return (
     <img
       src={LOGO_URL}
-      alt="IT Edunesa Logo"
+      alt="WarDosen Logo"
       className={cn("object-contain", className)}
     />
   );
@@ -50,7 +50,7 @@ export const Logo: React.FC<{
               theme === "white" && "text-white"
             )}
           >
-            IT <span className="text-orange-500">Edunesa</span>
+            War<span className="text-orange-500">Dosen</span>
           </h1>
           <p
             className={cn(
