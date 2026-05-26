@@ -196,6 +196,18 @@ app.post("/api/register-dosen", async (req, res) => {
 app.post("/api/login", async (req, res) => {
   try {
     const { username, password } = req.body;
+
+    // Validate that if login is attempted with an email, it must be an official UNESA domain
+    if (username && username.includes("@")) {
+      const emailDomain = username.split("@")[1];
+      const allowedEmailDomains = ["unesa.ac.id", "mhs.unesa.ac.id"];
+      if (!allowedEmailDomains.includes(emailDomain)) {
+        return res.status(403).json({ 
+          error: "Akses ditolak. Hanya email institusi UNESA (@unesa.ac.id atau @mhs.unesa.ac.id) yang diizinkan." 
+        });
+      }
+    }
+
     const user = await prisma.user.findFirst({
       where: {
         OR: [
