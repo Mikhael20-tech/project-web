@@ -216,6 +216,7 @@ const LoginPage = ({
             >
               {t("type_dosen")}
             </button>
+          </div>
           <AnimatePresence mode="wait">
             {!isDosenLogin ? (
               <motion.div
