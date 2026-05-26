@@ -249,13 +249,64 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-// Self-registration for Dosen
-// ⛔ DISABLED: Dosen self-registration is disabled for security.
-// All Dosen accounts must be created or linked by an Admin via the Admin Dashboard.
+// Self-registration endpoint for Dosen
 app.post("/api/register-dosen", async (req, res) => {
-  return res.status(403).json({ 
-    error: "Registrasi mandiri dosen tidak diizinkan. Hubungi Admin Prodi untuk menghubungkan akun Dosen Anda." 
-  });
+  try {
+    const { nip, nama, password } = req.body;
+    if (!nip || !nama || !password) {
+      return res.status(400).json({ error: "NIP, Nama, dan Password wajib diisi." });
+    }
+
+    const nipInput = nip.trim();
+
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { username: nipInput }
+    });
+    if (existingUser) {
+      return res.status(400).json({ error: "NIP sudah terdaftar dalam sistem." });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Check if Dosen profile already exists (seeded by admin)
+    let dosenProfile = await prisma.dosen.findUnique({
+      where: { nip: nipInput }
+    });
+
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Create User
+      const user = await tx.user.create({
+        data: {
+          username: nipInput,
+          password: hashedPassword,
+          role: "DOSEN"
+        }
+      });
+
+      // 2. If Dosen profile exists, link it; otherwise create a new one
+      if (dosenProfile) {
+        return tx.dosen.update({
+          where: { id: dosenProfile.id },
+          data: { userId: user.id }
+        });
+      } else {
+        return tx.dosen.create({
+          data: {
+            userId: user.id,
+            nip: nipInput,
+            nama: nama,
+            kuotaMax: 10 // Default quota
+          }
+        });
+      }
+    });
+
+    res.json(result);
+  } catch (err: any) {
+    console.error("Dosen Registration Error:", err);
+    res.status(500).json({ error: err.message || "Gagal melakukan registrasi dosen." });
+  }
 });
 
 app.post("/api/login", async (req, res) => {
