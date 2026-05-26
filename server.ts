@@ -40,10 +40,29 @@ const prisma = new Proxy({} as PrismaClient, {
 });
 
 const app = express();
-app.use(cors());
+
+// Allowed origins: localhost for dev, APP_URL for production
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:5173",
+  ...(process.env.APP_URL && process.env.APP_URL !== "MY_APP_URL" ? [process.env.APP_URL] : []),
+];
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.some(o => origin.startsWith(o))) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS: Origin '${origin}' tidak diizinkan.`));
+    }
+  },
+  credentials: true,
+}));
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  cors: { origin: "*" },
+  cors: { origin: allowedOrigins, credentials: true },
 });
 
 // Redis Adapter for Auto-Scaling
@@ -63,6 +82,9 @@ if (process.env.REDIS_URL) {
 }
 
 const JWT_SECRET = process.env.JWT_SECRET || "wardosen-secret-key-123";
+if (!process.env.JWT_SECRET) {
+  console.warn("⚠️  WARNING: JWT_SECRET tidak diatur di .env! Menggunakan fallback yang tidak aman untuk production.");
+}
 const PORT = 3000;
 
 // Multer Storage Configuration (Use memory storage for Supabase upload)
@@ -121,6 +143,20 @@ const rateLimitSelection = (req: any, res: any, next: any) => {
   next();
 };
 
+// Fix #7: Periodic cleanup of selectionRateLimits to prevent memory leak
+// Removes entries older than 60 seconds every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [userId, timestamps] of selectionRateLimits.entries()) {
+    const fresh = timestamps.filter(ts => now - ts < 60_000);
+    if (fresh.length === 0) {
+      selectionRateLimits.delete(userId);
+    } else {
+      selectionRateLimits.set(userId, fresh);
+    }
+  }
+}, 5 * 60 * 1000);
+
 // Debounced Socket.io Broadcast Helper for Lecturer Quota Updates (Max once per 1 second)
 let broadcastTimeout: NodeJS.Timeout | null = null;
 const triggerQuotaUpdate = () => {
@@ -138,83 +174,22 @@ const triggerQuotaUpdate = () => {
   }, 1000);
 };
 
-// --- AUTH ROUTES ---
+// Self-registration endpoint
+// ⛔ DISABLED: Student self-registration is disabled for security.
+// All student accounts must be created by an Admin via the Admin Dashboard.
 app.post("/api/register", async (req, res) => {
-  try {
-    const { nim, nama, password } = req.body;
-    if (!nim || !nama || !password) {
-      return res.status(400).json({ error: "NIM, Nama, dan Password wajib diisi." });
-    }
-    
-    const existingUser = await prisma.user.findUnique({ where: { username: nim } });
-    if (existingUser) {
-      return res.status(400).json({ error: "NIM tersebut sudah terdaftar." });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
-    await prisma.user.create({
-      data: {
-        username: nim,
-        password: hashedPassword,
-        role: "STUDENT",
-        mahasiswa: {
-          create: {
-            nim,
-            nama,
-            angkatan: "20" + nim.substring(0, 2)
-          }
-        }
-      }
-    });
-
-    res.status(201).json({ message: "Registrasi berhasil. Silakan login." });
-  } catch (err: any) {
-    console.error("Register Error Details:", err);
-    res.status(500).json({ error: "Terjadi kesalahan pada server saat registrasi." });
-  }
+  return res.status(403).json({ 
+    error: "Registrasi mandiri tidak diizinkan. Hubungi Admin Prodi untuk mendaftarkan akun Anda." 
+  });
 });
 
+// Self-registration for Dosen
+// ⛔ DISABLED: Dosen self-registration is disabled for security.
+// All Dosen accounts must be created or linked by an Admin via the Admin Dashboard.
 app.post("/api/register-dosen", async (req, res) => {
-  try {
-    const { nip, nama, password } = req.body;
-    if (!nip || !nama || !password) {
-      return res.status(400).json({ error: "NIP, Nama, dan Password wajib diisi." });
-    }
-    
-    const existingUser = await prisma.user.findUnique({ where: { username: nip } });
-    if (existingUser) {
-      return res.status(400).json({ error: "Akun dengan NIP tersebut sudah terdaftar." });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const existingDosen = await prisma.dosen.findFirst({ where: { nip } });
-    
-    if (existingDosen) {
-      await prisma.user.create({
-        data: {
-          username: nip,
-          password: hashedPassword,
-          role: "DOSEN",
-          dosen: { connect: { id: existingDosen.id } }
-        }
-      });
-    } else {
-      await prisma.user.create({
-        data: {
-          username: nip,
-          password: hashedPassword,
-          role: "DOSEN",
-          dosen: { create: { nip, nama } }
-        }
-      });
-    }
-
-    res.status(201).json({ message: "Registrasi Dosen berhasil. Silakan login." });
-  } catch (err: any) {
-    console.error("Register Dosen Error:", err);
-    res.status(500).json({ error: "Terjadi kesalahan pada server saat registrasi dosen." });
-  }
+  return res.status(403).json({ 
+    error: "Registrasi mandiri dosen tidak diizinkan. Hubungi Admin Prodi untuk menghubungkan akun Dosen Anda." 
+  });
 });
 
 app.post("/api/login", async (req, res) => {
@@ -305,6 +280,13 @@ app.get("/api/auth/google/callback", async (req, res) => {
     
     if (!email) throw new Error("No email returned from Google");
 
+    // Fix #12: Validate that the email is from an official UNESA domain
+    const emailDomain = email.split("@")[1];
+    const allowedEmailDomains = ["unesa.ac.id", "mhs.unesa.ac.id"];
+    if (!allowedEmailDomains.includes(emailDomain)) {
+      throw new Error(`Akses ditolak. Hanya email institusi UNESA (@unesa.ac.id atau @mhs.unesa.ac.id) yang diizinkan. Email Anda: ${email}`);
+    }
+
     let user = await prisma.user.findFirst({
         where: { OR: [{ email: email }, { username: email.split('@')[0] }] },
         include: { mahasiswa: true }
@@ -349,12 +331,14 @@ app.get("/api/auth/google/callback", async (req, res) => {
       { expiresIn: "1d" }
     );
 
+    // Fix #2: Use specific origin instead of '*' to prevent XSS via postMessage
+    const safeUser = JSON.stringify({ id: user.id, username: user.username, role: user.role, mahasiswa: user.mahasiswa });
     res.send(`
     <html>
       <body>
         <script>
           if (window.opener) {
-            window.opener.postMessage({ type: 'OAUTH_AUTH_SUCCESS', token: '${token}', user: ${JSON.stringify(user)} }, '*');
+            window.opener.postMessage({ type: 'OAUTH_AUTH_SUCCESS', token: '${token}', user: ${safeUser} }, '${origin}');
             window.close();
           } else {
             window.location.href = '/';
@@ -367,7 +351,11 @@ app.get("/api/auth/google/callback", async (req, res) => {
 
   } catch (err: any) {
     console.error("OAuth Error:", err);
-    res.send(`<p>Error: ${err.message}</p><script>setTimeout(()=>window.close(), 5000);</script>`);
+    // Fix: Sanitize error — do not expose internal error details (stack traces, DB info) to browser
+    const safeErrorMsg = err.message?.includes("Akses ditolak")
+      ? err.message
+      : "Terjadi kesalahan saat proses OAuth. Silakan coba lagi.";
+    res.send(`<html><body><p style="font-family:sans-serif;color:#c00;padding:2rem">${safeErrorMsg}</p><script>setTimeout(()=>window.close(), 4000);</script></body></html>`);
   }
 });
 
@@ -670,9 +658,14 @@ app.post("/api/admin/war/cancel", authenticate, isAdmin, async (req: any, res) =
     if (!mhs) throw new Error("Mahasiswa tidak ditemukan.");
     if (!mhs.dosenId) throw new Error("Mahasiswa ini belum memilih dosen.");
 
+    // Fix #11: Reset all related fields, not just dosenId
     await prisma.mahasiswa.update({
       where: { id: mahasiswaId },
-      data: { dosenId: null }
+      data: { 
+        dosenId: null,
+        statusBimbingan: "PENDING",
+        rencanaJudul: null
+      }
     });
 
     console.log(`Admin ${req.user.nim} membatalkan pilihan dosen untuk Mahasiswa ${mhs.nim}`);
@@ -1314,12 +1307,17 @@ app.post("/api/dosen/penelitian", authenticate, async (req: any, res) => {
 });
 
 app.patch("/api/dosen/penelitian/:id/toggle", authenticate, async (req: any, res) => {
-  if (req.user.role !== 'DOSEN') return res.status(403).json({ error: "Access denied." });
+  if (req.user.role !== 'DOSEN') return res.status(403).json({ error: "Access denied" });
   const { id } = req.params;
 
   try {
+    // Fix #5: Verify ownership before allowing toggle
+    const dosen = await prisma.dosen.findUnique({ where: { nip: req.user.nim } });
+    if (!dosen) return res.status(404).json({ error: "Data dosen tidak ditemukan." });
+
     const current = await prisma.penelitian.findUnique({ where: { id } });
     if (!current) return res.status(404).json({ error: "Penelitian tidak ditemukan." });
+    if (current.dosenId !== dosen.id) return res.status(403).json({ error: "Akses ditolak. Bukan penelitian Anda." });
 
     const updated = await prisma.penelitian.update({
       where: { id },
@@ -1332,10 +1330,18 @@ app.patch("/api/dosen/penelitian/:id/toggle", authenticate, async (req: any, res
 });
 
 app.delete("/api/dosen/penelitian/:id", authenticate, async (req: any, res) => {
-  if (req.user.role !== 'DOSEN') return res.status(403).json({ error: "Access denied." });
+  if (req.user.role !== 'DOSEN') return res.status(403).json({ error: "Access denied" });
   const { id } = req.params;
 
   try {
+    // Fix #5: Verify ownership before allowing delete
+    const dosen = await prisma.dosen.findUnique({ where: { nip: req.user.nim } });
+    if (!dosen) return res.status(404).json({ error: "Data dosen tidak ditemukan." });
+
+    const penelitian = await prisma.penelitian.findUnique({ where: { id } });
+    if (!penelitian) return res.status(404).json({ error: "Penelitian tidak ditemukan." });
+    if (penelitian.dosenId !== dosen.id) return res.status(403).json({ error: "Akses ditolak. Bukan penelitian Anda." });
+
     await prisma.penelitian.delete({ where: { id } });
     res.json({ success: true });
   } catch (err: any) {

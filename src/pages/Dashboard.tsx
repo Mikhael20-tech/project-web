@@ -96,32 +96,9 @@ const Dashboard = ({
     }
   };
 
-  const handleCancelDosen = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/war/cancel", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Gagal membatalkan pemilihan.");
-
-      toast({
-        title: t("toast_deleted_title"),
-        description: t("toast_deleted_desc"),
-        variant: "success",
-      });
-      await Promise.all([fetchStudentData(), fetchDosen()]);
-    } catch (err: any) {
-      toast({
-        title: "ERROR",
-        description: err.message.toUpperCase(),
-        variant: "error",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Note: Student cannot cancel their own selection.
+  // Only Dosen (via kick) or Admin (via admin panel) can remove a student's assignment.
+  // handleCancelDosen removed to reflect correct server-side behavior.
 
   const fetchDosen = async () => {
     try {
@@ -153,12 +130,16 @@ const Dashboard = ({
     };
     init();
 
-    socket.on("quota_update", (updatedList: any[]) => {
+    // Fix #9: Use a named handler so socket.off removes only this specific listener,
+    // preventing duplication if the component remounts (e.g. React Strict Mode, logout/login)
+    const handleQuotaUpdate = (updatedList: any[]) => {
       setDosenList(updatedList);
-    });
+    };
+
+    socket.on("quota_update", handleQuotaUpdate);
 
     return () => {
-      socket.off("quota_update");
+      socket.off("quota_update", handleQuotaUpdate);
     };
   }, []);
 

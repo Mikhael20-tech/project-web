@@ -161,18 +161,22 @@ const AdminDashboard = ({
 
   useEffect(() => {
     fetchData();
-    socket.on("quota_update", () => fetchData());
-    
-    socket.on("new_selection", (data: any) => {
+
+    // Fix #9 (Admin): Use named handlers so socket.off removes only these specific listeners
+    const handleQuotaUpdate = () => fetchData();
+    const handleNewSelection = (data: any) => {
       setActivities(prev => [
         { id: Date.now(), ...data },
         ...prev.slice(0, 49) // Keep last 50
       ]);
-    });
+    };
+
+    socket.on("quota_update", handleQuotaUpdate);
+    socket.on("new_selection", handleNewSelection);
 
     return () => {
-      socket.off("quota_update");
-      socket.off("new_selection");
+      socket.off("quota_update", handleQuotaUpdate);
+      socket.off("new_selection", handleNewSelection);
     };
   }, []);
 

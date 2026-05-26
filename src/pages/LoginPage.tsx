@@ -279,9 +279,6 @@ const LoginPage = ({
                     <label className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">
                       {t("login_password")}
                     </label>
-                    <span className="text-[9px] text-teal-800/50 font-mono tracking-tighter bg-teal-50/50 px-2 py-0.5 rounded-md border border-teal-100/30">
-                      mhs123
-                    </span>
                   </div>
                   <div className="relative">
                     <input
