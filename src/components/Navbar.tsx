@@ -289,7 +289,7 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
           ) : (
             <button
               onClick={() => navigate("/login")}
-              className="px-6 py-2.5 bg-teal-950 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-teal-950/20 hover:bg-teal-600 hover:-translate-y-0.5 transition-all active:scale-95"
+              className="hidden lg:inline-block px-6 py-2.5 bg-teal-950 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-teal-950/20 hover:bg-teal-600 hover:-translate-y-0.5 transition-all active:scale-95"
             >
               {t("nav_login_portal")}
             </button>
@@ -336,7 +336,7 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
                   {link.name}
                 </button>
               ))}
-              {user && (
+              {user ? (
                 <button
                   onClick={() => {
                     onLogout();
@@ -346,6 +346,16 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
                 >
                   <XCircle className="w-5 h-5" />
                   {t("logout")}
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    navigate("/login");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full px-6 py-4 bg-teal-950 text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-4 transition-all hover:bg-teal-900 active:scale-95 shadow-lg shadow-teal-950/10"
+                >
+                  {t("nav_login_portal")}
                 </button>
               )}
 
