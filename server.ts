@@ -175,13 +175,78 @@ const triggerQuotaUpdate = () => {
   }, 1000);
 };
 
-// Self-registration endpoint
-// ⛔ DISABLED: Student self-registration is disabled for security.
-// All student accounts must be created by an Admin via the Admin Dashboard.
+// Self-registration endpoint for Students
 app.post("/api/register", async (req, res) => {
-  return res.status(403).json({ 
-    error: "Registrasi mandiri tidak diizinkan. Hubungi Admin Prodi untuk mendaftarkan akun Anda." 
-  });
+  try {
+    const { nim, nama, password } = req.body;
+    if (!nim || !nama || !password) {
+      return res.status(400).json({ error: "NIM/Email, Nama, dan Password wajib diisi." });
+    }
+
+    let usernameInput = nim.trim();
+    let emailInput: string | null = null;
+    let extractedNim = usernameInput;
+    let extractedAngkatan = "";
+
+    // If the username input is an email, enforce UNESA domains and extract NIM
+    if (usernameInput.includes("@")) {
+      const emailDomain = usernameInput.split("@")[1];
+      const allowedEmailDomains = ["unesa.ac.id", "mhs.unesa.ac.id"];
+      if (!allowedEmailDomains.includes(emailDomain)) {
+        return res.status(403).json({ 
+          error: "Akses ditolak. Hanya email institusi UNESA (@unesa.ac.id atau @mhs.unesa.ac.id) yang diizinkan." 
+        });
+      }
+      emailInput = usernameInput;
+      usernameInput = usernameInput.split("@")[0];
+      extractedNim = usernameInput;
+    }
+
+    // Smart Extraction for UNESA NIM (usually 11 digits, first 2 are year)
+    if (/^\d+$/.test(usernameInput) && usernameInput.length >= 2) {
+      extractedNim = usernameInput;
+      extractedAngkatan = "20" + usernameInput.substring(0, 2);
+    }
+
+    // Check if the username or email is already registered
+    const existing = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { username: usernameInput },
+          ...(emailInput ? [{ email: emailInput }] : [])
+        ]
+      }
+    });
+
+    if (existing) {
+      return res.status(400).json({ error: "NIM atau Email sudah terdaftar dalam sistem." });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const student = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          username: usernameInput,
+          email: emailInput,
+          password: hashedPassword,
+          role: "STUDENT"
+        }
+      });
+      return tx.mahasiswa.create({
+        data: {
+          userId: user.id,
+          nim: extractedNim,
+          nama: nama,
+          angkatan: extractedAngkatan
+        }
+      });
+    });
+
+    res.json(student);
+  } catch (err: any) {
+    console.error("Registration Error:", err);
+    res.status(500).json({ error: err.message || "Gagal melakukan registrasi." });
+  }
 });
 
 // Self-registration for Dosen
