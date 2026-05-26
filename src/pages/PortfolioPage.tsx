@@ -28,7 +28,25 @@ const PortfolioPage = () => {
         return res.json();
       })
       .then((data) => {
-        setDosenList(data);
+        // Sort: "Yeni" at the very top, followed by "Eko", then the rest
+        const sorted = [...data].sort((a, b) => {
+          const aName = a.nama.toLowerCase();
+          const bName = b.nama.toLowerCase();
+          
+          const aIsYeni = aName.includes("yeni");
+          const bIsYeni = bName.includes("yeni");
+          const aIsEko = aName.includes("eko");
+          const bIsEko = bName.includes("eko");
+          
+          if (aIsYeni && !bIsYeni) return -1;
+          if (!aIsYeni && bIsYeni) return 1;
+          
+          if (aIsEko && !bIsEko) return -1;
+          if (!aIsEko && bIsEko) return 1;
+          
+          return 0;
+        });
+        setDosenList(sorted);
         setLoading(false);
       })
       .catch((err) => {
