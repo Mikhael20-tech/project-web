@@ -1,0 +1,10 @@
+[build]
+builder = "nixpacks"
+buildCommand = "npm install && npm run build && npx prisma generate"
+
+[deploy]
+startCommand = "NODE_ENV=production tsx server.ts"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+[environments.production]
