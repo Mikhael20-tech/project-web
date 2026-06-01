@@ -55,13 +55,14 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
   "https://dosenkita.up.railway.app", // Railway production URL (hardcoded fallback)
+  "https://dosenkitapti.up.railway.app", // User's Railway production URL
   ...(process.env.APP_URL && process.env.APP_URL !== "MY_APP_URL" ? [process.env.APP_URL] : []),
 ];
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.some(o => origin.startsWith(o))) {
+    if (allowedOrigins.some(o => origin.startsWith(o)) || origin.endsWith(".railway.app")) {
       callback(null, true);
     } else {
       callback(new Error(`CORS: Origin '${origin}' tidak diizinkan.`));
