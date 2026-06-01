@@ -15,6 +15,7 @@ enum Role {
   ADMIN
   STUDENT
   DOSEN
+  DEVELOPER
 }
 
 model User {
