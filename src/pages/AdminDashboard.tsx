@@ -29,6 +29,8 @@ import { cn } from "@/src/lib/utils";
 import { useLanguage } from "@/src/lib/LanguageContext";
 import { socket } from "@/src/lib/socket";
 import LoadingOverlay from "@/src/components/LoadingOverlay";
+import { AdminDateTimePicker } from "@/src/components/AdminDateTimePicker";
+import { BookingCalendar } from "@/src/components/BookingCalendar";
 import {
   BarChart,
   Bar,
@@ -1894,39 +1896,31 @@ const AdminDashboard = ({
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                          {t("dash_admin_start_time")}
-                        </label>
-                        <input
-                          type="datetime-local"
-                          value={configForm.startTime}
-                          onChange={(e) =>
-                            setConfigForm({
-                              ...configForm,
-                              startTime: e.target.value,
-                            })
-                          }
-                          className="w-full p-4 bg-teal-50 border border-teal-100 rounded-[1.25rem] text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                          {t("dash_admin_end_time")}
-                        </label>
-                        <input
-                          type="datetime-local"
-                          value={configForm.endTime}
-                          onChange={(e) =>
-                            setConfigForm({
-                              ...configForm,
-                              endTime: e.target.value,
-                            })
-                          }
-                          className="w-full p-4 bg-teal-50 border border-teal-100 rounded-[1.25rem] text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
-                          required
-                        />
+                      <AdminDateTimePicker
+                        label={t("dash_admin_start_time")}
+                        value={configForm.startTime}
+                        onChange={(val) =>
+                          setConfigForm({ ...configForm, startTime: val })
+                        }
+                        required
+                      />
+                      <AdminDateTimePicker
+                        label={t("dash_admin_end_time")}
+                        value={configForm.endTime}
+                        onChange={(val) =>
+                          setConfigForm({ ...configForm, endTime: val })
+                        }
+                        required
+                      />
+                    </div>
+
+                    {/* ── HeroUI Booking Calendar Preview ── */}
+                    <div className="bg-teal-50/40 border border-teal-100 rounded-[2rem] p-8 text-left">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 mb-6 flex items-center gap-2">
+                        <Calendar className="w-3 h-3" /> Preview Kalender Jadwal
+                      </p>
+                      <div className="flex justify-center">
+                        <BookingCalendar />
                       </div>
                     </div>
 
