@@ -118,6 +118,25 @@ const AdminDashboard = ({
     name: string;
   } | null>(null);
   const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    description?: string;
+    confirmText?: string;
+    cancelText?: string;
+    type?: "danger" | "warning" | "info";
+    onConfirm: () => void;
+  } | null>(null);
+
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => {
+        setMessage(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
 
   const fetchData = async () => {
     try {
@@ -349,28 +368,39 @@ const AdminDashboard = ({
   };
 
   const handleCancelSelection = async (mahasiswaId: string, studentName: string) => {
-    if (!window.confirm(`${t("confirm_cancel_advisor")} ${studentName}?`)) return;
-    setMessage(null);
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/war/cancel", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ mahasiswaId }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Gagal membatalkan pilihan.");
+    setConfirmModal({
+      isOpen: true,
+      title: "Membatalkan Pilihan Dosen",
+      message: `${t("confirm_cancel_advisor")} ${studentName}?`,
+      description: "Tindakan ini akan membatalkan pilihan dosen mahasiswa tersebut secara instan dan mengembalikan kuota pembimbing dosen terkait.",
+      confirmText: "YA, BATALKAN PILIHAN",
+      cancelText: "KEMBALI",
+      type: "danger",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        setMessage(null);
+        setLoading(true);
+        try {
+          const res = await fetch("/api/admin/war/cancel", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ mahasiswaId }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Gagal membatalkan pilihan.");
 
-      setMessage({ type: "success", text: data.message });
-      fetchData();
-    } catch (err: any) {
-      setMessage({ type: "error", text: err.message });
-    } finally {
-      setLoading(false);
-    }
+          setMessage({ type: "success", text: data.message });
+          fetchData();
+        } catch (err: any) {
+          setMessage({ type: "error", text: err.message });
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
   const handleDelete = async () => {
@@ -525,16 +555,25 @@ const AdminDashboard = ({
 
   const handleSendBroadcast = async () => {
     if (!broadcastForm.message) return;
-    if (!window.confirm(t("confirm_broadcast_send"))) return;
     
-    setBroadcastForm({ ...broadcastForm, status: "sending" });
-    try {
-      const res = await fetch("/api/admin/broadcast/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ 
-          message: broadcastForm.message, 
-          targetAngkatan: broadcastForm.targetAngkatan 
+    setConfirmModal({
+      isOpen: true,
+      title: "Kirim Broadcast WhatsApp",
+      message: t("confirm_broadcast_send") || "Apakah Anda yakin ingin mengirim pesan broadcast ini ke seluruh mahasiswa yang ditargetkan?",
+      description: "Pesan WhatsApp massal akan segera dikirimkan ke nomor kontak aktif dari mahasiswa yang terpilih.",
+      confirmText: "YA, KIRIM PESAN",
+      cancelText: "BATALKAN",
+      type: "warning",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        setBroadcastForm({ ...broadcastForm, status: "sending" });
+        try {
+          const res = await fetch("/api/admin/broadcast/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ 
+              message: broadcastForm.message, 
+              targetAngkatan: broadcastForm.targetAngkatan 
         })
       });
       const data = await res.json();
@@ -545,7 +584,9 @@ const AdminDashboard = ({
     } catch (err: any) {
       setMessage({ type: "error", text: err.message });
       setBroadcastForm({ ...broadcastForm, status: "error" });
-    }
+        }
+      }
+    });
   };
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
@@ -784,26 +825,7 @@ const AdminDashboard = ({
           </div>
         </motion.div>
 
-        {message && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -10 }}
-            className={cn(
-              "px-6 py-5 rounded-[2rem] flex items-center justify-center gap-3 font-bold text-sm shadow-sm border",
-              message.type === "success"
-                ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                : "bg-rose-50 text-rose-700 border-rose-100",
-            )}
-          >
-            {message.type === "success" ? (
-              <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-            ) : (
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            )}
-            {message.text.toUpperCase()}
-          </motion.div>
-        )}
+        {/* Float Notification Toast renders globally at the bottom of page layout */}
 
         <AnimatePresence mode="wait">
           {activeTab === "monitoring" && (
@@ -2419,6 +2441,126 @@ const AdminDashboard = ({
                     TIDAK, BATALKAN
                   </button>
                 </div>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Premium Glassmorphic Confirmation Modal */}
+          {confirmModal && confirmModal.isOpen && (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setConfirmModal(null)}
+                className="absolute inset-0 bg-teal-950/40 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                className="relative w-full max-w-md bg-white/70 backdrop-blur-xl border border-white/40 rounded-[3rem] p-10 shadow-2xl shadow-teal-950/10 space-y-8"
+              >
+                <div className={cn(
+                  "w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner",
+                  confirmModal.type === "danger" 
+                    ? "bg-rose-50 text-rose-500 shadow-rose-100" 
+                    : confirmModal.type === "warning"
+                    ? "bg-amber-50 text-amber-500 shadow-amber-100"
+                    : "bg-teal-50 text-teal-500 shadow-teal-100"
+                )}>
+                  {confirmModal.type === "danger" ? (
+                    <AlertCircle className="w-8 h-8" />
+                  ) : confirmModal.type === "warning" ? (
+                    <Info className="w-8 h-8" />
+                  ) : (
+                    <CheckCircle2 className="w-8 h-8" />
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <h3 className={cn(
+                    "text-[10px] font-black uppercase tracking-[0.2em]",
+                    confirmModal.type === "danger" 
+                      ? "text-rose-500" 
+                      : confirmModal.type === "warning"
+                      ? "text-amber-500"
+                      : "text-teal-500"
+                  )}>
+                    {confirmModal.title}
+                  </h3>
+                  <h2 className="text-2xl font-black text-teal-950 leading-tight">
+                    {confirmModal.message}
+                  </h2>
+                  {confirmModal.description && (
+                    <p className="text-xs text-teal-800/50 font-medium leading-relaxed">
+                      {confirmModal.description}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={confirmModal.onConfirm}
+                    disabled={loading}
+                    className={cn(
+                      "w-full py-4 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg transition-all active:scale-[0.98] disabled:opacity-50",
+                      confirmModal.type === "danger"
+                        ? "bg-rose-500 hover:bg-rose-600 shadow-rose-200"
+                        : confirmModal.type === "warning"
+                        ? "bg-amber-500 hover:bg-amber-600 shadow-amber-200"
+                        : "bg-teal-600 hover:bg-teal-700 shadow-teal-200"
+                    )}
+                  >
+                    {confirmModal.confirmText || "KONFIRMASI"}
+                  </button>
+                  <button
+                    onClick={() => setConfirmModal(null)}
+                    disabled={loading}
+                    className="w-full py-4 bg-teal-50/50 text-teal-900/60 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-100/50 transition-all"
+                  >
+                    {confirmModal.cancelText || "BATAL"}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Float Notification Toast */}
+          {message && (
+            <div className="fixed bottom-6 right-6 z-[300] max-w-sm w-full px-6 sm:px-0">
+              <motion.div
+                initial={{ opacity: 0, x: 50, scale: 0.9 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: 50, scale: 0.9 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                className={cn(
+                  "p-5 rounded-[2.5rem] flex items-center gap-4 text-xs font-black uppercase tracking-wider shadow-2xl border backdrop-blur-xl bg-white/80 border-white/50",
+                  message.type === "success"
+                    ? "text-emerald-700 shadow-emerald-500/10 border-emerald-100"
+                    : "text-rose-700 shadow-rose-500/10 border-rose-100",
+                )}
+              >
+                <div className={cn(
+                  "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-inner",
+                  message.type === "success" ? "bg-emerald-50 text-emerald-500" : "bg-rose-50 text-rose-500"
+                )}>
+                  {message.type === "success" ? (
+                    <CheckCircle2 className="w-5 h-5" />
+                  ) : (
+                    <AlertCircle className="w-5 h-5" />
+                  )}
+                </div>
+                <div className="flex-1 pr-4 normal-case text-teal-950 font-semibold leading-snug">
+                  {message.text}
+                </div>
+                <button
+                  onClick={() => setMessage(null)}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-teal-950/30 hover:bg-teal-950/5 hover:text-teal-950 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </motion.div>
             </div>
           )}
