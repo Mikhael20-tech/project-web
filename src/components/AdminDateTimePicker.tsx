@@ -135,7 +135,7 @@ export function AdminDateTimePicker({
           onChange={handleTimeChange as any}
           hourCycle={24}
         >
-          <TimeField.Group className="w-full" variant="bordered">
+          <TimeField.Group className="w-full">
             <TimeField.InputContainer className="w-full px-4 py-3.5 bg-teal-50 border border-teal-100 rounded-[1.25rem] shadow-inner flex items-center gap-2">
               <Clock className="w-4 h-4 text-teal-400 flex-shrink-0" />
               <TimeField.Input className="flex-1 font-bold text-sm text-teal-950">
