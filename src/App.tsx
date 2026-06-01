@@ -36,6 +36,7 @@ const AppContent = ({
   const navigate = useNavigate();
   const isLoginPage = location.pathname === "/login";
   const isLandingPage = location.pathname === "/";
+  const isPortfolioPage = location.pathname === "/portfolio";
 
   const handleLogout = () => {
     logout();
@@ -45,7 +46,7 @@ const AppContent = ({
   return (
     <div className={`bg-[#f8fdfc] min-h-screen font-sans antialiased text-teal-950 transition-colors`}>
       <AnimatePresence mode="wait">
-        {!currentUser && !isLoginPage && !isLandingPage && <LoadingOverlay />}
+        {!currentUser && !isLoginPage && !isLandingPage && !isPortfolioPage && <LoadingOverlay />}
       </AnimatePresence>
       
       {!isLoginPage && <Navbar user={currentUser} onLogout={handleLogout} />}
