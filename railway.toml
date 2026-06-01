@@ -1,8 +1,9 @@
 [build]
-buildCommand = "npm install && npm run build && npx prisma generate && npx prisma db push --accept-data-loss"
+buildCommand = "npm install && npm run build"
 
 [deploy]
 startCommand = "NODE_ENV=production tsx server.ts"
+preDeployCommand = "npx prisma generate && npx prisma db push --accept-data-loss"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
 
