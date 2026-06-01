@@ -96,7 +96,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "wardosen-secret-key-123";
 if (!process.env.JWT_SECRET) {
   console.warn("⚠️  WARNING: JWT_SECRET tidak diatur di .env! Menggunakan fallback yang tidak aman untuk production.");
 }
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 // Multer Storage Configuration (Use memory storage for Supabase upload)
 const storage = multer.memoryStorage();
