@@ -19,7 +19,16 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 // Initialize Supabase Storage Client
 const supabaseUrl = (process.env.SUPABASE_URL || "").replace(/^["']|["']$/g, "").trim();
 const supabaseKey = (process.env.SUPABASE_SERVICE_KEY || "").replace(/^["']|["']$/g, "").trim();
-const supabase = createSupabaseClient(supabaseUrl, supabaseKey);
+let supabase: any = null;
+if (supabaseUrl && supabaseKey) {
+  try {
+    supabase = createSupabaseClient(supabaseUrl, supabaseKey);
+  } catch (err) {
+    console.error("❌ Failed to initialize Supabase client:", err);
+  }
+} else {
+  console.warn("⚠️ WARNING: SUPABASE_URL atau SUPABASE_SERVICE_KEY belum disetel. Fitur upload foto tidak akan berfungsi.");
+}
 
 // Initialize Google Generative AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
@@ -86,7 +95,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "wardosen-secret-key-123";
 if (!process.env.JWT_SECRET) {
   console.warn("⚠️  WARNING: JWT_SECRET tidak diatur di .env! Menggunakan fallback yang tidak aman untuk production.");
 }
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Multer Storage Configuration (Use memory storage for Supabase upload)
 const storage = multer.memoryStorage();
@@ -814,6 +823,9 @@ app.post("/api/upload", authenticate, (req: any, res: any) => {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
     try {
+      if (!supabase) {
+        return res.status(500).json({ error: "Supabase storage is not configured on this server." });
+      }
       const bucketName = req.user?.role === 'STUDENT' ? 'mahasiswa-photos' : 'dosen-photos';
       const fileExt = path.extname(req.file.originalname);
       const uniqueFilename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${fileExt}`;

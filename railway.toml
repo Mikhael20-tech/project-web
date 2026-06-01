@@ -1,5 +1,5 @@
 [build]
-buildCommand = "npm install && npm run build && npx prisma generate"
+buildCommand = "npm install && npm run build && npx prisma generate && npx prisma db push --accept-data-loss"
 
 [deploy]
 startCommand = "NODE_ENV=production tsx server.ts"
