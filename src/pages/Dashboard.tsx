@@ -27,7 +27,8 @@ import { useLanguage } from "@/src/lib/LanguageContext";
 import LoadingOverlay from "@/src/components/LoadingOverlay";
 import DosenCardSkeleton from "@/src/components/DosenCardSkeleton";
 import confetti from "canvas-confetti";
-import { Alert } from "@heroui/react";
+import { Alert, Input, Button, ProgressBar } from "@heroui/react";
+
 
 const Dashboard = ({
   user: initialUser,
@@ -751,20 +752,23 @@ const Dashboard = ({
               <div className="h-px bg-teal-100 flex-1"></div>
             </div>
 
-            <div className="relative mb-6">
-              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                <Search className="w-4 h-4 text-teal-400" />
-              </div>
-              <input
+            <div className="relative mb-6 flex items-center bg-white border border-teal-100 rounded-[1.5rem] hover:border-teal-200 focus-within:border-teal-500 shadow-sm px-6 py-4">
+              <Search className="w-4 h-4 text-teal-400 shrink-0 mr-3" />
+              <Input
                 type="text"
                 value={searchDosen}
                 onChange={(e) => setSearchDosen(e.target.value)}
                 placeholder={t("dash_student_search_placeholder")}
-                className="w-full pl-11 pr-4 py-4 bg-white border border-teal-100 rounded-[1.5rem] text-sm font-bold text-teal-950 placeholder:text-teal-300 focus:outline-none focus:ring-4 focus:ring-teal-500/10 shadow-sm transition-all"
+                variant="primary"
+                className="w-full text-sm font-bold text-teal-950 placeholder:text-teal-300 bg-transparent outline-none border-none p-0 focus:ring-0 focus:outline-none"
               />
               {searchDosen && (
-                <button onClick={() => setSearchDosen("")} className="absolute inset-y-0 right-4 flex items-center text-teal-300 hover:text-teal-500">
-                  <X className="w-5 h-5" />
+                <button
+                  type="button"
+                  onClick={() => setSearchDosen("")}
+                  className="p-1 hover:bg-teal-50 rounded-full transition-all text-teal-400 hover:text-teal-600"
+                >
+                  <XCircle className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -824,70 +828,70 @@ const Dashboard = ({
                             <p className="text-xs font-black text-teal-800/60">{dosen._count.mahasiswa} / {dosen.kuotaMax}</p>
                           </div>
                         </div>
-
                         <div className="space-y-2">
-                          <div className="w-full h-2 bg-white rounded-full overflow-hidden p-0.5 border border-teal-100">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              whileInView={{ width: `${(dosen._count.mahasiswa / dosen.kuotaMax) * 100}%` }}
-                              transition={{ duration: 1 }}
-                              className={cn("h-full rounded-full", dosen.kuotaMax - dosen._count.mahasiswa > 0 ? "bg-teal-500" : "bg-rose-500")}
-                            />
-                          </div>
+                          <ProgressBar
+                            value={(dosen._count.mahasiswa / dosen.kuotaMax) * 100}
+                            color={dosen.kuotaMax - dosen._count.mahasiswa > 0 ? "accent" : "danger"}
+                            size="md"
+                          >
+                            <ProgressBar.Track className="bg-white border border-teal-100 rounded-full h-2 overflow-hidden p-0.5">
+                              <ProgressBar.Fill className={dosen.kuotaMax - dosen._count.mahasiswa > 0 ? "bg-teal-500" : "bg-rose-500"} />
+                            </ProgressBar.Track>
+                          </ProgressBar>
                         </div>
                       </div>
 
                       {config?.category === "SKRIPSI_ARTIKEL" ? (
                         <div className="space-y-2 mt-4 flex-1 flex flex-col justify-end">
                           {dosen.penelitian?.map((p: any) => (
-                            <button
+                            <Button
                               key={p.id}
                               onClick={() => setConfirmingDosen({ dosen, title: p.judul })}
-                              disabled={!isWarActive || config?.isForcedClosed || dosen.kuotaMax - dosen._count.mahasiswa <= 0 || loading || !isBatchAllowed() || !studentData?.rencanaJudul}
+                              isDisabled={!isWarActive || config?.isForcedClosed || dosen.kuotaMax - dosen._count.mahasiswa <= 0 || loading || !isBatchAllowed() || !studentData?.rencanaJudul}
+                              variant="secondary"
                               className={cn(
-                                "w-full py-3 px-4 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all duration-300 text-left truncate border",
+                                "w-full py-3 px-4 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all duration-300 text-left truncate border h-auto min-h-0",
                                 isWarActive && !config?.isForcedClosed && dosen.kuotaMax - dosen._count.mahasiswa > 0 && isBatchAllowed() && studentData?.rencanaJudul
-                                  ? "bg-teal-50 text-teal-800 hover:bg-teal-500 hover:text-white border-teal-100 hover:border-teal-500 shadow-sm"
-                                  : "bg-slate-50 text-slate-400 cursor-not-allowed border-slate-100"
+                                  ? "bg-teal-50 text-teal-800 border-teal-100 hover:bg-teal-500 hover:text-white hover:border-teal-500 shadow-sm"
+                                  : "bg-slate-50 text-slate-400 border-slate-100"
                               )}
-                              title={p.judul}
                             >
                               PILIH: {p.judul}
-                            </button>
+                            </Button>
                           ))}
-                          <button
+                          <Button
                             onClick={() => setConfirmingDosen({ dosen, title: studentData?.rencanaJudul })}
-                            disabled={!isWarActive || config?.isForcedClosed || dosen.kuotaMax - dosen._count.mahasiswa <= 0 || loading || !isBatchAllowed() || !studentData?.rencanaJudul}
+                            isDisabled={!isWarActive || config?.isForcedClosed || dosen.kuotaMax - dosen._count.mahasiswa <= 0 || loading || !isBatchAllowed() || !studentData?.rencanaJudul}
                             className={cn(
-                              "w-full py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all duration-300 shadow-sm mt-2",
+                              "w-full py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all duration-300 shadow-sm mt-2 h-auto",
                               isWarActive && !config?.isForcedClosed && dosen.kuotaMax - dosen._count.mahasiswa > 0 && isBatchAllowed() && studentData?.rencanaJudul
                                 ? "bg-teal-950 text-white hover:bg-teal-800 border border-teal-900"
-                                : "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
+                                : "bg-slate-100 text-slate-400 border border-slate-200"
                             )}
                           >
                             PILIH (JUDUL DARI PROFIL)
-                          </button>
+                          </Button>
                         </div>
                       ) : (
-                        <button
+                        <Button
                           onClick={() => setConfirmingDosen({ dosen, title: studentData?.rencanaJudul })}
-                          disabled={!isWarActive || config?.isForcedClosed || dosen.kuotaMax - dosen._count.mahasiswa <= 0 || loading || !isBatchAllowed() || !studentData?.rencanaJudul}
+                          isDisabled={!isWarActive || config?.isForcedClosed || dosen.kuotaMax - dosen._count.mahasiswa <= 0 || loading || !isBatchAllowed() || !studentData?.rencanaJudul}
                           className={cn(
-                            "w-full py-6 mt-4 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all duration-500 shadow-xl overflow-hidden relative",
+                            "w-full py-6 mt-4 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all duration-500 shadow-xl overflow-hidden relative h-auto min-h-[56px]",
                             isWarActive && !config?.isForcedClosed && dosen.kuotaMax - dosen._count.mahasiswa > 0 && isBatchAllowed() && studentData?.rencanaJudul
-                              ? "bg-teal-950 text-white hover:bg-teal-500 shadow-teal-950/20 hover:-translate-y-2"
-                              : "bg-teal-50 text-teal-800/20 cursor-not-allowed border border-teal-100"
+                              ? "bg-teal-950 text-white hover:bg-teal-500 shadow-teal-950/20 hover:-translate-y-1"
+                              : "bg-teal-50 text-teal-800/20 border border-teal-100"
                           )}
                         >
                           <span className="relative z-10 flex items-center justify-center gap-2">
                             {loading ? <RefreshCcw className="w-4 h-4 animate-spin" /> : 
-                              (config?.isForcedClosed ? t("dash_student_system_closed") :
-                              (!isWarActive ? t("dash_student_waiting_war") : 
-                              (!isBatchAllowed() ? t("dash_student_access_denied") :
-                              (!studentData?.rencanaJudul ? "ISI PROFIL TERLEBIH DAHULU" :
-                              (dosen.kuotaMax - dosen._count.mahasiswa <= 0 ? t("dash_student_quota_full") : t("dash_student_pick_advisor"))))))}
+                              config?.isForcedClosed ? t("dash_student_system_closed") :
+                              !isWarActive ? t("dash_student_waiting_war") : 
+                              !isBatchAllowed() ? t("dash_student_access_denied") :
+                              !studentData?.rencanaJudul ? "ISI PROFIL TERLEBIH DAHULU" :
+                              dosen.kuotaMax - dosen._count.mahasiswa <= 0 ? t("dash_student_quota_full") : t("dash_student_pick_advisor")}
                           </span>
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </motion.div>

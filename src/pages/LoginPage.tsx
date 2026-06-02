@@ -13,7 +13,7 @@ import {
 import { cn } from "@/src/lib/utils";
 import { useLanguage } from "@/src/lib/LanguageContext";
 import { LogoIcon } from "@/src/components/Logo";
-import { Alert } from "@heroui/react";
+import { Alert, Input, Button } from "@heroui/react";
 
 const LoginPage = ({
   onLogin,
@@ -239,13 +239,14 @@ const LoginPage = ({
                         24050974086
                       </span>
                     </div>
-                    <input
+                    <Input
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 rounded-[1.5rem] px-6 py-5 text-teal-950 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all placeholder:text-teal-800/30 shadow-inner"
                       placeholder="NIM atau Email UNESA"
                       required
+                      variant="primary"
+                      className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-[1.5rem] h-[60px] px-6 shadow-inner transition-all font-bold text-sm text-teal-950"
                     />
                   </div>
 
@@ -261,13 +262,14 @@ const LoginPage = ({
                           Nama Lengkap
                         </label>
                       </div>
-                      <input
+                      <Input
                         type="text"
                         value={nama}
                         onChange={(e) => setNama(e.target.value)}
-                        className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 rounded-[1.5rem] px-6 py-5 text-teal-950 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all placeholder:text-teal-800/30 shadow-inner"
                         placeholder="Masukkan nama lengkap"
                         required={isRegister}
+                        variant="primary"
+                        className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-[1.5rem] h-[60px] px-6 shadow-inner transition-all font-bold text-sm text-teal-950"
                       />
                     </motion.div>
                   )}
@@ -279,13 +281,14 @@ const LoginPage = ({
                         {t("login_password")}
                       </label>
                     </div>
-                    <input
+                    <Input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 rounded-[1.5rem] px-6 py-5 text-teal-950 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all placeholder:text-teal-800/30 shadow-inner"
                       placeholder="Ketuk sandi rahasia"
                       required
+                      variant="primary"
+                      className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-[1.5rem] h-[60px] px-6 shadow-inner transition-all font-bold text-sm text-teal-950"
                     />
                   </div>
 
@@ -299,21 +302,20 @@ const LoginPage = ({
                   )}
 
                   {/* Submit Button */}
-                  <button
+                  <Button
                     type="submit"
-                    disabled={loading}
-                    className="w-full py-6 bg-teal-950 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-teal-950/30 hover:bg-teal-600 hover:-translate-y-1 active:scale-95 transition-all disabled:opacity-50 disabled:translate-y-0 flex items-center justify-center gap-3 group relative overflow-hidden"
+                    isDisabled={loading}
+                    className="w-full h-16 bg-teal-950 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-teal-950/30 hover:bg-teal-600 hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3 group relative overflow-hidden"
                   >
-                    <div className="absolute inset-0 bg-white/10 -translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
                     {loading ? (
-                      <RefreshCcw className="w-5 h-5 animate-spin" />
+                      <RefreshCcw className="w-5 h-5 animate-spin text-white" />
                     ) : (
                       <>
                         <LogIn className="w-4 h-4 group-hover:rotate-12 transition-transform" />{" "}
                         {isRegister ? "Daftar Akun" : t("login_btn_enter")}
                       </>
                     )}
-                  </button>
+                  </Button>
                 </form>
 
                 {/* SSO Google separator and button */}
@@ -326,12 +328,11 @@ const LoginPage = ({
                   </span>
                 </div>
 
-                <button
+                <Button
                   type="button"
                   onClick={handleGoogleLogin}
-                  className="w-full py-5 bg-white border-2 border-teal-100/80 hover:border-teal-400 text-teal-950 rounded-[1.5rem] font-black text-xs uppercase tracking-widest flex items-center justify-center gap-4 transition-all duration-300 hover:bg-teal-50/30 hover:-translate-y-1 active:scale-95 shadow-xl shadow-teal-950/5 group relative overflow-hidden"
+                  className="w-full h-14 bg-white border-2 border-teal-100/80 hover:border-teal-400 text-teal-950 rounded-[1.5rem] font-black text-xs uppercase tracking-widest flex items-center justify-center gap-4 transition-all duration-300 hover:bg-teal-50/30 hover:-translate-y-1 active:scale-95 shadow-xl shadow-teal-950/5 group relative overflow-hidden"
                 >
-                  <div className="absolute inset-0 bg-teal-50/10 -translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
                   <svg className="w-5 h-5 shrink-0 group-hover:scale-110 transition-transform duration-300 relative z-10" viewBox="0 0 24 24" fill="none">
                     <path
                       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -353,7 +354,7 @@ const LoginPage = ({
                   <span className="relative z-10 font-black tracking-[0.1em]">
                     {isRegister ? "Daftar lewat Google UNESA" : "Login lewat Google UNESA"}
                   </span>
-                </button>
+                </Button>
 
                 {/* Account status switch */}
                 <div className="text-center pt-4 border-t border-teal-50/50">
@@ -392,13 +393,14 @@ const LoginPage = ({
                         19800101
                       </span>
                     </div>
-                    <input
+                    <Input
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 rounded-[1.5rem] px-6 py-5 text-teal-950 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all placeholder:text-teal-800/30 shadow-inner"
                       placeholder={t("login_nip")}
                       required
+                      variant="primary"
+                      className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-[1.5rem] h-[60px] px-6 shadow-inner transition-all font-bold text-sm text-teal-950"
                     />
                   </div>
 
@@ -414,13 +416,14 @@ const LoginPage = ({
                           Nama Lengkap
                         </label>
                       </div>
-                      <input
+                      <Input
                         type="text"
                         value={nama}
                         onChange={(e) => setNama(e.target.value)}
-                        className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 rounded-[1.5rem] px-6 py-5 text-teal-950 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all placeholder:text-teal-800/30 shadow-inner"
                         placeholder="Masukkan nama lengkap"
                         required={isRegister}
+                        variant="primary"
+                        className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-[1.5rem] h-[60px] px-6 shadow-inner transition-all font-bold text-sm text-teal-950"
                       />
                     </motion.div>
                   )}
@@ -432,13 +435,14 @@ const LoginPage = ({
                         {t("login_password")}
                       </label>
                     </div>
-                    <input
+                    <Input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 rounded-[1.5rem] px-6 py-5 text-teal-950 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all placeholder:text-teal-800/30 shadow-inner"
                       placeholder="Ketuk sandi rahasia"
                       required
+                      variant="primary"
+                      className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-[1.5rem] h-[60px] px-6 shadow-inner transition-all font-bold text-sm text-teal-950"
                     />
                   </div>
 
@@ -452,21 +456,20 @@ const LoginPage = ({
                   )}
 
                   {/* Submit Button */}
-                  <button
+                  <Button
                     type="submit"
-                    disabled={loading}
-                    className="w-full py-6 bg-teal-950 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-teal-950/30 hover:bg-teal-600 hover:-translate-y-1 active:scale-95 transition-all disabled:opacity-50 disabled:translate-y-0 flex items-center justify-center gap-3 group relative overflow-hidden"
+                    isDisabled={loading}
+                    className="w-full h-16 bg-teal-950 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-teal-950/30 hover:bg-teal-600 hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3 group relative overflow-hidden"
                   >
-                    <div className="absolute inset-0 bg-white/10 -translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
                     {loading ? (
-                      <RefreshCcw className="w-5 h-5 animate-spin" />
+                      <RefreshCcw className="w-5 h-5 animate-spin text-white" />
                     ) : (
                       <>
                         <LogIn className="w-4 h-4 group-hover:rotate-12 transition-transform" />{" "}
                         {isRegister ? "Daftar Akun Dosen" : t("login_btn_enter")}
                       </>
                     )}
-                  </button>
+                  </Button>
                 </form>
 
                 {/* SSO Google separator and button */}
@@ -479,12 +482,11 @@ const LoginPage = ({
                   </span>
                 </div>
 
-                <button
+                <Button
                   type="button"
                   onClick={handleGoogleLogin}
-                  className="w-full py-5 bg-white border-2 border-teal-100/80 hover:border-teal-400 text-teal-950 rounded-[1.5rem] font-black text-xs uppercase tracking-widest flex items-center justify-center gap-4 transition-all duration-300 hover:bg-teal-50/30 hover:-translate-y-1 active:scale-95 shadow-xl shadow-teal-950/5 group relative overflow-hidden"
+                  className="w-full h-14 bg-white border-2 border-teal-100/80 hover:border-teal-400 text-teal-950 rounded-[1.5rem] font-black text-xs uppercase tracking-widest flex items-center justify-center gap-4 transition-all duration-300 hover:bg-teal-50/30 hover:-translate-y-1 active:scale-95 shadow-xl shadow-teal-950/5 group relative overflow-hidden"
                 >
-                  <div className="absolute inset-0 bg-teal-50/10 -translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
                   <svg className="w-5 h-5 shrink-0 group-hover:scale-110 transition-transform duration-300 relative z-10" viewBox="0 0 24 24" fill="none">
                     <path
                       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -506,7 +508,7 @@ const LoginPage = ({
                   <span className="relative z-10 font-black tracking-[0.1em]">
                     {isRegister ? "Daftar lewat Google UNESA" : "Login lewat Google UNESA"}
                   </span>
-                </button>
+                </Button>
 
                 {/* Account status switch */}
                 <div className="text-center pt-4 border-t border-teal-50/50">

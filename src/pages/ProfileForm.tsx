@@ -3,7 +3,7 @@ import { motion } from "motion/react";
 import { Users, AlertCircle, RefreshCcw } from "lucide-react";
 import GlassCard from "@/src/components/GlassCard";
 import { useLanguage } from "@/src/lib/LanguageContext";
-import { Alert } from "@heroui/react";
+import { Alert, Input, Button } from "@heroui/react";
 
 const ProfileForm = ({
   user,
@@ -82,24 +82,26 @@ const ProfileForm = ({
               <label className="text-[10px] font-black uppercase text-teal-800/60 ml-1">
                 {t("dash_profile_nim_auto")}
               </label>
-              <input
+              <Input
                 value={user.username}
                 disabled
-                className="w-full p-4 bg-teal-50/50 border border-teal-100 rounded-2xl text-teal-800/60 font-mono text-sm cursor-not-allowed shadow-inner"
+                variant="primary"
+                className="w-full bg-teal-50/50 border border-teal-100 rounded-2xl h-14 px-6 shadow-inner cursor-not-allowed font-mono text-sm text-teal-800/60"
               />
             </div>
             <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase text-teal-800/60 ml-1">
                 {t("dash_profile_fullname")}
               </label>
-              <input
+              <Input
                 value={formData.nama}
                 onChange={(e) =>
                   setFormData({ ...formData, nama: e.target.value })
                 }
                 placeholder={t("dash_profile_fullname_placeholder")}
-                className="w-full p-4 bg-[#f8fdfc] border border-teal-100 rounded-2xl text-teal-950 text-sm focus:ring-4 focus:ring-teal-100 transition-all outline-none shadow-inner placeholder:text-teal-800/30 font-bold"
                 required
+                variant="primary"
+                className="w-full bg-[#f8fdfc] border border-teal-100 rounded-2xl h-14 px-6 shadow-inner transition-all font-bold text-sm text-teal-950 focus:border-teal-400 focus:outline-none focus:ring-0"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -107,29 +109,31 @@ const ProfileForm = ({
                 <label className="text-[10px] font-black uppercase text-teal-800/60 ml-1">
                   {t("dash_profile_batch")}
                 </label>
-                <input
+                <Input
                   type="text"
                   value={formData.angkatan}
                   onChange={(e) =>
                     setFormData({ ...formData, angkatan: e.target.value })
                   }
                   placeholder="2021"
-                  className="w-full p-4 bg-[#f8fdfc] border border-teal-100 rounded-2xl text-teal-950 text-sm focus:ring-4 focus:ring-teal-100 transition-all outline-none shadow-inner placeholder:text-teal-800/30 font-bold"
                   required
+                  variant="primary"
+                  className="w-full bg-[#f8fdfc] border border-teal-100 rounded-2xl h-14 px-6 shadow-inner transition-all font-bold text-sm text-teal-950 focus:border-teal-400 focus:outline-none focus:ring-0"
                 />
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase text-teal-800/60 ml-1">
                   {t("dash_profile_contact")}
                 </label>
-                <input
+                <Input
                   value={formData.kontak}
                   onChange={(e) =>
                     setFormData({ ...formData, kontak: e.target.value })
                   }
                   placeholder="0812..."
-                  className="w-full p-4 bg-[#f8fdfc] border border-teal-100 rounded-2xl text-teal-950 text-sm focus:ring-4 focus:ring-teal-100 transition-all outline-none shadow-inner placeholder:text-teal-800/30 font-bold"
                   required
+                  variant="primary"
+                  className="w-full bg-[#f8fdfc] border border-teal-100 rounded-2xl h-14 px-6 shadow-inner transition-all font-bold text-sm text-teal-950 focus:border-teal-400 focus:outline-none focus:ring-0"
                 />
               </div>
             </div>
@@ -143,19 +147,17 @@ const ProfileForm = ({
               </Alert>
             )}
 
-            <button
+            <Button
               type="submit"
-              disabled={loading}
-              className="w-full py-5 bg-teal-500 text-white rounded-[2rem] shadow-xl shadow-teal-500/20 font-black text-xs uppercase tracking-[0.2em] hover:bg-teal-950 hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
+              isDisabled={loading}
+              className="w-full h-14 bg-teal-500 text-white rounded-[2rem] shadow-xl shadow-teal-500/20 font-black text-xs uppercase tracking-[0.2em] hover:bg-teal-950 transition-all flex items-center justify-center gap-2"
             >
               {loading ? (
-                <>
-                  <RefreshCcw className="w-4 h-4 animate-spin" /> {t("dash_profile_saving")}
-                </>
+                <RefreshCcw className="w-4 h-4 animate-spin text-white" />
               ) : (
                 t("dash_profile_save_continue")
               )}
-            </button>
+            </Button>
           </form>
         </GlassCard>
       </motion.div>
