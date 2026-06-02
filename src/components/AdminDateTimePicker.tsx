@@ -104,8 +104,11 @@ export function AdminDateTimePicker({
             <DatePicker.TriggerIndicator className="text-teal-400" />
           </DatePicker.Trigger>
 
-          <DatePicker.Popover className="z-50">
-            <div className="p-3 bg-white rounded-3xl shadow-2xl shadow-teal-500/10 border border-teal-50">
+          <DatePicker.Popover 
+            className="z-50 !fixed !inset-0 !flex !items-center !justify-center bg-teal-950/20 backdrop-blur-sm !transform-none"
+            style={{ transform: "none" }}
+          >
+            <div className="p-6 bg-white/70 backdrop-blur-xl border border-white/40 rounded-3xl shadow-2xl shadow-teal-500/10 max-w-sm w-full mx-4">
               <Calendar value={dateValue} onChange={handleDateChange as any}>
                 <Calendar.Header className="flex items-center justify-between px-2 pb-3">
                   <Calendar.NavButton slot="previous" />
