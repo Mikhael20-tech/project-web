@@ -56,6 +56,7 @@ export function AdminDateTimePicker({
     parsed.date
   );
   const [timeValue, setTimeValue] = useState<Time | null>(parsed.time);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   // Sync when parent value changes (e.g., data loaded from API)
   useEffect(() => {
@@ -87,7 +88,12 @@ export function AdminDateTimePicker({
 
       <div className="space-y-2">
         {/* ── Date Picker ── */}
-        <DatePicker value={dateValue} onChange={handleDateChange as any}>
+        <DatePicker 
+          value={dateValue} 
+          onChange={handleDateChange as any}
+          isOpen={isDatePickerOpen}
+          onOpenChange={setIsDatePickerOpen}
+        >
           <DatePicker.Trigger className="w-full px-4 py-3.5 bg-teal-50 border border-teal-100 rounded-[1.25rem] text-teal-950 font-bold focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-500/10 hover:border-teal-300 transition-all shadow-inner flex items-center justify-between group">
             <span className="flex items-center gap-2 text-sm">
               <CalendarDays className="w-4 h-4 text-teal-400 group-hover:text-teal-500 transition-colors" />
@@ -108,37 +114,35 @@ export function AdminDateTimePicker({
             className="z-50 !fixed !inset-0 !flex !items-center !justify-center bg-teal-950/20 backdrop-blur-sm !transform-none"
             style={{ transform: "none" }}
           >
-            {({ close }) => (
-              <div className="relative p-6 bg-white/70 backdrop-blur-xl border border-white/40 rounded-3xl shadow-2xl shadow-teal-500/10 max-w-sm w-full mx-4">
-                <button
-                  type="button"
-                  onClick={close}
-                  className="absolute top-4 right-4 p-1.5 rounded-full text-teal-800/40 hover:bg-teal-50 hover:text-teal-500 border border-transparent hover:border-teal-100/50 transition-all z-10"
-                  aria-label="Tutup"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-                <Calendar value={dateValue} onChange={handleDateChange as any}>
-                  <Calendar.Header className="flex items-center justify-between px-2 pb-3 pr-8">
-                    <Calendar.NavButton slot="previous" />
-                    <Calendar.Heading className="text-sm font-black text-teal-950" />
-                    <Calendar.NavButton slot="next" />
-                  </Calendar.Header>
-                  <Calendar.Grid>
-                    <Calendar.GridHeader>
-                      {(day) => (
-                        <Calendar.HeaderCell className="text-[10px] font-black text-teal-800/40 uppercase">
-                          {day}
-                        </Calendar.HeaderCell>
-                      )}
-                    </Calendar.GridHeader>
-                    <Calendar.GridBody>
-                      {(date) => <Calendar.Cell date={date} />}
-                    </Calendar.GridBody>
-                  </Calendar.Grid>
-                </Calendar>
-              </div>
-            )}
+            <div className="relative p-6 bg-white/70 backdrop-blur-xl border border-white/40 rounded-3xl shadow-2xl shadow-teal-500/10 max-w-sm w-full mx-4">
+              <button
+                type="button"
+                onClick={() => setIsDatePickerOpen(false)}
+                className="absolute top-4 right-4 p-1.5 rounded-full text-teal-800/40 hover:bg-teal-50 hover:text-teal-500 border border-transparent hover:border-teal-100/50 transition-all z-10"
+                aria-label="Tutup"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <Calendar value={dateValue} onChange={handleDateChange as any}>
+                <Calendar.Header className="flex items-center justify-between px-2 pb-3 pr-8">
+                  <Calendar.NavButton slot="previous" />
+                  <Calendar.Heading className="text-sm font-black text-teal-950" />
+                  <Calendar.NavButton slot="next" />
+                </Calendar.Header>
+                <Calendar.Grid>
+                  <Calendar.GridHeader>
+                    {(day) => (
+                      <Calendar.HeaderCell className="text-[10px] font-black text-teal-800/40 uppercase">
+                        {day}
+                      </Calendar.HeaderCell>
+                    )}
+                  </Calendar.GridHeader>
+                  <Calendar.GridBody>
+                    {(date) => <Calendar.Cell date={date} />}
+                  </Calendar.GridBody>
+                </Calendar.Grid>
+              </Calendar>
+            </div>
           </DatePicker.Popover>
         </DatePicker>
 
