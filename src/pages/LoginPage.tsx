@@ -13,6 +13,7 @@ import {
 import { cn } from "@/src/lib/utils";
 import { useLanguage } from "@/src/lib/LanguageContext";
 import { LogoIcon } from "@/src/components/Logo";
+import { Alert } from "@heroui/react";
 
 const LoginPage = ({
   onLogin,
@@ -289,9 +290,12 @@ const LoginPage = ({
                   </div>
 
                   {error && (
-                    <div className="p-5 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-4 text-rose-600 text-xs font-bold shadow-sm">
-                      <AlertCircle className="w-5 h-5 shrink-0" /> {error}
-                    </div>
+                    <Alert status="danger">
+                      <Alert.Indicator />
+                      <Alert.Content>
+                        <Alert.Title>{error}</Alert.Title>
+                      </Alert.Content>
+                    </Alert>
                   )}
 
                   {/* Submit Button */}
@@ -439,9 +443,12 @@ const LoginPage = ({
                   </div>
 
                   {error && (
-                    <div className="p-5 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-4 text-rose-600 text-xs font-bold shadow-sm">
-                      <AlertCircle className="w-5 h-5 shrink-0" /> {error}
-                    </div>
+                    <Alert status="danger">
+                      <Alert.Indicator />
+                      <Alert.Content>
+                        <Alert.Title>{error}</Alert.Title>
+                      </Alert.Content>
+                    </Alert>
                   )}
 
                   {/* Submit Button */}

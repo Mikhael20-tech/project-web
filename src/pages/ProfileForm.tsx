@@ -3,6 +3,7 @@ import { motion } from "motion/react";
 import { Users, AlertCircle, RefreshCcw } from "lucide-react";
 import GlassCard from "@/src/components/GlassCard";
 import { useLanguage } from "@/src/lib/LanguageContext";
+import { Alert } from "@heroui/react";
 
 const ProfileForm = ({
   user,
@@ -134,10 +135,12 @@ const ProfileForm = ({
             </div>
 
             {error && (
-              <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-600 text-xs font-bold flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />{" "}
-                {error.toUpperCase()}
-              </div>
+              <Alert status="danger">
+                <Alert.Indicator />
+                <Alert.Content>
+                  <Alert.Title>{error.toUpperCase()}</Alert.Title>
+                </Alert.Content>
+              </Alert>
             )}
 
             <button

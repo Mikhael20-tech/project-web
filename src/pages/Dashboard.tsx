@@ -27,6 +27,7 @@ import { useLanguage } from "@/src/lib/LanguageContext";
 import LoadingOverlay from "@/src/components/LoadingOverlay";
 import DosenCardSkeleton from "@/src/components/DosenCardSkeleton";
 import confetti from "canvas-confetti";
+import { Alert } from "@heroui/react";
 
 const Dashboard = ({
   user: initialUser,
@@ -507,17 +508,14 @@ const Dashboard = ({
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="bg-orange-50 border border-orange-100 p-6 rounded-[2.5rem] flex items-center gap-6 shadow-sm"
           >
-            <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-500 shrink-0">
-              <AlertCircle className="w-6 h-6" />
-            </div>
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-orange-400 mb-1">{t("dash_student_info_important")}</h4>
-              <p className="text-sm font-bold text-orange-800 leading-tight">
-                {config.announcement}
-              </p>
-            </div>
+            <Alert status="warning">
+              <Alert.Indicator />
+              <Alert.Content>
+                <Alert.Title>{t("dash_student_info_important")}</Alert.Title>
+                <Alert.Description>{config.announcement}</Alert.Description>
+              </Alert.Content>
+            </Alert>
           </motion.div>
         )}
 
