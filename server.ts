@@ -545,30 +545,55 @@ app.get("/api/me-dosen", authenticate, async (req: any, res) => {
 });
 
 app.post("/api/profile", authenticate, async (req: any, res) => {
-  const { nama, kontak, peminatan, bio, foto, angkatan, rencanaJudul } = req.body;
+  const { nim, nama, kontak, peminatan, bio, foto, angkatan, rencanaJudul } = req.body;
   try {
-    const student = await prisma.mahasiswa.upsert({
-      where: { userId: req.user.id },
-      update: { 
-        nama, 
-        kontak, 
-        peminatan, 
-        bio, 
-        foto: foto || null, 
-        angkatan,
-        rencanaJudul
-      },
-      create: {
-        userId: req.user.id,
-        nim: req.user.nim, 
+    const student = await prisma.$transaction(async (tx) => {
+      // 1. If NIM is updated, check uniqueness and update User.username
+      if (nim) {
+        const existingUser = await tx.user.findFirst({
+          where: {
+            username: nim,
+            NOT: { id: req.user.id }
+          }
+        });
+        if (existingUser) {
+          throw new Error("NIM sudah terdaftar oleh pengguna lain.");
+        }
+        await tx.user.update({
+          where: { id: req.user.id },
+          data: { username: nim }
+        });
+      }
+
+      // 2. Automatically determine angkatan from the first 2 digits of the NIM
+      let finalAngkatan = angkatan;
+      if (nim && /^\d+$/.test(nim) && nim.length >= 2) {
+        finalAngkatan = "20" + nim.substring(0, 2);
+      }
+
+      const mhsData = {
         nama,
         kontak,
         peminatan,
         bio,
         foto: foto || null,
-        angkatan,
         rencanaJudul
-      },
+      };
+
+      return tx.mahasiswa.upsert({
+        where: { userId: req.user.id },
+        update: {
+          ...mhsData,
+          ...(nim ? { nim } : {}),
+          ...(finalAngkatan ? { angkatan: finalAngkatan } : {})
+        },
+        create: {
+          userId: req.user.id,
+          nim: nim || req.user.nim,
+          ...mhsData,
+          angkatan: finalAngkatan || ""
+        }
+      });
     });
 
     if (foto) {

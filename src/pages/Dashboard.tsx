@@ -52,6 +52,7 @@ const Dashboard = ({
   const [uploadLoading, setUploadLoading] = useState(false);
   const [confirmingDosen, setConfirmingDosen] = useState<{dosen: any, title: string} | null>(null);
   const [profileForm, setProfileForm] = useState({
+    nim: "",
     nama: "",
     kontak: "",
     peminatan: "",
@@ -79,6 +80,7 @@ const Dashboard = ({
         onProfileUpdate(data);
         const judul = data.rencanaJudul || "";
         setProfileForm({
+          nim: data.nim || "",
           nama: data.nama || "",
           kontak: data.kontak || "",
           peminatan: data.peminatan || "",
@@ -978,6 +980,11 @@ const Dashboard = ({
                         </div>
                         <p className="text-[10px] font-black uppercase text-teal-500 tracking-widest">{t("dash_student_change_photo")}</p>
                      </div>
+
+                     <div className="space-y-2">
+                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">NIM (Nomor Induk Mahasiswa)</label>
+                         <input value={profileForm.nim} onChange={(e) => setProfileForm({...profileForm, nim: e.target.value})} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" required />
+                      </div>
 
                      <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">{t("dash_student_fullname")}</label>
