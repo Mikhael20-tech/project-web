@@ -727,6 +727,7 @@ Silakan cek dashboard Anda untuk mendownload bukti pemilihan. Tetap semangat! ðŸ
     
     // Broadcast for Live Activity Feed (instantly)
     io.emit("new_selection", { 
+      studentName: result.studentName,
       lecturerName: result.lecturerName,
       timestamp: new Date()
     });

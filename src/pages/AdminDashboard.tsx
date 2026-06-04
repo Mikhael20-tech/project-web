@@ -1099,7 +1099,7 @@ const AdminDashboard = ({
                               className="bg-white/5 border border-white/5 p-4 rounded-2xl"
                             >
                               <p className="text-[9px] font-bold text-teal-200/80 leading-relaxed">
-                                <span className="text-teal-400">{t("dash_admin_activity_prefix")}</span> {t("dash_admin_activity_suffix")} <span className="text-white">{act.lecturerName}</span>
+                                <span className="text-teal-400">{act.studentName || t("dash_admin_activity_prefix")}</span> {t("dash_admin_activity_suffix")} <span className="text-white">{act.lecturerName}</span>
                               </p>
                               <p className="text-[7px] font-black text-teal-500 mt-2 uppercase tracking-widest">
                                 {new Date(act.timestamp).toLocaleTimeString()}
