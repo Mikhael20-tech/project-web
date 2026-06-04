@@ -179,7 +179,10 @@ const triggerQuotaUpdate = () => {
     broadcastTimeout = null;
     try {
       const allLecturers = await prisma.dosen.findMany({
-        include: { _count: { select: { mahasiswa: true } } },
+        include: { 
+          _count: { select: { mahasiswa: true } },
+          penelitian: true
+        },
       });
       io.emit("quota_update", allLecturers);
     } catch (err) {
@@ -798,6 +801,7 @@ app.post("/api/dosen/kick-student/:mahasiswaId", authenticate, isDosen, async (r
     });
 
     triggerQuotaUpdate();
+    io.emit("student_update", { id: student.id, userId: student.userId, nim: student.nim });
     res.json({ message: `Mahasiswa ${student.nama} berhasil dikeluarkan dari daftar bimbingan.` });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -849,6 +853,8 @@ app.post("/api/admin/war/cancel", authenticate, isAdmin, async (req: any, res) =
     });
 
     console.log(`Admin ${req.user.nim} membatalkan pilihan dosen untuk Mahasiswa ${mhs.nim}`);
+    triggerQuotaUpdate();
+    io.emit("student_update", { id: mhs.id, userId: mhs.userId, nim: mhs.nim });
     res.json({ message: `Berhasil membatalkan pilihan dosen untuk ${mhs.nama}` });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -938,6 +944,7 @@ app.post("/api/admin/dosen", authenticate, isAdmin, async (req, res) => {
       });
     }
 
+    triggerQuotaUpdate();
     res.json(dosen);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -1015,6 +1022,7 @@ app.put("/api/admin/dosen/:id", authenticate, isAdmin, async (req, res) => {
       }
     }
 
+    triggerQuotaUpdate();
     res.json(dosen);
   } catch (err: any) {
     res.status(400).json({ error: "Gagal memperbarui data dosen." });
@@ -1247,6 +1255,7 @@ app.put("/api/admin/war-config", authenticate, isAdmin, async (req, res) => {
             ...updateData
           }
         });
+        io.emit("config_update", config);
         res.json(config);
     } catch (err: any) {
         if (err.message.includes("category") || err.code === 'P2025' || err.message.includes("column")) {
@@ -1294,7 +1303,8 @@ app.post("/api/admin/reset-angkatan", authenticate, isAdmin, async (req, res) =>
       data: { dosenId: null, statusBimbingan: "PENDING" }
     });
     
-    io.emit("quota_update", await prisma.dosen.findMany({ include: { _count: { select: { mahasiswa: true } } } }));
+    io.emit("quota_update", await prisma.dosen.findMany({ include: { _count: { select: { mahasiswa: true } }, penelitian: true } }));
+    io.emit("student_update", { angkatan: angkatan });
     res.json({ message: `Berhasil mereset ${result.count} data bimbingan mahasiswa angkatan ${angkatan}.` });
   } catch (err: any) {
     res.status(500).json({ error: "Gagal me-reset data angkatan." });

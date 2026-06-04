@@ -134,6 +134,11 @@ const Dashboard = ({
     }
   };
 
+  const studentDataRef = React.useRef(studentData);
+  useEffect(() => {
+    studentDataRef.current = studentData;
+  }, [studentData]);
+
   useEffect(() => {
     const init = async () => {
       setInitialLoading(true);
@@ -148,10 +153,28 @@ const Dashboard = ({
       setDosenList(updatedList);
     };
 
+    const handleConfigUpdate = (newConfig: any) => {
+      setConfig(newConfig);
+    };
+
+    const handleStudentUpdate = (data: any) => {
+      const currentStudent = studentDataRef.current;
+      if (
+        (currentStudent && (data.id === currentStudent.id || data.userId === currentStudent.userId || data.nim === currentStudent.nim)) ||
+        (data.angkatan && currentStudent && data.angkatan === currentStudent.angkatan)
+      ) {
+        fetchStudentData();
+      }
+    };
+
     socket.on("quota_update", handleQuotaUpdate);
+    socket.on("config_update", handleConfigUpdate);
+    socket.on("student_update", handleStudentUpdate);
 
     return () => {
       socket.off("quota_update", handleQuotaUpdate);
+      socket.off("config_update", handleConfigUpdate);
+      socket.off("student_update", handleStudentUpdate);
     };
   }, []);
 
