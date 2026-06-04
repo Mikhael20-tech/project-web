@@ -5,8 +5,8 @@ services:
     image: ghcr.io/mikhael20-tech/project-web:latest
     container_name: wardosen-service
     restart: always
-    ports:
-      - "80:3000"
+    expose:
+      - "3000"
     volumes:
       - ./uploads:/app/uploads
     environment:
@@ -14,3 +14,21 @@ services:
       - NODE_ENV=production
     env_file:
       - .env
+
+  caddy:
+    image: caddy:latest
+    container_name: caddy-service
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    command: caddy reverse-proxy --from wardospem.tech --to wardosen-app:3000
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - wardosen-app
+
+volumes:
+  caddy_data:
+  caddy_config:
