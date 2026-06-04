@@ -1057,6 +1057,65 @@ app.get("/api/admin/mahasiswa", authenticate, isAdmin, async (req, res) => {
   }
 });
 
+app.post("/api/admin/mahasiswa/import", authenticate, isAdmin, async (req, res) => {
+  try {
+    const students = req.body; // Array of { nim: string, nama: string }
+    if (!Array.isArray(students)) {
+      return res.status(400).json({ error: "Data harus berupa array." });
+    }
+
+    let successCount = 0;
+    let skipCount = 0;
+
+    for (const std of students) {
+      const nim = String(std.nim || "").trim();
+      const nama = String(std.nama || "").trim();
+      if (!nim || !nama) {
+        skipCount++;
+        continue;
+      }
+
+      // Check if user already exists
+      const existingUser = await prisma.user.findUnique({ where: { username: nim } });
+      if (existingUser) {
+        skipCount++;
+        continue;
+      }
+
+      const defaultPassword = "mhs" + nim.slice(-4);
+      const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+      let extractedAngkatan = "";
+      if (/^\d+$/.test(nim) && nim.length >= 2) {
+        extractedAngkatan = "20" + nim.substring(0, 2);
+      }
+
+      await prisma.$transaction(async (tx) => {
+        const user = await tx.user.create({
+          data: {
+            username: nim,
+            password: hashedPassword,
+            role: "STUDENT"
+          }
+        });
+        await tx.mahasiswa.create({
+          data: {
+            userId: user.id,
+            nim,
+            nama,
+            angkatan: extractedAngkatan || null
+          }
+        });
+      });
+      successCount++;
+    }
+
+    res.json({ success: true, successCount, skipCount });
+  } catch (err: any) {
+    console.error("Bulk Import Error:", err);
+    res.status(500).json({ error: err.message || "Gagal mengimpor data." });
+  }
+});
+
 app.post("/api/admin/mahasiswa", authenticate, isAdmin, async (req, res) => {
   try {
     const { nim, nama, kontak, password } = req.body;

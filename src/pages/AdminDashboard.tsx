@@ -651,6 +651,80 @@ const AdminDashboard = ({
     }
   };
 
+  const handleCSVImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLoading(true);
+    setMessage(null);
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const text = event.target?.result as string;
+        if (!text) throw new Error("File kosong atau tidak terbaca.");
+
+        const lines = text.split(/\r?\n/);
+        const parsedStudents: { nim: string; nama: string }[] = [];
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+
+          const delimiter = line.includes(";") ? ";" : ",";
+          const cols = line.split(delimiter).map(c => c.replace(/^["']|["']$/g, "").trim());
+
+          if (cols.length < 2) continue;
+
+          const nim = cols[0];
+          const nama = cols[1];
+
+          if (
+            i === 0 &&
+            (nim.toLowerCase() === "nim" ||
+              nim.toLowerCase() === "username" ||
+              nama.toLowerCase() === "nama" ||
+              nama.toLowerCase() === "name")
+          ) {
+            continue;
+          }
+
+          if (nim && nama) {
+            parsedStudents.push({ nim, nama });
+          }
+        }
+
+        if (parsedStudents.length === 0) {
+          throw new Error("Tidak ada data mahasiswa valid yang ditemukan dalam CSV. Pastikan kolom pertama adalah NIM dan kolom kedua adalah Nama.");
+        }
+
+        const res = await fetch("/api/admin/mahasiswa/import", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(parsedStudents),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Gagal mengimpor data.");
+
+        setMessage({
+          type: "success",
+          text: `Berhasil mengimpor ${data.successCount} mahasiswa baru! (${data.skipCount} dilewati/sudah terdaftar).`,
+        });
+        fetchData();
+      } catch (err: any) {
+        setMessage({ type: "error", text: err.message });
+      } finally {
+        setLoading(false);
+        e.target.value = "";
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const handleAdminPhotoUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -1678,15 +1752,30 @@ const AdminDashboard = ({
               </div>
 
               <div className="bg-white border border-teal-50 rounded-[3rem] overflow-hidden shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]">
-                <div className="p-8 md:p-10 border-b border-teal-50 flex justify-between items-center bg-[#f8fdfc]">
-                  <h3 className="text-xs font-black text-teal-950 uppercase tracking-widest mb-8 flex items-center gap-2">
+                <div className="p-8 md:p-10 border-b border-teal-50 flex flex-wrap justify-between items-center bg-[#f8fdfc] gap-4">
+                  <h3 className="text-xs font-black text-teal-950 uppercase tracking-widest flex items-center gap-2">
                     <Users className="w-4 h-4 text-teal-500" /> {t("dash_admin_db_mahasiswa")}
                   </h3>
-                  <span className="px-4 py-2 bg-teal-950 text-white rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg">
-                    {students.length} {t("dash_admin_registered")}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="file"
+                      id="import-csv-input"
+                      accept=".csv"
+                      onChange={handleCSVImport}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="import-csv-input"
+                      className="flex items-center gap-2 px-5 py-3 bg-teal-50 border border-teal-100 rounded-2xl text-[10px] font-black text-teal-800 hover:bg-teal-100 hover:border-teal-200 transition-all uppercase tracking-widest shadow-sm cursor-pointer group"
+                    >
+                      <Upload className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
+                      Impor CSV
+                    </label>
+                    <span className="px-4 py-3 bg-teal-950 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg">
+                      {students.length} {t("dash_admin_registered")}
+                    </span>
+                  </div>
                 </div>
-                
                 <div className="px-8 md:px-10 py-6 border-b border-teal-50 bg-[#f8fdfc] flex flex-wrap gap-4 items-center">
                   <div className="relative flex-grow max-w-md">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-teal-400" />

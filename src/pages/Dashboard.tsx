@@ -66,6 +66,7 @@ const Dashboard = ({
   const [searchDosen, setSearchDosen] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const isProfileIncomplete = !studentData?.kontak || !studentData?.foto || studentData?.foto.includes("unsplash.com");
 
   const fetchStudentData = async () => {
     try {
@@ -88,6 +89,11 @@ const Dashboard = ({
           foto: data.foto || "",
           rencanaJudul: judul,
         });
+
+        const isIncomplete = !data.kontak || !data.foto || data.foto.includes("unsplash.com");
+        if (isIncomplete) {
+          setIsProfileModalOpen(true);
+        }
         
         if (judul && judul.includes(" - ")) {
            const parts = judul.split(" - ");
@@ -238,6 +244,36 @@ const Dashboard = ({
     }
     
     const payload = { ...profileForm, rencanaJudul: finalJudul };
+
+    if (isProfileIncomplete) {
+      if (!profileForm.foto || profileForm.foto.includes("unsplash.com")) {
+        toast({
+          title: "FOTO PROFIL WAJIB",
+          description: "Silakan unggah foto profil Anda terlebih dahulu.",
+          variant: "error",
+        });
+        setLoading(false);
+        return;
+      }
+      if (!profileForm.kontak || !profileForm.kontak.trim()) {
+        toast({
+          title: "NOMOR WHATSAPP WAJIB",
+          description: "Silakan isi nomor WhatsApp Anda terlebih dahulu.",
+          variant: "error",
+        });
+        setLoading(false);
+        return;
+      }
+      if (!newPassword) {
+        toast({
+          title: "PASSWORD WAJIB",
+          description: "Silakan atur password baru Anda terlebih dahulu.",
+          variant: "error",
+        });
+        setLoading(false);
+        return;
+      }
+    }
 
     try {
       if (newPassword) {
@@ -961,12 +997,24 @@ const Dashboard = ({
            {/* Profile Settings Modal */}
            {isProfileModalOpen && (
              <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
-               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsProfileModalOpen(false)} className="absolute inset-0 bg-teal-950/60 backdrop-blur-sm" />
-               <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
-                 <div className="flex justify-between items-center p-10 pb-4 shrink-0">
-                   <h2 className="text-2xl font-black text-teal-950">{t("dash_student_profile_custom")}</h2>
-                   <button onClick={() => setIsProfileModalOpen(false)} className="p-2 hover:bg-teal-50 rounded-xl transition-all"><XCircle className="w-6 h-6 text-teal-200" /></button>
-                 </div>
+                <motion.div 
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }} 
+                  exit={{ opacity: 0 }} 
+                  onClick={() => {
+                    if (!isProfileIncomplete) {
+                      setIsProfileModalOpen(false);
+                    }
+                  }} 
+                  className="absolute inset-0 bg-teal-950/60 backdrop-blur-sm" 
+                />
+                <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
+                  <div className="flex justify-between items-center p-10 pb-4 shrink-0">
+                    <h2 className="text-2xl font-black text-teal-950">{t("dash_student_profile_custom")}</h2>
+                    {!isProfileIncomplete && (
+                      <button onClick={() => setIsProfileModalOpen(false)} className="p-2 hover:bg-teal-50 rounded-xl transition-all"><XCircle className="w-6 h-6 text-teal-200" /></button>
+                    )}
+                  </div>
 
                  <div className="flex-1 overflow-y-auto px-10 pb-10 pt-2 custom-scrollbar">
                    <form onSubmit={handleUpdateProfile} className="space-y-6">
@@ -982,9 +1030,9 @@ const Dashboard = ({
                      </div>
 
                      <div className="space-y-2">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">NIM (Nomor Induk Mahasiswa)</label>
-                         <input value={profileForm.nim} onChange={(e) => setProfileForm({...profileForm, nim: e.target.value})} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" required />
-                      </div>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">NIM (Nomor Induk Mahasiswa)</label>
+                          <input value={profileForm.nim} disabled className="w-full bg-teal-50/50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950/40 cursor-not-allowed focus:outline-none animate-pulse-subtle" />
+                       </div>
 
                      <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">{t("dash_student_fullname")}</label>
