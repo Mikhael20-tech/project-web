@@ -431,7 +431,7 @@ app.get("/api/auth/google/callback", async (req, res) => {
 
     let user = await prisma.user.findFirst({
         where: { OR: [{ email: email }, { username: email.split('@')[0] }] },
-        include: { mahasiswa: true }
+        include: { mahasiswa: true, dosen: true }
     });
 
     if (!user) {
@@ -446,6 +446,9 @@ app.get("/api/auth/google/callback", async (req, res) => {
             extractedAngkatan = "20" + username.substring(0, 2);
         }
 
+        const isLecturer = emailDomain === "unesa.ac.id";
+        const role = isLecturer ? "DOSEN" : "STUDENT";
+
         const randomPassword = await bcrypt.hash(Math.random().toString(36).slice(-8), 10);
         user = await prisma.user.create({
             data: {
@@ -453,17 +456,27 @@ app.get("/api/auth/google/callback", async (req, res) => {
                 email: email,
                 password: randomPassword,
                 foto: picture,
-                role: 'STUDENT',
-                mahasiswa: {
-                    create: {
-                        nim: extractedNim,
-                        nama: name || username,
-                        foto: picture,
-                        angkatan: extractedAngkatan
+                role: role,
+                ...(role === "STUDENT" ? {
+                    mahasiswa: {
+                        create: {
+                            nim: extractedNim,
+                            nama: name || username,
+                            foto: picture,
+                            angkatan: extractedAngkatan
+                        }
                     }
-                }
+                } : {
+                    dosen: {
+                        create: {
+                            nip: username,
+                            nama: name || username,
+                            foto: picture
+                        }
+                    }
+                })
             },
-            include: { mahasiswa: true }
+            include: { mahasiswa: true, dosen: true }
         });
     }
 
@@ -474,7 +487,7 @@ app.get("/api/auth/google/callback", async (req, res) => {
     );
 
     // Fix #2: Use specific origin instead of '*' to prevent XSS via postMessage
-    const safeUser = JSON.stringify({ id: user.id, username: user.username, role: user.role, mahasiswa: user.mahasiswa });
+    const safeUser = JSON.stringify({ id: user.id, username: user.username, role: user.role, mahasiswa: user.mahasiswa, dosen: user.dosen });
     res.send(`
     <html>
       <body>
