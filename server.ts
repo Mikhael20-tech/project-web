@@ -794,7 +794,7 @@ app.post("/api/dosen/kick-student/:mahasiswaId", authenticate, isDosen, async (r
 
     await prisma.mahasiswa.update({
       where: { id: mahasiswaId },
-      data: { dosenId: null, statusBimbingan: "PENDING", rencanaJudul: null },
+      data: { dosenId: null, statusBimbingan: "PENDING" },
     });
 
     triggerQuotaUpdate();
@@ -844,8 +844,7 @@ app.post("/api/admin/war/cancel", authenticate, isAdmin, async (req: any, res) =
       where: { id: mahasiswaId },
       data: { 
         dosenId: null,
-        statusBimbingan: "PENDING",
-        rencanaJudul: null
+        statusBimbingan: "PENDING"
       }
     });
 
@@ -1292,7 +1291,7 @@ app.post("/api/admin/reset-angkatan", authenticate, isAdmin, async (req, res) =>
   try {
     const result = await prisma.mahasiswa.updateMany({
       where: { angkatan: angkatan },
-      data: { dosenId: null, statusBimbingan: "PENDING", rencanaJudul: null }
+      data: { dosenId: null, statusBimbingan: "PENDING" }
     });
     
     io.emit("quota_update", await prisma.dosen.findMany({ include: { _count: { select: { mahasiswa: true } } } }));
