@@ -33,7 +33,12 @@ const LoginPage = ({
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       const origin = event.origin;
-      if (!origin.endsWith(".run.app") && !origin.includes("localhost") && !origin.endsWith(".up.railway.app")) {
+      if (
+        origin !== window.location.origin &&
+        !origin.endsWith(".run.app") &&
+        !origin.includes("localhost") &&
+        !origin.endsWith(".up.railway.app")
+      ) {
         return;
       }
       if (event.data?.type === "OAUTH_AUTH_SUCCESS") {
