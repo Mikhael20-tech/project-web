@@ -1630,8 +1630,7 @@ app.put("/api/student/password", authenticate, async (req: any, res) => {
     const user = await prisma.user.findUnique({ where: { id: req.user.id } });
     if (!user) return res.status(404).json({ error: "User tidak ditemukan." });
 
-    const isGoogleSSO = user.email !== null;
-    if (!(isGoogleSSO && !currentPassword)) {
+    if (currentPassword) {
       if (!(await bcrypt.compare(currentPassword, user.password))) {
         return res.status(401).json({ error: "Password saat ini salah." });
       }
