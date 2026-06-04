@@ -1515,9 +1515,44 @@ app.put("/api/dosen/password", authenticate, async (req: any, res) => {
   }
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user.id } });
-    if (!user || !(await bcrypt.compare(currentPassword, user.password))) {
-      return res.status(401).json({ error: "Password saat ini salah." });
+    if (!user) return res.status(404).json({ error: "User tidak ditemukan." });
+
+    // Skip current password verification for Google SSO users who leave it blank
+    const isGoogleSSO = user.email !== null;
+    if (!(isGoogleSSO && !currentPassword)) {
+      if (!(await bcrypt.compare(currentPassword, user.password))) {
+        return res.status(401).json({ error: "Password saat ini salah." });
+      }
     }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { password: hashedPassword }
+    });
+    res.json({ message: "Password berhasil diperbarui." });
+  } catch (err: any) {
+    res.status(500).json({ error: "Gagal memperbarui password." });
+  }
+});
+
+app.put("/api/student/password", authenticate, async (req: any, res) => {
+  if (req.user.role !== 'STUDENT') return res.status(403).json({ error: "Access denied." });
+  const { currentPassword, newPassword } = req.body;
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ error: "Password baru minimal 6 karakter." });
+  }
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) return res.status(404).json({ error: "User tidak ditemukan." });
+
+    const isGoogleSSO = user.email !== null;
+    if (!(isGoogleSSO && !currentPassword)) {
+      if (!(await bcrypt.compare(currentPassword, user.password))) {
+        return res.status(401).json({ error: "Password saat ini salah." });
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await prisma.user.update({
       where: { id: req.user.id },

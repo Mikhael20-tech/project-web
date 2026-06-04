@@ -63,6 +63,8 @@ const Dashboard = ({
   const [magangPosisi, setMagangPosisi] = useState("");
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [searchDosen, setSearchDosen] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const fetchStudentData = async () => {
     try {
@@ -236,6 +238,27 @@ const Dashboard = ({
     const payload = { ...profileForm, rencanaJudul: finalJudul };
 
     try {
+      if (newPassword) {
+        if (newPassword.length < 6) {
+          throw new Error("Password baru minimal 6 karakter.");
+        }
+        if (newPassword !== confirmPassword) {
+          throw new Error("Konfirmasi password tidak cocok.");
+        }
+        const passRes = await fetch("/api/student/password", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ newPassword }),
+        });
+        if (!passRes.ok) {
+          const passData = await passRes.json();
+          throw new Error(passData.error || "Gagal memperbarui password.");
+        }
+      }
+
       const res = await fetch("/api/profile", {
         method: "POST",
         headers: {
@@ -250,6 +273,8 @@ const Dashboard = ({
         description: t("toast_profile_updated_desc"),
         variant: "success",
       });
+      setNewPassword("");
+      setConfirmPassword("");
       setIsProfileModalOpen(false);
       fetchStudentData();
     } catch (err: any) {
@@ -1000,6 +1025,20 @@ const Dashboard = ({
                           <textarea value={profileForm.rencanaJudul} onChange={(e) => setProfileForm({...profileForm, rencanaJudul: e.target.value})} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none min-h-[80px]" placeholder="Ketik disini..." required />
                        </div>
                      )}
+
+                      <div className="border-t border-teal-100/50 pt-6 space-y-4">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-500">Setup / Ganti Password</p>
+                        <div className="flex flex-col md:flex-row gap-4">
+                           <div className="flex-1 space-y-2">
+                             <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Password Baru (Opsional)</label>
+                             <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" placeholder="Minimal 6 karakter" />
+                           </div>
+                           <div className="flex-1 space-y-2">
+                             <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Konfirmasi Password</label>
+                             <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" placeholder="Ulangi password baru" />
+                           </div>
+                        </div>
+                      </div>
 
                      <button type="submit" disabled={loading} className="w-full py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg">{loading ? t("dash_student_saving") : t("dash_student_save_changes")}</button>
                    </form>
