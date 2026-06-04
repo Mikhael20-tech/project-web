@@ -17,6 +17,14 @@ export default defineConfig(({mode}) => {
     },
     server: {
       hmr: false,
+      watch: {
+        ignored: [
+          '**/prisma/**',
+          '**/uploads/**',
+          '**/.git/**',
+          '**/node_modules/**',
+        ],
+      },
     },
   };
 });

@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # --- AUTOMATED DEPLOYMENT SCRIPT FOR WARDOSEN ---
 # Jalankan skrip ini di VPS KVM Anda dengan perintah: bash deploy.sh
