@@ -1076,7 +1076,7 @@ const AdminDashboard = ({
 
                   <div className="bg-teal-950 border border-teal-900 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden flex flex-col">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 blur-3xl rounded-full" />
-                    <h3 className="text-xl font-black text-teal-950 uppercase tracking-tighter flex items-center gap-3">
+                    <h3 className="text-xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
                       <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-500 shadow-inner">
                         <Zap className="w-5 h-5" />
                       </div>
@@ -1085,9 +1085,9 @@ const AdminDashboard = ({
                     
                     <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar relative z-10 mt-6">
                       {activities.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center opacity-20 py-10">
-                          <Zap className="w-8 h-8 text-teal-400 mb-2" />
-                          <p className="text-[8px] font-black uppercase tracking-widest">{t("dash_admin_activity_waiting")}</p>
+                        <div className="h-full flex flex-col items-center justify-center py-10 text-teal-300/50">
+                          <Zap className="w-8 h-8 text-orange-400 animate-pulse mb-3" />
+                          <p className="text-[10px] font-black uppercase tracking-widest">{t("dash_admin_activity_waiting")}</p>
                         </div>
                       ) : (
                         <AnimatePresence initial={false}>
