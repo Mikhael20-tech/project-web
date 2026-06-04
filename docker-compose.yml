@@ -2,9 +2,7 @@ version: '3.8'
 
 services:
   wardosen-app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/mikhael20-tech/project-web:latest
     container_name: wardosen-service
     restart: always
     ports:
