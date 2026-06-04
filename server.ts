@@ -56,6 +56,8 @@ const allowedOrigins = [
   "http://localhost:5173",
   "https://dosenkita.up.railway.app", // Railway production URL (hardcoded fallback)
   "https://dosenkitapti.up.railway.app", // User's Railway production URL
+  "http://72.60.79.72", // VPS IP Address
+  "http://srv1730879.hstgr.cloud", // VPS Hostname
   ...(process.env.APP_URL && process.env.APP_URL !== "MY_APP_URL" ? [process.env.APP_URL] : []),
 ];
 app.use(cors({
@@ -65,7 +67,8 @@ app.use(cors({
     if (allowedOrigins.some(o => origin.startsWith(o)) || origin.endsWith(".railway.app")) {
       callback(null, true);
     } else {
-      callback(new Error(`CORS: Origin '${origin}' tidak diizinkan.`));
+      // Return false instead of throwing an Error to prevent 500 Internal Server Error
+      callback(null, false);
     }
   },
   credentials: true,
