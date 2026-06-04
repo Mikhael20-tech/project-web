@@ -962,13 +962,13 @@ const Dashboard = ({
            {isProfileModalOpen && (
              <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsProfileModalOpen(false)} className="absolute inset-0 bg-teal-950/60 backdrop-blur-sm" />
-               <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-lg bg-white rounded-[2.5rem] p-10 shadow-2xl max-h-[90vh] overflow-y-auto">
-                 <div className="space-y-8">
-                   <div className="flex justify-between items-center">
-                     <h2 className="text-2xl font-black text-teal-950">{t("dash_student_profile_custom")}</h2>
-                     <button onClick={() => setIsProfileModalOpen(false)} className="p-2 hover:bg-teal-50 rounded-xl transition-all"><XCircle className="w-6 h-6 text-teal-200" /></button>
-                   </div>
+               <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
+                 <div className="flex justify-between items-center p-10 pb-4 shrink-0">
+                   <h2 className="text-2xl font-black text-teal-950">{t("dash_student_profile_custom")}</h2>
+                   <button onClick={() => setIsProfileModalOpen(false)} className="p-2 hover:bg-teal-50 rounded-xl transition-all"><XCircle className="w-6 h-6 text-teal-200" /></button>
+                 </div>
 
+                 <div className="flex-1 overflow-y-auto px-10 pb-10 pt-2 custom-scrollbar">
                    <form onSubmit={handleUpdateProfile} className="space-y-6">
                      <div className="flex flex-col items-center gap-4 py-6 bg-teal-50/50 border border-dashed border-teal-100 rounded-[2rem]">
                         <div className="relative group">
