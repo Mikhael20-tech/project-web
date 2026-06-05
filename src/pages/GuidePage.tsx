@@ -156,15 +156,7 @@ const GuidePage = () => {
                     </div>
                   </div>
 
-                  <div className="p-6 bg-orange-50 rounded-3xl border border-orange-100 flex gap-4">
-                    <Info className="w-6 h-6 text-orange-500 shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="text-xs font-black text-orange-950 uppercase tracking-widest mb-1">Bukti Resmi Pemilihan</h4>
-                      <p className="text-xs text-orange-900 leading-relaxed font-semibold">
-                        Setelah berhasil mendapatkan kuota dosen (status berubah menjadi <strong>TERDAFTAR</strong>), Anda dapat mengunduh bukti PDF pemilihan resmi langsung di dasbor Anda. Bukti ini berisi tanda tangan elektronik sistem dan data valid dospem untuk diserahkan ke koordinator prodi.
-                      </p>
-                    </div>
-                  </div>
+
                 </div>
               )}
 
