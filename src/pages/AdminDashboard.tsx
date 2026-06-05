@@ -60,6 +60,8 @@ const AdminDashboard = ({
   >("monitoring");
   const [reports, setReports] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [selectedDosen, setSelectedDosen] = useState<string[]>([]);
   const [config, setConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<{
@@ -447,6 +449,73 @@ const AdminDashboard = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleBulkDelete = async (type: "mahasiswa" | "dosen", ids: string[]) => {
+    if (ids.length === 0) return;
+    setConfirmModal({
+      isOpen: true,
+      title: `Hapus ${ids.length} Data Terpilih`,
+      message: `Anda yakin ingin menghapus ${ids.length} data ${type} yang dipilih?`,
+      confirmText: "YA, HAPUS",
+      cancelText: "BATAL",
+      type: "danger",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        setLoading(true);
+        setMessage(null);
+        try {
+          const res = await fetch(`/api/admin/${type}/bulk-delete`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ ids })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Gagal menghapus data massal.");
+          setMessage({ type: "success", text: `${ids.length} data ${type} berhasil dihapus.` });
+          if (type === "mahasiswa") setSelectedStudents([]);
+          fetchData();
+        } catch (err: any) {
+          setMessage({ type: "error", text: err.message });
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
+  };
+
+  const handleDeleteAll = async (type: "mahasiswa" | "dosen") => {
+    setConfirmModal({
+      isOpen: true,
+      title: `Hapus SEMUA Data ${type.toUpperCase()}`,
+      message: `PERINGATAN! Anda yakin ingin menghapus SEMUA data ${type}? Aksi ini tidak dapat dibatalkan.`,
+      confirmText: "YA, HAPUS SEMUA",
+      cancelText: "BATAL",
+      type: "danger",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        setLoading(true);
+        setMessage(null);
+        try {
+          const res = await fetch(`/api/admin/${type}/all`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Gagal menghapus semua data.");
+          setMessage({ type: "success", text: `Semua data ${type} berhasil dihapus.` });
+          if (type === "mahasiswa") setSelectedStudents([]);
+          fetchData();
+        } catch (err: any) {
+          setMessage({ type: "error", text: err.message });
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
   const exportToCSV = () => {
@@ -2016,6 +2085,16 @@ const AdminDashboard = ({
                 <div className="flex justify-between items-center bg-[#f8fdfc] p-6 rounded-[2rem] border border-teal-50 shadow-[0_8px_30px_rgb(0,0,0,0.01)]">
                   <div>
                     <h3 className="text-xs font-black text-teal-950 uppercase tracking-widest flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-teal-200 text-teal-500 focus:ring-teal-500 cursor-pointer accent-teal-500"
+                        checked={reports.length > 0 && selectedDosen.length === reports.length}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedDosen(reports.map(d => d.id));
+                          else setSelectedDosen([]);
+                        }}
+                        title="Pilih Semua Dosen"
+                      />
                       <Users className="w-4 h-4 text-teal-500" /> Daftar Dosen
                     </h3>
                     <p className="text-[10px] font-bold text-teal-800/40 uppercase tracking-wider mt-0.5">{reports.length} dosen terdaftar</p>
@@ -2033,6 +2112,26 @@ const AdminDashboard = ({
                   </button>
                 </div>
 
+                {/* Bulk Actions Bar for Dosen */}
+                <div className="flex flex-wrap gap-4 items-center">
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteAll("dosen")}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border border-rose-100"
+                  >
+                    <Trash2 className="w-4 h-4" /> Hapus Semua Dosen
+                  </button>
+                  {selectedDosen.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleBulkDelete("dosen", selectedDosen)}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-rose-600 text-white hover:bg-rose-700 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md"
+                    >
+                      <Trash2 className="w-4 h-4 text-white/70" /> Hapus {selectedDosen.length} Terpilih
+                    </button>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {reports.map((dosen, i) => (
                     <motion.div
@@ -2040,9 +2139,23 @@ const AdminDashboard = ({
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: i * 0.05 }}
-                      className="bg-white p-6 rounded-[2.5rem] border border-teal-50 shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_40px_-15px_rgba(79,70,229,0.15)] hover:border-teal-100 transition-all flex items-center justify-between group"
+                      className={cn(
+                        "bg-white p-6 rounded-[2.5rem] border shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_40px_-15px_rgba(79,70,229,0.15)] transition-all flex flex-col md:flex-row items-start md:items-center justify-between group relative",
+                        selectedDosen.includes(dosen.id) ? "border-teal-400 bg-teal-50/30" : "border-teal-50 hover:border-teal-100"
+                      )}
                     >
-                      <div className="flex items-center gap-5">
+                      <div className="absolute top-5 right-5 md:top-auto md:left-4 z-10">
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 rounded border-teal-200 text-teal-500 focus:ring-teal-500 cursor-pointer accent-teal-500"
+                          checked={selectedDosen.includes(dosen.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) setSelectedDosen([...selectedDosen, dosen.id]);
+                            else setSelectedDosen(selectedDosen.filter(id => id !== dosen.id));
+                          }}
+                        />
+                      </div>
+                      <div className="flex items-center gap-5 md:ml-6 mt-4 md:mt-0">
                         <div className="w-16 h-16 rounded-[1.25rem] bg-teal-50 overflow-hidden border border-teal-100 shadow-inner group-hover:scale-110 transition-transform">
                           {dosen.foto ? (
                             <img
@@ -2305,6 +2418,26 @@ const AdminDashboard = ({
                     </span>
                   </div>
                 </div>
+                
+                {/* Bulk Actions Bar */}
+                <div className="px-8 md:px-10 py-4 bg-rose-50/30 flex flex-wrap gap-4 items-center border-b border-rose-50">
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteAll("mahasiswa")}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-rose-100 text-rose-700 hover:bg-rose-600 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
+                  >
+                    <Trash2 className="w-4 h-4" /> Hapus Semua Data
+                  </button>
+                  {selectedStudents.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleBulkDelete("mahasiswa", selectedStudents)}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-rose-600 text-white hover:bg-rose-700 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md"
+                    >
+                      <Trash2 className="w-4 h-4 text-white/70" /> Hapus {selectedStudents.length} Terpilih
+                    </button>
+                  )}
+                </div>
                 <div className="px-8 md:px-10 py-6 border-b border-teal-50 bg-[#f8fdfc] flex flex-wrap gap-4 items-center">
                   <div className="relative flex-grow max-w-md">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-teal-400" />
@@ -2382,6 +2515,17 @@ const AdminDashboard = ({
                   <table className="w-full text-left">
                     <thead>
                       <tr className="bg-[#f8fdfc] border-b border-teal-50 text-[10px] font-black uppercase text-teal-800/40 tracking-widest">
+                        <th className="px-10 py-6 w-10">
+                          <input 
+                            type="checkbox" 
+                            className="w-4 h-4 rounded border-teal-200 text-teal-500 focus:ring-teal-500 cursor-pointer accent-teal-500"
+                            checked={students.length > 0 && selectedStudents.length === students.length}
+                            onChange={(e) => {
+                              if (e.target.checked) setSelectedStudents(students.map(s => s.id));
+                              else setSelectedStudents([]);
+                            }}
+                          />
+                        </th>
                         <th className="px-10 py-6">{t("dash_admin_student_data").split(" ")[0]}</th>
                         <th className="px-10 py-6">{t("dash_admin_student_id").split(" ")[0]}</th>
                         <th className="px-10 py-6">{t("dash_admin_advisor_selected")}</th>
@@ -2400,8 +2544,22 @@ const AdminDashboard = ({
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: i * 0.05 }}
-                          className="hover:bg-[#f8fdfc] transition-colors group"
+                          className={cn(
+                            "hover:bg-[#f8fdfc] transition-colors group",
+                            selectedStudents.includes(std.id) && "bg-teal-50/50"
+                          )}
                         >
+                          <td className="px-10 py-5">
+                            <input 
+                              type="checkbox" 
+                              className="w-4 h-4 rounded border-teal-200 text-teal-500 focus:ring-teal-500 cursor-pointer accent-teal-500"
+                              checked={selectedStudents.includes(std.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) setSelectedStudents([...selectedStudents, std.id]);
+                                else setSelectedStudents(selectedStudents.filter(id => id !== std.id));
+                              }}
+                            />
+                          </td>
                           <td className="px-10 py-5 font-extrabold text-teal-950 text-sm group-hover:text-teal-500 transition-colors">
                             {std.nama}
                           </td>

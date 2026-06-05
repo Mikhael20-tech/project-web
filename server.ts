@@ -1061,6 +1061,53 @@ app.delete("/api/admin/dosen/:id", authenticate, isAdmin, async (req, res) => {
   }
 });
 
+app.post("/api/admin/dosen/bulk-delete", authenticate, isAdmin, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: "Daftar ID tidak valid." });
+    }
+    
+    const dosens = await prisma.dosen.findMany({ where: { id: { in: ids } }, select: { userId: true } });
+    const userIds = dosens.map(d => d.userId).filter(Boolean) as string[];
+    
+    await prisma.dosen.deleteMany({ where: { id: { in: ids } } });
+    if (userIds.length > 0) {
+      await prisma.user.deleteMany({ where: { id: { in: userIds } } });
+    }
+    
+    const updatedDosenList = await prisma.dosen.findMany({
+      include: { _count: { select: { mahasiswa: true } } }
+    });
+    io.emit("quota_update", updatedDosenList);
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error("Bulk delete dosen error:", err);
+    res.status(500).json({ error: "Gagal menghapus dosen yang dipilih." });
+  }
+});
+
+app.delete("/api/admin/dosen/all", authenticate, isAdmin, async (req, res) => {
+  try {
+    const dosens = await prisma.dosen.findMany({ select: { userId: true } });
+    const userIds = dosens.map(d => d.userId).filter(Boolean) as string[];
+    
+    await prisma.dosen.deleteMany();
+    if (userIds.length > 0) {
+      await prisma.user.deleteMany({ where: { id: { in: userIds } } });
+    }
+    
+    const updatedDosenList = await prisma.dosen.findMany({
+      include: { _count: { select: { mahasiswa: true } } }
+    });
+    io.emit("quota_update", updatedDosenList);
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error("Delete all dosen error:", err);
+    res.status(500).json({ error: "Gagal menghapus semua dosen." });
+  }
+});
+
 // Mahasiswa CRUD
 app.get("/api/admin/mahasiswa", authenticate, isAdmin, async (req, res) => {
   try {
@@ -1436,6 +1483,48 @@ app.delete("/api/admin/mahasiswa/:id", authenticate, isAdmin, async (req, res) =
   } catch (err: any) {
     console.error("Delete mahasiswa error:", err);
     res.status(400).json({ error: "Gagal menghapus data mahasiswa." });
+  }
+});
+
+app.post("/api/admin/mahasiswa/bulk-delete", authenticate, isAdmin, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: "Daftar ID tidak valid." });
+    }
+    const students = await prisma.mahasiswa.findMany({ where: { id: { in: ids } } });
+    const userIds = students.map(s => s.userId);
+    
+    await prisma.mahasiswa.deleteMany({ where: { id: { in: ids } } });
+    await prisma.user.deleteMany({ where: { id: { in: userIds } } });
+    
+    const updatedDosenList = await prisma.dosen.findMany({
+      include: { _count: { select: { mahasiswa: true } } }
+    });
+    io.emit("quota_update", updatedDosenList);
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error("Bulk delete mahasiswa error:", err);
+    res.status(500).json({ error: "Gagal menghapus mahasiswa yang dipilih." });
+  }
+});
+
+app.delete("/api/admin/mahasiswa/all", authenticate, isAdmin, async (req, res) => {
+  try {
+    const students = await prisma.mahasiswa.findMany();
+    const userIds = students.map(s => s.userId);
+    
+    await prisma.mahasiswa.deleteMany();
+    await prisma.user.deleteMany({ where: { id: { in: userIds } } });
+    
+    const updatedDosenList = await prisma.dosen.findMany({
+      include: { _count: { select: { mahasiswa: true } } }
+    });
+    io.emit("quota_update", updatedDosenList);
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error("Delete all mahasiswa error:", err);
+    res.status(500).json({ error: "Gagal menghapus semua mahasiswa." });
   }
 });
 
