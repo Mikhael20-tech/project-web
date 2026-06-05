@@ -1064,7 +1064,7 @@ const AdminDashboard = ({
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
-        const parsedStudents: { nim: string; nama: string }[] = [];
+        const parsedStudents: { nim: string; nama: string; password?: string }[] = [];
 
         if (isExcel) {
           const data = new Uint8Array(event.target?.result as ArrayBuffer);
@@ -1100,7 +1100,8 @@ const AdminDashboard = ({
             if (nimClean && nama && /^(1[5-9]|2[0-9])\d{9,13}$/.test(nimClean) && !/[a-zA-Z]/.test(nimClean)) {
               parsedStudents.push({ 
                 nim: nimClean, 
-                nama: toTitleCase(nama) 
+                nama: toTitleCase(nama),
+                password: "123456"
               });
             }
           }
@@ -1147,7 +1148,8 @@ const AdminDashboard = ({
             if (nimClean && nama && /^(1[5-9]|2[0-9])\d{9,13}$/.test(nimClean) && !/[a-zA-Z]/.test(nimClean)) {
               parsedStudents.push({ 
                 nim: nimClean, 
-                nama: toTitleCase(nama) 
+                nama: toTitleCase(nama),
+                password: "123456"
               });
             }
           }
@@ -2062,7 +2064,7 @@ const AdminDashboard = ({
                           </span>
                         </div>
                       </div>
-                      <div className="flex gap-2 transition-opacity">
+                      <div className="flex flex-wrap gap-2 transition-opacity justify-end">
                         <button
                           type="button"
                           onClick={(e) => {
@@ -2080,7 +2082,7 @@ const AdminDashboard = ({
                               password: "",
                             });
                           }}
-                          className="p-3 bg-[#f8fdfc] text-teal-800/40 hover:bg-teal-50 hover:text-teal-500 border border-transparent hover:border-teal-100 rounded-xl transition-all shadow-sm"
+                          className="p-2.5 bg-teal-50 text-teal-600 hover:bg-teal-500 hover:text-white border border-teal-100 rounded-xl transition-all shadow-sm"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
@@ -2095,7 +2097,7 @@ const AdminDashboard = ({
                               name: dosen.nama,
                             });
                           }}
-                          className="p-3 bg-[#f8fdfc] text-teal-800/40 hover:bg-rose-50 hover:text-rose-600 border border-transparent hover:border-rose-100 rounded-xl transition-all shadow-sm"
+                          className="p-2.5 bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white border border-rose-100 rounded-xl transition-all shadow-sm"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -2248,11 +2250,14 @@ const AdminDashboard = ({
               </div>
 
               <div className="bg-white border border-teal-50 rounded-[3rem] overflow-hidden shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]">
-                <div className="p-8 md:p-10 border-b border-teal-50 flex flex-wrap justify-between items-center bg-[#f8fdfc] gap-4">
-                  <h3 className="text-xs font-black text-teal-950 uppercase tracking-widest flex items-center gap-2">
-                    <Users className="w-4 h-4 text-teal-500" /> {t("dash_admin_db_mahasiswa")}
+                <div className="p-8 md:p-10 border-b border-teal-50 flex flex-col xl:flex-row justify-between items-start xl:items-center bg-[#f8fdfc] gap-6">
+                  <h3 className="text-sm font-black text-teal-950 uppercase tracking-widest flex items-center gap-3">
+                    <div className="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center">
+                      <Users className="w-5 h-5 text-teal-600" />
+                    </div>
+                    {t("dash_admin_db_mahasiswa")}
                   </h3>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 w-full xl:w-auto">
                     <input
                       type="file"
                       id="import-csv-input"
@@ -2260,11 +2265,28 @@ const AdminDashboard = ({
                       onChange={handleCSVImport}
                       className="hidden"
                     />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const ws = XLSX.utils.aoa_to_sheet([
+                          ["NIM", "Nama"],
+                          ["24050974001", "Contoh Nama Mahasiswa"],
+                        ]);
+                        ws["!cols"] = [{ wch: 20 }, { wch: 35 }];
+                        const wb = XLSX.utils.book_new();
+                        XLSX.utils.book_append_sheet(wb, ws, "Mahasiswa");
+                        XLSX.writeFile(wb, "template_import_mahasiswa.xlsx");
+                      }}
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white border-2 border-teal-100 rounded-2xl text-[10px] font-black text-teal-700 hover:bg-teal-50 hover:border-teal-300 transition-all uppercase tracking-widest shadow-sm group"
+                    >
+                      <Download className="w-4 h-4 group-hover:-translate-y-1 transition-transform text-teal-500" />
+                      Template Excel
+                    </button>
                     <label
                       htmlFor="import-csv-input"
-                      className="flex items-center gap-2 px-5 py-3 bg-teal-50 border border-teal-100 rounded-2xl text-[10px] font-black text-teal-800 hover:bg-teal-100 hover:border-teal-200 transition-all uppercase tracking-widest shadow-sm cursor-pointer group"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-teal-50 to-teal-100/50 border-2 border-teal-200 rounded-2xl text-[10px] font-black text-teal-800 hover:bg-teal-100 hover:border-teal-300 transition-all uppercase tracking-widest shadow-sm cursor-pointer group"
                     >
-                      <Upload className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
+                      <Upload className="w-4 h-4 group-hover:-translate-y-1 transition-transform text-teal-600" />
                       Impor CSV / Excel
                     </label>
                     <button
@@ -2273,9 +2295,9 @@ const AdminDashboard = ({
                         setAiImportType("mahasiswa");
                         setAiImportOpen(true);
                       }}
-                      className="flex items-center gap-2 px-5 py-3 bg-teal-950 text-teal-400 border border-teal-900 hover:bg-teal-900 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg cursor-pointer group animate-pulse hover:animate-none"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-teal-950 text-teal-400 border-2 border-teal-900 hover:bg-teal-900 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-teal-950/20 cursor-pointer group transition-all"
                     >
-                      <Zap className="w-4 h-4 text-teal-400 group-hover:scale-110 transition-transform" />
+                      <Zap className="w-4 h-4 text-orange-400 group-hover:scale-125 transition-transform animate-pulse group-hover:animate-none" />
                       ✨ Impor Massal AI
                     </button>
                     <span className="px-4 py-3 bg-teal-950 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg">
@@ -2399,41 +2421,43 @@ const AdminDashboard = ({
                               </span>
                             )}
                           </td>
-                          <td className="px-10 py-5 text-right space-x-2">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setStudentForm({
-                                  id: std.id,
-                                  nim: std.nim,
-                                  nama: std.nama,
-                                  kontak: std.kontak || "",
-                                  password: "", // Don't fetch password
-                                  angkatan: std.angkatan || "",
-                                });
-                                window.scrollTo({ top: 0, behavior: "smooth" });
-                              }}
-                              className="p-3 text-teal-800/30 bg-white border border-teal-100 hover:border-teal-200 hover:text-teal-600 hover:bg-teal-50 rounded-[1rem] transition-all shadow-sm"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setDeleteData({
-                                  type: "mahasiswa",
-                                  id: std.id,
-                                  name: std.nama,
-                                });
-                              }}
-                              className="p-3 text-teal-800/30 bg-white border border-teal-100 hover:border-rose-200 hover:text-rose-500 hover:bg-rose-50 rounded-[1rem] transition-all shadow-sm"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                          <td className="px-10 py-5">
+                            <div className="flex flex-wrap items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setStudentForm({
+                                    id: std.id,
+                                    nim: std.nim,
+                                    nama: std.nama,
+                                    kontak: std.kontak || "",
+                                    password: "", // Don't fetch password
+                                    angkatan: std.angkatan || "",
+                                  });
+                                  window.scrollTo({ top: 0, behavior: "smooth" });
+                                }}
+                                className="p-2.5 bg-teal-50 text-teal-600 hover:bg-teal-500 hover:text-white border border-teal-100 rounded-xl transition-all shadow-sm"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setDeleteData({
+                                    type: "mahasiswa",
+                                    id: std.id,
+                                    name: std.nama,
+                                  });
+                                }}
+                                className="p-2.5 bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white border border-rose-100 rounded-xl transition-all shadow-sm"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </motion.tr>
                       ))}

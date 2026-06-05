@@ -596,7 +596,8 @@ app.post("/api/profile", authenticate, async (req: any, res) => {
         },
         create: {
           userId: req.user.id,
-          nim: nim || req.user.nim,
+          nim: nim || req.user.nim || "",
+          nama: nama || "Mahasiswa",
           ...mhsData,
           angkatan: finalAngkatan || ""
         }
@@ -1097,7 +1098,7 @@ app.post("/api/admin/mahasiswa/import", authenticate, isAdmin, async (req, res) 
         continue;
       }
 
-      const defaultPassword = "mhs" + nim.slice(-4);
+      const defaultPassword = std.password || "123456";
       const hashedPassword = await bcrypt.hash(defaultPassword, 10);
       let extractedAngkatan = "";
       if (/^\d+$/.test(nim) && nim.length >= 2) {
@@ -1373,7 +1374,7 @@ app.post("/api/admin/dosen/import", authenticate, isAdmin, async (req, res) => {
 
 app.post("/api/admin/mahasiswa", authenticate, isAdmin, async (req, res) => {
   try {
-    const { nim, nama, kontak, password } = req.body;
+    const { nim, nama, kontak, password, angkatan } = req.body;
     if (!nim || !nama) throw new Error("NIM dan Nama wajib diisi.");
 
     // Check existing
@@ -1381,6 +1382,11 @@ app.post("/api/admin/mahasiswa", authenticate, isAdmin, async (req, res) => {
     if (existing) throw new Error("NIM sudah terdaftar dalam sistem.");
 
     const hashedPassword = await bcrypt.hash(password || "mhs123", 10);
+    
+    let finalAngkatan = angkatan;
+    if (!finalAngkatan && /^\d+$/.test(nim) && nim.length >= 2) {
+      finalAngkatan = "20" + nim.substring(0, 2);
+    }
     
     const student = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
@@ -1395,7 +1401,8 @@ app.post("/api/admin/mahasiswa", authenticate, isAdmin, async (req, res) => {
           userId: user.id,
           nim,
           nama,
-          kontak
+          kontak,
+          angkatan: finalAngkatan || ""
         }
       });
     });
@@ -1435,7 +1442,7 @@ app.delete("/api/admin/mahasiswa/:id", authenticate, isAdmin, async (req, res) =
 app.put("/api/admin/mahasiswa/:id", authenticate, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { nim, nama, kontak, password } = req.body;
+    const { nim, nama, kontak, password, angkatan } = req.body;
     
     const student = await prisma.$transaction(async (tx) => {
       const current = await tx.mahasiswa.findUnique({ where: { id } });
@@ -1457,9 +1464,19 @@ app.put("/api/admin/mahasiswa/:id", authenticate, isAdmin, async (req, res) => {
         });
       }
 
+      let finalAngkatan = angkatan;
+      if (!finalAngkatan && nim && /^\d+$/.test(nim) && nim.length >= 2) {
+        finalAngkatan = "20" + nim.substring(0, 2);
+      }
+
       return tx.mahasiswa.update({
         where: { id },
-        data: { nim, nama, kontak }
+        data: { 
+          nim, 
+          nama, 
+          kontak,
+          angkatan: finalAngkatan || undefined
+        }
       });
     });
     
@@ -1555,6 +1572,41 @@ app.post("/api/admin/reset-angkatan", authenticate, isAdmin, async (req, res) =>
     res.json({ message: `Berhasil mereset ${result.count} data bimbingan mahasiswa angkatan ${angkatan}.` });
   } catch (err: any) {
     res.status(500).json({ error: "Gagal me-reset data angkatan." });
+  }
+});
+
+// Delete all dummy/test students
+app.delete("/api/admin/mahasiswa/dummy", authenticate, isAdmin, async (req, res) => {
+  try {
+    // Find dummy students: nama like "Mahasiswa Test %" OR nim matches old seed format (2205xxx, 7 digits)
+    const dummyStudents = await prisma.mahasiswa.findMany({
+      where: {
+        OR: [
+          { nama: { startsWith: "Mahasiswa Test" } },
+          { nim: { startsWith: "2205" } }
+        ]
+      },
+      select: { id: true, userId: true, nama: true }
+    });
+
+    if (dummyStudents.length === 0) {
+      return res.json({ success: true, deletedCount: 0, message: "Tidak ada mahasiswa dummy ditemukan." });
+    }
+
+    const userIds = dummyStudents.map(s => s.userId);
+    const mhsIds = dummyStudents.map(s => s.id);
+
+    await prisma.$transaction(async (tx) => {
+      await tx.mahasiswa.deleteMany({ where: { id: { in: mhsIds } } });
+      await tx.user.deleteMany({ where: { id: { in: userIds } } });
+    });
+
+    io.emit("quota_update", await prisma.dosen.findMany({ include: { _count: { select: { mahasiswa: true } }, penelitian: true } }));
+
+    res.json({ success: true, deletedCount: dummyStudents.length, message: `Berhasil menghapus ${dummyStudents.length} mahasiswa dummy.` });
+  } catch (err: any) {
+    console.error("Delete Dummy Error:", err);
+    res.status(500).json({ error: err.message || "Gagal menghapus mahasiswa dummy." });
   }
 });
 
