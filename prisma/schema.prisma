@@ -44,6 +44,9 @@ model Mahasiswa {
   dosenId         String?
   dosen           Dosen?    @relation(fields: [dosenId], references: [id])
   rencanaJudul    String?
+  magangPosisi    String?
+  magangTempat    String?
+  plpLokasi       String?
   statusBimbingan String    @default("PENDING")
   periode         String?
 }

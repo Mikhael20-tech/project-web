@@ -548,7 +548,7 @@ app.get("/api/me-dosen", authenticate, async (req: any, res) => {
 });
 
 app.post("/api/profile", authenticate, async (req: any, res) => {
-  const { nim, nama, kontak, peminatan, bio, foto, angkatan, rencanaJudul } = req.body;
+  const { nim, nama, kontak, peminatan, bio, foto, angkatan, rencanaJudul, magangPosisi, magangTempat, plpLokasi } = req.body;
   try {
     const student = await prisma.$transaction(async (tx) => {
       // 1. If NIM is updated, check uniqueness and update User.username
@@ -580,7 +580,10 @@ app.post("/api/profile", authenticate, async (req: any, res) => {
         peminatan,
         bio,
         foto: foto || null,
-        rencanaJudul
+        rencanaJudul,
+        magangPosisi,
+        magangTempat,
+        plpLokasi
       };
 
       return tx.mahasiswa.upsert({
@@ -660,7 +663,10 @@ app.post("/api/war/select", authenticate, rateLimitSelection, async (req: any, r
     const affectedRows = await prisma.$executeRaw`
       UPDATE "Mahasiswa"
       SET "dosenId" = ${dosenId}, 
-          "rencanaJudul" = ${rencanaJudul || null}, 
+          "rencanaJudul" = CASE 
+            WHEN (SELECT category FROM "WarConfig" WHERE id = 'global_config') = 'SKRIPSI_ARTIKEL' THEN ${rencanaJudul || null}::text
+            ELSE "rencanaJudul"
+          END,
           "statusBimbingan" = 'APPROVED', 
           "periode" = ${config.periode || null}
       WHERE "id" = ${student.id}

@@ -647,16 +647,30 @@ const DosenDashboard = ({
                         </div>
 
                         {/* Rencana Judul */}
-                        {m.rencanaJudul && (
-                          <div className="mb-4 px-4 py-3 bg-white rounded-2xl border border-teal-100">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-teal-800/40 mb-1">
-                              {config?.category === "MAGANG" ? t("dash_dosen_title_magang") :
-                               config?.category === "PLP" ? t("dash_dosen_title_plp") :
-                               t("dash_dosen_title_plan")}
-                            </p>
-                            <p className="text-xs font-bold text-teal-950 leading-relaxed">{m.rencanaJudul}</p>
-                          </div>
-                        )}
+                        {(() => {
+                          const cat = config?.category || "SKRIPSI_ARTIKEL";
+                          let displayTitle = "";
+                          if (cat === "MAGANG") {
+                            displayTitle = (m.magangPosisi || m.magangTempat) ? `${m.magangPosisi || ""} - ${m.magangTempat || ""}` : "";
+                          } else if (cat === "PLP") {
+                            displayTitle = m.plpLokasi || "";
+                          } else {
+                            displayTitle = m.rencanaJudul || "";
+                          }
+
+                          if (!displayTitle) return null;
+
+                          return (
+                            <div className="mb-4 px-4 py-3 bg-white rounded-2xl border border-teal-100">
+                              <p className="text-[9px] font-black uppercase tracking-widest text-teal-800/40 mb-1">
+                                {cat === "MAGANG" ? t("dash_dosen_title_magang") :
+                                 cat === "PLP" ? t("dash_dosen_title_plp") :
+                                 t("dash_dosen_title_plan")}
+                              </p>
+                              <p className="text-xs font-bold text-teal-950 leading-relaxed">{displayTitle}</p>
+                            </div>
+                          );
+                        })()}
 
                         {/* Action Buttons */}
                         <div className="flex gap-2 mt-auto pt-3 border-t border-slate-100">

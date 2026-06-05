@@ -59,9 +59,10 @@ const Dashboard = ({
     bio: "",
     foto: "",
     rencanaJudul: "",
+    magangPosisi: "",
+    magangTempat: "",
+    plpLokasi: "",
   });
-  const [magangTempat, setMagangTempat] = useState("");
-  const [magangPosisi, setMagangPosisi] = useState("");
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [searchDosen, setSearchDosen] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -79,7 +80,6 @@ const Dashboard = ({
       if (data) {
         setStudentData(data);
         onProfileUpdate(data);
-        const judul = data.rencanaJudul || "";
         setProfileForm({
           nim: data.nim || "",
           nama: data.nama || "",
@@ -87,20 +87,15 @@ const Dashboard = ({
           peminatan: data.peminatan || "",
           bio: data.bio || "",
           foto: data.foto || "",
-          rencanaJudul: judul,
+          rencanaJudul: data.rencanaJudul || "",
+          magangPosisi: data.magangPosisi || "",
+          magangTempat: data.magangTempat || "",
+          plpLokasi: data.plpLokasi || "",
         });
 
         const isIncomplete = !data.kontak || !data.foto || data.foto.includes("unsplash.com");
         if (isIncomplete) {
           setIsProfileModalOpen(true);
-        }
-        
-        if (judul && judul.includes(" - ")) {
-           const parts = judul.split(" - ");
-           setMagangPosisi(parts[0]?.trim() || "");
-           setMagangTempat(parts.slice(1).join(" - ")?.trim() || "");
-        } else {
-           setMagangPosisi(judul);
         }
       }
     } catch (err) {
@@ -258,15 +253,39 @@ const Dashboard = ({
     e.preventDefault();
     setLoading(true);
     
-    // Combine magang fields immediately before submission to ensure fresh state
-    let finalJudul = profileForm.rencanaJudul;
     if (config?.category === "MAGANG") {
-      const pos = magangPosisi.trim();
-      const tempat = magangTempat.trim();
-      finalJudul = (pos || tempat) ? `${pos} - ${tempat}` : "";
+      if (!profileForm.magangPosisi?.trim() || !profileForm.magangTempat?.trim()) {
+        toast({
+          title: "DATA MAGANG WAJIB",
+          description: "Silakan isi posisi dan tempat magang Anda.",
+          variant: "error",
+        });
+        setLoading(false);
+        return;
+      }
+    } else if (config?.category === "PLP") {
+      if (!profileForm.plpLokasi?.trim()) {
+        toast({
+          title: "LOKASI PLP WAJIB",
+          description: "Silakan isi lokasi & rencana PLP Anda.",
+          variant: "error",
+        });
+        setLoading(false);
+        return;
+      }
+    } else {
+      if (!profileForm.rencanaJudul?.trim()) {
+        toast({
+          title: "RENCANA JUDUL WAJIB",
+          description: "Silakan isi rencana judul riset Anda.",
+          variant: "error",
+        });
+        setLoading(false);
+        return;
+      }
     }
     
-    const payload = { ...profileForm, rencanaJudul: finalJudul };
+    const payload = { ...profileForm };
 
     if (isProfileIncomplete) {
       if (!profileForm.foto || profileForm.foto.includes("unsplash.com")) {
@@ -401,15 +420,40 @@ const Dashboard = ({
     const s = Math.floor((ms % (1000 * 60)) / 1000);
     return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
+  const profileStatus = (() => {
+    const cat = config?.category || "SKRIPSI_ARTIKEL";
+    if (cat === "MAGANG") {
+      const hasData = !!(studentData?.magangPosisi && studentData?.magangTempat);
+      return {
+        completed: hasData,
+        title: hasData ? `${studentData.magangPosisi} - ${studentData.magangTempat}` : "",
+        errorMessage: "ISI DATA MAGANG TERLEBIH DAHULU"
+      };
+    } else if (cat === "PLP") {
+      const hasData = !!studentData?.plpLokasi;
+      return {
+        completed: hasData,
+        title: hasData ? studentData.plpLokasi : "",
+        errorMessage: "ISI LOKASI PLP TERLEBIH DAHULU"
+      };
+    } else {
+      const hasData = !!studentData?.rencanaJudul;
+      return {
+        completed: hasData,
+        title: hasData ? studentData.rencanaJudul : "",
+        errorMessage: "ISI RENCANA JUDUL TERLEBIH DAHULU"
+      };
+    }
+  })();
   const labels = (() => {
-    const cat = config?.category || "SKRIPSI";
+    const cat = config?.category || "SKRIPSI_ARTIKEL";
     if (cat === "MAGANG") {
       return {
         dosenChoice: "Dosen Pembimbing Magang Pilihan",
         selected: "Dosen Magang Terpilih",
         timelineLabel: "Milestone Pemilihan Magang",
         step2Title: "Input Posisi & Mitra Magang",
-        step2Desc: studentData?.rencanaJudul || "Posisi dan lokasi magang telah terverifikasi",
+        step2Desc: profileStatus.title || "Posisi dan lokasi magang belum diisi",
         step3Title: "Dosen Magang Dikunci",
         step3Desc: "Dosen Pembimbing Magang telah resmi dikunci dan disetujui",
         guidanceStatus: "Status Pembimbing Magang",
@@ -420,7 +464,7 @@ const Dashboard = ({
         selected: "Dosen PLP Terpilih",
         timelineLabel: "Milestone Pemilihan PLP",
         step2Title: "Input Lokasi & Mitra PLP",
-        step2Desc: studentData?.rencanaJudul || "Lokasi PLP telah terverifikasi",
+        step2Desc: profileStatus.title || "Lokasi PLP belum diisi",
         step3Title: "Dosen PLP Dikunci",
         step3Desc: "Dosen Pembimbing PLP telah resmi dikunci dan disetujui",
         guidanceStatus: "Status Pembimbing PLP",
@@ -431,7 +475,7 @@ const Dashboard = ({
         selected: t("dash_student_selected"),
         timelineLabel: t("dash_student_timeline_label") && !t("dash_student_timeline_label").includes("TIMELINE") ? t("dash_student_timeline_label") : "Milestone Pemilihan Skripsi",
         step2Title: "Input Rencana Judul",
-        step2Desc: studentData?.rencanaJudul || "Rencana judul skripsi telah terverifikasi",
+        step2Desc: profileStatus.title || "Rencana judul skripsi belum diisi",
         step3Title: "Pilihan Dosen Dikunci",
         step3Desc: "Kandidat pembimbing skripsi berhasil dikunci dan terdaftar",
         guidanceStatus: t("dash_student_guidance_status"),
@@ -735,7 +779,7 @@ const Dashboard = ({
                       </div>
                       <div className="min-w-0">
                         <p className="text-[11px] font-black text-white uppercase tracking-wider leading-none mb-1">{labels.step2Title}</p>
-                        <p className="text-[10px] font-bold text-teal-400/60 leading-tight truncate max-w-[280px]" title={studentData.rencanaJudul || "Belum diisi"}>
+                        <p className="text-[10px] font-bold text-teal-400/60 leading-tight truncate max-w-[280px]" title={profileStatus.title || "Belum diisi"}>
                           {labels.step2Desc}
                         </p>
                       </div>
@@ -802,9 +846,11 @@ const Dashboard = ({
                 </div>
 
                 <div className="p-8 border-2 border-dashed border-teal-100 rounded-3xl mb-12">
-                  <h3 className="text-[10px] font-black text-teal-300 uppercase tracking-widest mb-2">{t("dash_student_title_plan")}</h3>
+                  <h3 className="text-[10px] font-black text-teal-300 uppercase tracking-widest mb-2">
+                    {config?.category === "MAGANG" ? "Posisi & Mitra Magang" : config?.category === "PLP" ? "Lokasi & Mitra PLP" : t("dash_student_title_plan")}
+                  </h3>
                   <p className="text-sm font-medium italic text-teal-800 leading-relaxed">
-                    "{studentData.rencanaJudul || "Belum ditentukan"}"
+                    "{profileStatus.title || "Belum ditentukan"}"
                   </p>
                 </div>
 
@@ -933,11 +979,11 @@ const Dashboard = ({
                             <Button
                               key={p.id}
                               onClick={() => setConfirmingDosen({ dosen, title: p.judul })}
-                              isDisabled={!isWarActive || config?.isForcedClosed || dosen.kuotaMax - dosen._count.mahasiswa <= 0 || loading || !isBatchAllowed() || !studentData?.rencanaJudul}
+                              isDisabled={!isWarActive || config?.isForcedClosed || dosen.kuotaMax - dosen._count.mahasiswa <= 0 || loading || !isBatchAllowed() || !profileStatus.completed}
                               variant="secondary"
                               className={cn(
                                 "w-full py-3 px-4 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all duration-300 text-left truncate border h-auto min-h-0",
-                                isWarActive && !config?.isForcedClosed && dosen.kuotaMax - dosen._count.mahasiswa > 0 && isBatchAllowed() && studentData?.rencanaJudul
+                                isWarActive && !config?.isForcedClosed && dosen.kuotaMax - dosen._count.mahasiswa > 0 && isBatchAllowed() && profileStatus.completed
                                   ? "bg-teal-50 text-teal-800 border-teal-100 hover:bg-teal-500 hover:text-white hover:border-teal-500 shadow-sm"
                                   : "bg-slate-50 text-slate-400 border-slate-100"
                               )}
@@ -946,11 +992,11 @@ const Dashboard = ({
                             </Button>
                           ))}
                           <Button
-                            onClick={() => setConfirmingDosen({ dosen, title: studentData?.rencanaJudul })}
-                            isDisabled={!isWarActive || config?.isForcedClosed || dosen.kuotaMax - dosen._count.mahasiswa <= 0 || loading || !isBatchAllowed() || !studentData?.rencanaJudul}
+                            onClick={() => setConfirmingDosen({ dosen, title: profileStatus.title })}
+                            isDisabled={!isWarActive || config?.isForcedClosed || dosen.kuotaMax - dosen._count.mahasiswa <= 0 || loading || !isBatchAllowed() || !profileStatus.completed}
                             className={cn(
                               "w-full py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all duration-300 shadow-sm mt-2 h-auto",
-                              isWarActive && !config?.isForcedClosed && dosen.kuotaMax - dosen._count.mahasiswa > 0 && isBatchAllowed() && studentData?.rencanaJudul
+                              isWarActive && !config?.isForcedClosed && dosen.kuotaMax - dosen._count.mahasiswa > 0 && isBatchAllowed() && profileStatus.completed
                                 ? "bg-teal-950 text-white hover:bg-teal-800 border border-teal-900"
                                 : "bg-slate-100 text-slate-400 border border-slate-200"
                             )}
@@ -960,11 +1006,11 @@ const Dashboard = ({
                         </div>
                       ) : (
                         <Button
-                          onClick={() => setConfirmingDosen({ dosen, title: studentData?.rencanaJudul })}
-                          isDisabled={!isWarActive || config?.isForcedClosed || dosen.kuotaMax - dosen._count.mahasiswa <= 0 || loading || !isBatchAllowed() || !studentData?.rencanaJudul}
+                          onClick={() => setConfirmingDosen({ dosen, title: profileStatus.title })}
+                          isDisabled={!isWarActive || config?.isForcedClosed || dosen.kuotaMax - dosen._count.mahasiswa <= 0 || loading || !isBatchAllowed() || !profileStatus.completed}
                           className={cn(
                             "w-full py-6 mt-4 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all duration-500 shadow-xl overflow-hidden relative h-auto min-h-[56px]",
-                            isWarActive && !config?.isForcedClosed && dosen.kuotaMax - dosen._count.mahasiswa > 0 && isBatchAllowed() && studentData?.rencanaJudul
+                            isWarActive && !config?.isForcedClosed && dosen.kuotaMax - dosen._count.mahasiswa > 0 && isBatchAllowed() && profileStatus.completed
                               ? "bg-teal-950 text-white hover:bg-teal-500 shadow-teal-950/20 hover:-translate-y-1"
                               : "bg-teal-50 text-teal-800/20 border border-teal-100"
                           )}
@@ -974,7 +1020,7 @@ const Dashboard = ({
                               config?.isForcedClosed ? t("dash_student_system_closed") :
                               !isWarActive ? t("dash_student_waiting_war") : 
                               !isBatchAllowed() ? t("dash_student_access_denied") :
-                              !studentData?.rencanaJudul ? "ISI PROFIL TERLEBIH DAHULU" :
+                              !profileStatus.completed ? "ISI PROFIL TERLEBIH DAHULU" :
                               dosen.kuotaMax - dosen._count.mahasiswa <= 0 ? t("dash_student_quota_full") : t("dash_student_pick_advisor")}
                           </span>
                         </Button>
@@ -1073,36 +1119,55 @@ const Dashboard = ({
                      </div>
 
                      {config?.category === "MAGANG" ? (
-                        <div className="flex flex-col md:flex-row gap-4">
-                          <div className="flex-1 space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Posisi Magang</label>
-                            <input 
-                              value={magangPosisi} 
-                              onChange={(e) => setMagangPosisi(e.target.value)} 
-                              className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" 
-                              placeholder="Misal: UI/UX Designer" 
-                              required 
-                            />
-                          </div>
-                          <div className="flex-1 space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Tempat / Instansi</label>
-                            <input 
-                              value={magangTempat} 
-                              onChange={(e) => setMagangTempat(e.target.value)} 
-                              className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" 
-                              placeholder="Misal: PT. Telkom Indonesia" 
-                              required 
-                            />
-                          </div>
+                         <div className="flex flex-col md:flex-row gap-4">
+                           <div className="flex-1 space-y-2">
+                             <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Posisi Magang</label>
+                             <input 
+                               value={profileForm.magangPosisi} 
+                               onChange={(e) => setProfileForm({...profileForm, magangPosisi: e.target.value})} 
+                               className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" 
+                               placeholder="Misal: UI/UX Designer" 
+                               required 
+                             />
+                           </div>
+                           <div className="flex-1 space-y-2">
+                             <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Tempat / Instansi</label>
+                             <input 
+                               value={profileForm.magangTempat} 
+                               onChange={(e) => setProfileForm({...profileForm, magangTempat: e.target.value})} 
+                               className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" 
+                               placeholder="Misal: PT. Telkom Indonesia" 
+                               required 
+                             />
+                           </div>
+                         </div>
+                      ) : config?.category === "PLP" ? (
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                             Lokasi & Rencana PLP
+                           </label>
+                           <input 
+                             value={profileForm.plpLokasi} 
+                             onChange={(e) => setProfileForm({...profileForm, plpLokasi: e.target.value})} 
+                             className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" 
+                             placeholder="Misal: SMKN 1 Surabaya" 
+                             required 
+                           />
                         </div>
-                     ) : (
-                       <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                            {config?.category === "PLP" ? "Lokasi & Rencana PLP" : "Rencana Judul Riset Anda"}
-                          </label>
-                          <textarea value={profileForm.rencanaJudul} onChange={(e) => setProfileForm({...profileForm, rencanaJudul: e.target.value})} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none min-h-[80px]" placeholder="Ketik disini..." required />
-                       </div>
-                     )}
+                      ) : (
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                             Rencana Judul Riset Anda
+                           </label>
+                           <textarea 
+                             value={profileForm.rencanaJudul} 
+                             onChange={(e) => setProfileForm({...profileForm, rencanaJudul: e.target.value})} 
+                             className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none min-h-[80px]" 
+                             placeholder="Ketik disini..." 
+                             required 
+                           />
+                        </div>
+                      )}
 
                       <div className="border-t border-teal-100/50 pt-6 space-y-4">
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-500">Setup / Ganti Password</p>
