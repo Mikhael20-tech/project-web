@@ -12,8 +12,7 @@ import {
   CheckCircle2,
   HelpCircle,
   ChevronDown,
-  Languages,
-  GraduationCap
+  Languages
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { socket } from "@/src/lib/socket";
@@ -217,11 +216,10 @@ const LandingPage = () => {
             <div className="hidden md:block h-px bg-teal-100 flex-1 mx-12 mb-6" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
             {[
-              { t: t("module_magang_t"), d: t("module_magang_d"), icon: Users, color: "from-indigo-500 to-indigo-600" },
-              { t: t("module_plp_t"), d: t("module_plp_d"), icon: GraduationCap, color: "from-rose-500 to-rose-600" },
-              { t: t("module_skripsi_t"), d: t("module_skripsi_d"), icon: ShieldCheck, color: "from-emerald-500 to-emerald-600" }
+              { t: t("module_magang_t"), d: t("module_magang_d"), icon: Users, color: "from-indigo-500 to-indigo-600", bg: "bg-indigo-50 text-indigo-500" },
+              { t: t("module_skripsi_t"), d: t("module_skripsi_d"), icon: ShieldCheck, color: "from-emerald-500 to-emerald-600", bg: "bg-emerald-50 text-emerald-500" }
             ].map((m, i) => (
               <motion.div
                 key={i}
@@ -230,8 +228,7 @@ const LandingPage = () => {
               >
                 <div className={cn("absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500", m.color)} />
                 <div className="relative z-10 bg-white/70 backdrop-blur-md p-10 rounded-[2.8rem] h-full flex flex-col items-start transition-all duration-500 group-hover:bg-transparent">
-                  <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center mb-8 shadow-lg group-hover:bg-white/20 group-hover:text-white transition-all", 
-                    i === 0 ? "bg-indigo-50 text-indigo-500" : i === 1 ? "bg-rose-50 text-rose-500" : "bg-emerald-50 text-emerald-500")}>
+                  <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center mb-8 shadow-lg group-hover:bg-white/20 group-hover:text-white transition-all", m.bg)}>
                     <m.icon className="w-8 h-8" />
                   </div>
                   <h3 className="text-2xl font-black mb-4 group-hover:text-white transition-colors">{m.t}</h3>

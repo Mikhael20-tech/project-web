@@ -2658,7 +2658,6 @@ const AdminDashboard = ({
                         <div className="flex flex-wrap gap-3">
                           {[
                             { id: "MAGANG", label: t("cat_magang"), icon: Briefcase, color: "bg-indigo-500", text: "text-indigo-500" },
-                            { id: "PLP", label: t("cat_plp"), icon: GraduationCap, color: "bg-rose-500", text: "text-rose-500" },
                             { id: "SKRIPSI_ARTIKEL", label: t("cat_skripsi_artikel"), icon: ShieldCheck, color: "bg-emerald-500", text: "text-emerald-500" }
                           ].map((cat) => (
                             <button

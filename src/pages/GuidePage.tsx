@@ -52,7 +52,7 @@ const GuidePage = () => {
                 Panduan <span className="text-teal-400 italic">Portal WarDosen</span>
               </h1>
               <p className="text-teal-100/70 text-sm md:text-base font-medium leading-relaxed">
-                Pelajari langkah-langkah, aturan, dan mekanisme pemilihan dosen pembimbing secara kompetitif, adil, dan transparan. Panduan ini mencakup peran mahasiswa, dosen, admin, serta penjelasan khusus tiga kategori war.
+                Pelajari langkah-langkah, aturan, dan mekanisme pemilihan dosen pembimbing secara kompetitif, adil, dan transparan. Panduan ini mencakup peran mahasiswa, dosen, admin, serta penjelasan khusus dua kategori war.
               </p>
             </div>
           </div>
@@ -226,7 +226,7 @@ const GuidePage = () => {
                       <div className="space-y-1">
                         <h4 className="text-sm font-extrabold text-teal-950">Konfigurasi Jadwal & Target Periode</h4>
                         <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                          Atur waktu mulai (START) dan waktu selesai (END) secara presisi. Tentukan juga Kategori War yang aktif (Magang, PLP, atau Skripsi) serta target angkatan yang boleh ikut bertanding (misal: "22, 23").
+                          Atur waktu mulai (START) dan waktu selesai (END) secara presisi. Tentukan juga Kategori War yang aktif (Magang atau Skripsi) serta target angkatan yang boleh ikut bertanding (misal: "22, 23").
                         </p>
                       </div>
                     </div>
@@ -269,10 +269,10 @@ const GuidePage = () => {
                 <div className="space-y-8">
                   <div className="space-y-2">
                     <h2 className="text-2xl font-black text-teal-950 tracking-tight">Kategori Pemilihan (War Kategori)</h2>
-                    <p className="text-sm text-teal-800/60 font-medium">Sistem portal ini terbagi menjadi 3 fokus kategori sesuai dengan agenda akademik semester prodi:</p>
+                    <p className="text-sm text-teal-800/60 font-medium">Sistem portal ini terbagi menjadi 2 fokus kategori sesuai dengan agenda akademik semester prodi:</p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 max-w-3xl">
                     {/* Magang */}
                     <div className="bg-[#fcfefe] border border-teal-50 rounded-3xl p-8 space-y-4 shadow-sm hover:border-teal-100 transition-all">
                       <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center">
@@ -291,31 +291,13 @@ const GuidePage = () => {
                       </div>
                     </div>
 
-                    {/* PLP */}
-                    <div className="bg-[#fcfefe] border border-teal-50 rounded-3xl p-8 space-y-4 shadow-sm hover:border-teal-100 transition-all">
-                      <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center">
-                        <Calendar className="w-6 h-6" />
-                      </div>
-                      <div className="space-y-2">
-                        <h3 className="text-lg font-black text-teal-950">2. War PLP</h3>
-                        <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                          Masa pemilihan <strong>Dosen Pembimbing PLP</strong> (Pengenalan Lapangan Persekolahan) untuk praktek mengajar mahasiswa di sekolah mitra.
-                        </p>
-                        <div className="p-3 bg-rose-50/50 rounded-xl text-[10px] text-rose-950 font-bold border border-rose-100">
-                          Format Judul Profil: <br/>
-                          <span className="font-mono text-[9px]">"Lokasi PLP / Nama Sekolah"</span> <br/>
-                          Contoh: <span className="font-normal italic">SMKN 1 Surabaya</span>
-                        </div>
-                      </div>
-                    </div>
-
                     {/* Skripsi */}
                     <div className="bg-[#fcfefe] border border-teal-50 rounded-3xl p-8 space-y-4 shadow-sm hover:border-teal-100 transition-all">
                       <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center">
                         <BookOpen className="w-6 h-6" />
                       </div>
                       <div className="space-y-2">
-                        <h3 className="text-lg font-black text-teal-950">3. War Skripsi / Artikel</h3>
+                        <h3 className="text-lg font-black text-teal-950">2. War Skripsi / Artikel</h3>
                         <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
                           Masa pemilihan <strong>Dosen Pembimbing Skripsi Utama</strong>. Mahasiswa bertanding memperebutkan kuota dospem berdasarkan kecocokan bidang riset.
                         </p>

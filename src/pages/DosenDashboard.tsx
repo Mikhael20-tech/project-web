@@ -399,19 +399,16 @@ const DosenDashboard = ({
                 <div className={cn(
                   "inline-flex items-center gap-2 px-3 py-1 rounded-full border ml-2 mb-4 shadow-sm",
                   config.category === "MAGANG" ? "bg-indigo-50 border-indigo-100" :
-                  config.category === "PLP" ? "bg-rose-50 border-rose-100" :
                   "bg-emerald-50 border-emerald-100"
                 )}>
                   <span className={cn(
                     "w-2 h-2 rounded-full animate-ping",
                     config.category === "MAGANG" ? "bg-indigo-500" :
-                    config.category === "PLP" ? "bg-rose-500" :
                     "bg-emerald-500"
                   )} />
                   <span className={cn(
                     "text-[10px] font-black uppercase tracking-widest",
                     config.category === "MAGANG" ? "text-indigo-600" :
-                    config.category === "PLP" ? "text-rose-600" :
                     "text-emerald-600"
                   )}>
                     {t(`cat_${config.category.toLowerCase()}`)}
@@ -652,8 +649,6 @@ const DosenDashboard = ({
                           let displayTitle = "";
                           if (cat === "MAGANG") {
                             displayTitle = (m.magangPosisi || m.magangTempat) ? `${m.magangPosisi || ""} - ${m.magangTempat || ""}` : "";
-                          } else if (cat === "PLP") {
-                            displayTitle = m.plpLokasi || "";
                           } else {
                             displayTitle = m.rencanaJudul || "";
                           }
@@ -664,7 +659,6 @@ const DosenDashboard = ({
                             <div className="mb-4 px-4 py-3 bg-white rounded-2xl border border-teal-100">
                               <p className="text-[9px] font-black uppercase tracking-widest text-teal-800/40 mb-1">
                                 {cat === "MAGANG" ? t("dash_dosen_title_magang") :
-                                 cat === "PLP" ? t("dash_dosen_title_plp") :
                                  t("dash_dosen_title_plan")}
                               </p>
                               <p className="text-xs font-bold text-teal-950 leading-relaxed">{displayTitle}</p>

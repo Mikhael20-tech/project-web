@@ -61,7 +61,6 @@ const Dashboard = ({
     rencanaJudul: "",
     magangPosisi: "",
     magangTempat: "",
-    plpLokasi: "",
   });
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [searchDosen, setSearchDosen] = useState("");
@@ -90,7 +89,6 @@ const Dashboard = ({
           rencanaJudul: data.rencanaJudul || "",
           magangPosisi: data.magangPosisi || "",
           magangTempat: data.magangTempat || "",
-          plpLokasi: data.plpLokasi || "",
         });
 
         const isIncomplete = !data.kontak || !data.foto || data.foto.includes("unsplash.com");
@@ -263,16 +261,6 @@ const Dashboard = ({
         setLoading(false);
         return;
       }
-    } else if (config?.category === "PLP") {
-      if (!profileForm.plpLokasi?.trim()) {
-        toast({
-          title: "LOKASI PLP WAJIB",
-          description: "Silakan isi lokasi & rencana PLP Anda.",
-          variant: "error",
-        });
-        setLoading(false);
-        return;
-      }
     } else {
       if (!profileForm.rencanaJudul?.trim()) {
         toast({
@@ -297,8 +285,6 @@ const Dashboard = ({
     let payload: any;
     if (config?.category === "MAGANG") {
       payload = { ...basePayload, magangPosisi: profileForm.magangPosisi, magangTempat: profileForm.magangTempat };
-    } else if (config?.category === "PLP") {
-      payload = { ...basePayload, plpLokasi: profileForm.plpLokasi };
     } else {
       payload = { ...basePayload, rencanaJudul: profileForm.rencanaJudul };
     }
@@ -445,13 +431,6 @@ const Dashboard = ({
         title: hasData ? `${studentData.magangPosisi} - ${studentData.magangTempat}` : "",
         errorMessage: "ISI DATA MAGANG TERLEBIH DAHULU"
       };
-    } else if (cat === "PLP") {
-      const hasData = !!studentData?.plpLokasi;
-      return {
-        completed: hasData,
-        title: hasData ? studentData.plpLokasi : "",
-        errorMessage: "ISI LOKASI PLP TERLEBIH DAHULU"
-      };
     } else {
       const hasData = !!studentData?.rencanaJudul;
       return {
@@ -473,17 +452,6 @@ const Dashboard = ({
         step3Title: "Dosen Magang Dikunci",
         step3Desc: "Dosen Pembimbing Magang telah resmi dikunci dan disetujui",
         guidanceStatus: "Status Pembimbing Magang",
-      };
-    } else if (cat === "PLP") {
-      return {
-        dosenChoice: "Dosen Pembimbing PLP Pilihan",
-        selected: "Dosen PLP Terpilih",
-        timelineLabel: "Milestone Pemilihan PLP",
-        step2Title: "Input Lokasi & Mitra PLP",
-        step2Desc: profileStatus.title || "Lokasi PLP belum diisi",
-        step3Title: "Dosen PLP Dikunci",
-        step3Desc: "Dosen Pembimbing PLP telah resmi dikunci dan disetujui",
-        guidanceStatus: "Status Pembimbing PLP",
       };
     } else {
       return {
@@ -557,13 +525,11 @@ const Dashboard = ({
               <h2 className={cn(
                 "text-[10px] font-black uppercase tracking-[0.3em] mb-2 flex items-center gap-2",
                 config?.category === "MAGANG" ? "text-indigo-500" :
-                config?.category === "PLP" ? "text-rose-500" :
                 "text-emerald-500"
               )}>
                 <div className={cn(
                   "w-2 h-2 rounded-full animate-ping",
                   config?.category === "MAGANG" ? "bg-indigo-500" :
-                  config?.category === "PLP" ? "bg-rose-500" :
                   "bg-emerald-500"
                 )} />
                 {config?.category ? t(`cat_${config.category.toLowerCase()}`) : "Live War System"}
@@ -863,7 +829,7 @@ const Dashboard = ({
 
                 <div className="p-8 border-2 border-dashed border-teal-100 rounded-3xl mb-12">
                   <h3 className="text-[10px] font-black text-teal-300 uppercase tracking-widest mb-2">
-                    {config?.category === "MAGANG" ? "Posisi & Mitra Magang" : config?.category === "PLP" ? "Lokasi & Mitra PLP" : t("dash_student_title_plan")}
+                    {config?.category === "MAGANG" ? "Posisi & Mitra Magang" : t("dash_student_title_plan")}
                   </h3>
                   <p className="text-sm font-medium italic text-teal-800 leading-relaxed">
                     "{profileStatus.title || "Belum ditentukan"}"
@@ -1065,7 +1031,7 @@ const Dashboard = ({
                    
                    <div className="p-4 bg-teal-50 rounded-2xl border border-teal-100/50 text-left">
                      <p className="text-[10px] font-black uppercase tracking-widest text-teal-800/40 mb-1">
-                       {config?.category === "MAGANG" ? t("dash_dosen_title_magang") : config?.category === "PLP" ? t("dash_dosen_title_plp") : t("dash_dosen_title_plan")}
+                       {config?.category === "MAGANG" ? t("dash_dosen_title_magang") : t("dash_dosen_title_plan")}
                      </p>
                      <p className="text-xs font-bold text-teal-950">{confirmingDosen.title}</p>
                    </div>
@@ -1157,19 +1123,6 @@ const Dashboard = ({
                              />
                            </div>
                          </div>
-                      ) : config?.category === "PLP" ? (
-                        <div className="space-y-2">
-                           <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                             Lokasi & Rencana PLP
-                           </label>
-                           <input 
-                             value={profileForm.plpLokasi} 
-                             onChange={(e) => setProfileForm({...profileForm, plpLokasi: e.target.value})} 
-                             className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" 
-                             placeholder="Misal: SMKN 1 Surabaya" 
-                             required 
-                           />
-                        </div>
                       ) : (
                         <div className="space-y-2">
                            <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
