@@ -43,6 +43,7 @@ import {
   PieChart,
   Pie
 } from "recharts";
+import * as XLSX from "xlsx";
 
 const AdminDashboard = ({
   token,
@@ -658,44 +659,85 @@ const AdminDashboard = ({
     setLoading(true);
     setMessage(null);
 
+    const isExcel = file.name.endsWith(".xlsx") || file.name.endsWith(".xls");
+
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
-        const text = event.target?.result as string;
-        if (!text) throw new Error("File kosong atau tidak terbaca.");
-
-        const lines = text.split(/\r?\n/);
         const parsedStudents: { nim: string; nama: string }[] = [];
 
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i].trim();
-          if (!line) continue;
+        if (isExcel) {
+          const data = new Uint8Array(event.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const rows = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1 });
 
-          const delimiter = line.includes(";") ? ";" : ",";
-          const cols = line.split(delimiter).map(c => c.replace(/^["']|["']$/g, "").trim());
+          for (let i = 0; i < rows.length; i++) {
+            const cols = rows[i];
+            if (!cols || cols.length < 2) continue;
 
-          if (cols.length < 2) continue;
+            const nim = String(cols[0] ?? "").trim();
+            const nama = String(cols[1] ?? "").trim();
 
-          const nim = cols[0];
-          const nama = cols[1];
+            if (
+              i === 0 &&
+              (nim.toLowerCase() === "nim" ||
+                nim.toLowerCase() === "username" ||
+                nim.toLowerCase() === "nomor induk mahasiswa" ||
+                nama.toLowerCase() === "nama" ||
+                nama.toLowerCase() === "name" ||
+                nama.toLowerCase() === "nama lengkap")
+            ) {
+              continue;
+            }
 
-          if (
-            i === 0 &&
-            (nim.toLowerCase() === "nim" ||
-              nim.toLowerCase() === "username" ||
-              nama.toLowerCase() === "nama" ||
-              nama.toLowerCase() === "name")
-          ) {
-            continue;
+            if (nim && nama) {
+              parsedStudents.push({ nim, nama });
+            }
           }
+        } else {
+          const text = event.target?.result as string;
+          if (!text) throw new Error("File kosong atau tidak terbaca.");
 
-          if (nim && nama) {
-            parsedStudents.push({ nim, nama });
+          const lines = text.split(/\r?\n/);
+
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+
+            const delimiter = line.includes(";") ? ";" : ",";
+            const cols = line.split(delimiter).map(c => c.replace(/^["']|["']$/g, "").trim());
+
+            if (cols.length < 2) continue;
+
+            const nim = cols[0];
+            const nama = cols[1];
+
+            if (
+              i === 0 &&
+              (nim.toLowerCase() === "nim" ||
+                nim.toLowerCase() === "username" ||
+                nim.toLowerCase() === "nomor induk mahasiswa" ||
+                nama.toLowerCase() === "nama" ||
+                nama.toLowerCase() === "name" ||
+                nama.toLowerCase() === "nama lengkap")
+            ) {
+              continue;
+            }
+
+            if (nim && nama) {
+              parsedStudents.push({ nim, nama });
+            }
           }
         }
 
         if (parsedStudents.length === 0) {
-          throw new Error("Tidak ada data mahasiswa valid yang ditemukan dalam CSV. Pastikan kolom pertama adalah NIM dan kolom kedua adalah Nama.");
+          throw new Error(
+            isExcel
+              ? "Tidak ada data mahasiswa valid yang ditemukan dalam file Excel. Pastikan kolom pertama adalah NIM dan kolom kedua adalah Nama."
+              : "Tidak ada data mahasiswa valid yang ditemukan dalam CSV. Pastikan kolom pertama adalah NIM dan kolom kedua adalah Nama."
+          );
         }
 
         const res = await fetch("/api/admin/mahasiswa/import", {
@@ -722,7 +764,12 @@ const AdminDashboard = ({
         e.target.value = "";
       }
     };
-    reader.readAsText(file);
+
+    if (isExcel) {
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.readAsText(file);
+    }
   };
 
   const handleAdminPhotoUpload = async (
@@ -1760,7 +1807,7 @@ const AdminDashboard = ({
                     <input
                       type="file"
                       id="import-csv-input"
-                      accept=".csv"
+                      accept=".csv, .xlsx, .xls"
                       onChange={handleCSVImport}
                       className="hidden"
                     />
@@ -1769,7 +1816,7 @@ const AdminDashboard = ({
                       className="flex items-center gap-2 px-5 py-3 bg-teal-50 border border-teal-100 rounded-2xl text-[10px] font-black text-teal-800 hover:bg-teal-100 hover:border-teal-200 transition-all uppercase tracking-widest shadow-sm cursor-pointer group"
                     >
                       <Upload className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
-                      Impor CSV
+                      Impor CSV / Excel
                     </label>
                     <span className="px-4 py-3 bg-teal-950 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg">
                       {students.length} {t("dash_admin_registered")}
