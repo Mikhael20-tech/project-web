@@ -9,7 +9,6 @@ import {
   ChevronRight, 
   LayoutDashboard,
   Clock,
-  CheckCircle2,
   HelpCircle,
   ChevronDown,
   Languages
@@ -187,7 +186,6 @@ const LandingPage = () => {
               { icon: LayoutDashboard, title: t("f3_t"), desc: t("f3_d"), color: "bg-orange-50 text-orange-500" },
               { icon: ShieldCheck, title: t("f4_t"), desc: t("f4_d"), color: "bg-emerald-50 text-emerald-500" },
               { icon: Zap, title: t("f5_t"), desc: t("f5_d"), color: "bg-pink-50 text-pink-500" },
-              { icon: CheckCircle2, title: t("f6_t"), desc: t("f6_d"), color: "bg-indigo-50 text-indigo-500" }
             ].map((f, i) => (
               <motion.div 
                 key={i}
