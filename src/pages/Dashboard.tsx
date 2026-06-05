@@ -1028,7 +1028,7 @@ const Dashboard = ({
                             "w-full py-6 mt-4 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all duration-500 shadow-xl overflow-hidden relative h-auto min-h-[56px]",
                             isWarActive && !config?.isForcedClosed && dosen.kuotaMax - dosen._count.mahasiswa > 0 && isBatchAllowed() && profileStatus.completed
                               ? "bg-teal-950 text-white hover:bg-teal-500 shadow-teal-950/20 hover:-translate-y-1"
-                              : "bg-teal-50 text-teal-800/20 border border-teal-100"
+                              : "bg-teal-50 text-teal-800/60 border border-teal-100"
                           )}
                         >
                           <span className="relative z-10 flex items-center justify-center gap-2">
