@@ -66,7 +66,7 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
   }, [lastScrollY]);
 
   const navLinks = [
-    { name: t("nav_home"), path: "/", icon: <Globe className="w-4 h-4" /> },
+    { name: t("nav_home"), path: "/", icon: <Globe className="w-4 h-4" />, authOnly: true },
     {
       name: t("view_features"),
       path: "/#features",
@@ -83,11 +83,13 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
       name: t("nav_portfolio"),
       path: "/portfolio",
       icon: <Star className="w-4 h-4" />,
+      authOnly: true,
     },
     {
       name: t("nav_guide") || "Panduan",
       path: "/guide",
       icon: <HelpCircle className="w-4 h-4" />,
+      authOnly: true,
     },
     {
       name: t("nav_dashboard"),
@@ -112,7 +114,8 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
   const filteredLinks = navLinks.filter(
     (link) =>
       (!link.role || (user && user.role === link.role)) &&
-      (!link.guestOnly || !user)
+      (!link.guestOnly || !user) &&
+      (!(link as any).authOnly || user)
   );
 
   const handleNavClick = (path: string) => {
