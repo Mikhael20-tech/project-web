@@ -406,7 +406,11 @@ const AdminDashboard = ({
     });
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (e?: React.MouseEvent | React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (!deleteData) return;
     const { type, id } = deleteData;
     setMessage(null);
@@ -1428,7 +1432,9 @@ const AdminDashboard = ({
                                         </span>
                                       </div>
                                       <button
+                                        type="button"
                                         onClick={(e) => {
+                                          e.preventDefault();
                                           e.stopPropagation();
                                           handleCancelSelection(m.id, m.nama);
                                         }}
@@ -1721,7 +1727,10 @@ const AdminDashboard = ({
                       </div>
                       <div className="flex gap-2 transition-opacity">
                         <button
-                          onClick={() =>
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             setDosenForm({
                               id: dosen.id,
                               nama: dosen.nama,
@@ -1732,20 +1741,23 @@ const AdminDashboard = ({
                               bio: dosen.bio || "",
                               kontak: dosen.kontak || "",
                               password: "",
-                            })
-                          }
+                            });
+                          }}
                           className="p-3 bg-[#f8fdfc] text-teal-800/40 hover:bg-teal-50 hover:text-teal-500 border border-transparent hover:border-teal-100 rounded-xl transition-all shadow-sm"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() =>
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             setDeleteData({
                               type: "dosen",
                               id: dosen.id,
                               name: dosen.nama,
-                            })
-                          }
+                            });
+                          }}
                           className="p-3 bg-[#f8fdfc] text-teal-800/40 hover:bg-rose-50 hover:text-rose-600 border border-transparent hover:border-rose-100 rounded-xl transition-all shadow-sm"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -2041,7 +2053,10 @@ const AdminDashboard = ({
                           </td>
                           <td className="px-10 py-5 text-right space-x-2">
                             <button
-                              onClick={() => {
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
                                 setStudentForm({
                                   id: std.id,
                                   nim: std.nim,
@@ -2057,13 +2072,16 @@ const AdminDashboard = ({
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() =>
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
                                 setDeleteData({
                                   type: "mahasiswa",
                                   id: std.id,
                                   name: std.nama,
-                                })
-                              }
+                                });
+                              }}
                               className="p-3 text-teal-800/30 bg-white border border-teal-100 hover:border-rose-200 hover:text-rose-500 hover:bg-rose-50 rounded-[1rem] transition-all shadow-sm"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -2596,14 +2614,19 @@ const AdminDashboard = ({
 
                 <div className="flex flex-col gap-3">
                   <button
-                    onClick={handleDelete}
+                    type="button"
+                    onClick={(e) => handleDelete(e)}
                     disabled={loading}
                     className="w-full py-4 bg-rose-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-rose-100 hover:bg-rose-600 transition-all disabled:opacity-50"
                   >
                     {loading ? "MENGHAPUS..." : "YA, HAPUS PERMANEN"}
                   </button>
                   <button
-                    onClick={() => setDeleteData(null)}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setDeleteData(null);
+                    }}
                     disabled={loading}
                     className="w-full py-4 bg-teal-50 text-teal-800/40 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-100 transition-all"
                   >
