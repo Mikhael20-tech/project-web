@@ -285,7 +285,23 @@ const Dashboard = ({
       }
     }
     
-    const payload = { ...profileForm };
+    // Only send fields relevant to the active WAR category to avoid cross-contamination
+    const basePayload = {
+      nim: profileForm.nim,
+      nama: profileForm.nama,
+      kontak: profileForm.kontak,
+      peminatan: profileForm.peminatan,
+      bio: profileForm.bio,
+      foto: profileForm.foto,
+    };
+    let payload: any;
+    if (config?.category === "MAGANG") {
+      payload = { ...basePayload, magangPosisi: profileForm.magangPosisi, magangTempat: profileForm.magangTempat };
+    } else if (config?.category === "PLP") {
+      payload = { ...basePayload, plpLokasi: profileForm.plpLokasi };
+    } else {
+      payload = { ...basePayload, rencanaJudul: profileForm.rencanaJudul };
+    }
 
     if (isProfileIncomplete) {
       if (!profileForm.foto || profileForm.foto.includes("unsplash.com")) {

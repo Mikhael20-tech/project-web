@@ -574,17 +574,18 @@ app.post("/api/profile", authenticate, async (req: any, res) => {
         finalAngkatan = "20" + nim.substring(0, 2);
       }
 
-      const mhsData = {
-        nama,
-        kontak,
-        peminatan,
-        bio,
-        foto: foto || null,
-        rencanaJudul,
-        magangPosisi,
-        magangTempat,
-        plpLokasi
-      };
+      // Only include fields that were explicitly sent (not undefined)
+      // This prevents category switching from wiping data from other WAR types
+      const mhsData: Record<string, any> = {};
+      if (nama !== undefined) mhsData.nama = nama;
+      if (kontak !== undefined) mhsData.kontak = kontak;
+      if (peminatan !== undefined) mhsData.peminatan = peminatan;
+      if (bio !== undefined) mhsData.bio = bio;
+      if (foto !== undefined) mhsData.foto = foto || null;
+      if (rencanaJudul !== undefined) mhsData.rencanaJudul = rencanaJudul;
+      if (magangPosisi !== undefined) mhsData.magangPosisi = magangPosisi;
+      if (magangTempat !== undefined) mhsData.magangTempat = magangTempat;
+      if (plpLokasi !== undefined) mhsData.plpLokasi = plpLokasi;
 
       return tx.mahasiswa.upsert({
         where: { userId: req.user.id },
