@@ -85,6 +85,11 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
       icon: <Star className="w-4 h-4" />,
     },
     {
+      name: t("nav_guide") || "Panduan",
+      path: "/guide",
+      icon: <HelpCircle className="w-4 h-4" />,
+    },
+    {
       name: t("nav_dashboard"),
       path: "/dashboard",
       icon: <Users className="w-4 h-4" />,

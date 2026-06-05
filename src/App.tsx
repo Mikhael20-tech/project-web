@@ -23,6 +23,7 @@ import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import DosenDashboard from "./pages/DosenDashboard";
 import PortfolioPage from "./pages/PortfolioPage";
+import GuidePage from "./pages/GuidePage";
 
 const AppContent = ({
   currentUser,
@@ -99,6 +100,14 @@ const AppContent = ({
           <Route
             path="/portfolio"
             element={<PageTransition><PortfolioPage /></PageTransition>}
+          />
+          <Route
+            path="/guide"
+            element={<PageTransition><GuidePage /></PageTransition>}
+          />
+          <Route
+            path="/panduan"
+            element={<Navigate to="/guide" replace />}
           />
           <Route
             path="/admin"
