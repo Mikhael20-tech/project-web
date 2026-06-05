@@ -661,6 +661,85 @@ const AdminDashboard = ({
 
     const isExcel = file.name.endsWith(".xlsx") || file.name.endsWith(".xls");
 
+    const toTitleCase = (str: string): string => {
+      if (!str) return "";
+      return str
+        .toLowerCase()
+        .split(" ")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+    };
+
+    const findColumnIndices = (dataRows: any[][]): { nimIdx: number; namaIdx: number } => {
+      let nimScores: { [key: number]: number } = {};
+      let namaScores: { [key: number]: number } = {};
+
+      // Scanner regex for NIM: starts with 15-29 (active cohorts), digits only, length 11 to 15 digits
+      const nimRegex = /^(1[5-9]|2[0-9])\d{9,13}$/;
+
+      for (let i = 0; i < Math.min(dataRows.length, 10); i++) {
+        const row = dataRows[i];
+        if (!row) continue;
+
+        for (let c = 0; c < row.length; c++) {
+          const val = String(row[c] ?? "").trim();
+          if (!val) continue;
+
+          // Check if matches NIM format (digits-only, valid cohort years)
+          if (nimRegex.test(val) && !/[a-zA-Z]/.test(val)) {
+            nimScores[c] = (nimScores[c] || 0) + 1;
+          }
+          // Check if matches Name (has letters, reasonable length, and not a header keyword)
+          else if (
+            /[a-zA-Z]/.test(val) &&
+            val.length > 2 &&
+            !/^(nim|nama|name|username|email|no|hp|phone|telepon|kontak|contact|angkatan|cohort|class|kelas|jurusan|prodi|timestamp|created_at|createdat)$/i.test(val)
+          ) {
+            namaScores[c] = (namaScores[c] || 0) + 1;
+          }
+        }
+      }
+
+      let nimIdx = 0;
+      let namaIdx = 1;
+
+      // Find column index with highest NIM score
+      let maxNimScore = 0;
+      let bestNimIdx = -1;
+      for (const c in nimScores) {
+        const idx = parseInt(c);
+        if (nimScores[idx] > maxNimScore) {
+          maxNimScore = nimScores[idx];
+          bestNimIdx = idx;
+        }
+      }
+
+      if (bestNimIdx !== -1) {
+        nimIdx = bestNimIdx;
+      }
+
+      // Find column index with highest Nama score (excluding the NIM column)
+      let maxNamaScore = 0;
+      let bestNamaIdx = -1;
+      for (const c in namaScores) {
+        const idx = parseInt(c);
+        if (idx !== nimIdx && namaScores[idx] > maxNamaScore) {
+          maxNamaScore = namaScores[idx];
+          bestNamaIdx = idx;
+        }
+      }
+
+      if (bestNamaIdx !== -1) {
+        namaIdx = bestNamaIdx;
+      } else {
+        // Fallback: choose the other column if we have exactly 2 columns
+        if (bestNimIdx === 0) namaIdx = 1;
+        else if (bestNimIdx === 1) namaIdx = 0;
+      }
+
+      return { nimIdx, namaIdx };
+    };
+
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
@@ -673,12 +752,15 @@ const AdminDashboard = ({
           const worksheet = workbook.Sheets[sheetName];
           const rows = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1 });
 
+          // Detect column indices dynamically
+          const { nimIdx, namaIdx } = findColumnIndices(rows);
+
           for (let i = 0; i < rows.length; i++) {
             const cols = rows[i];
-            if (!cols || cols.length < 2) continue;
+            if (!cols) continue;
 
-            const nim = String(cols[0] ?? "").trim();
-            const nama = String(cols[1] ?? "").trim();
+            const nim = String(cols[nimIdx] ?? "").trim();
+            const nama = String(cols[namaIdx] ?? "").trim();
 
             if (
               i === 0 &&
@@ -692,8 +774,13 @@ const AdminDashboard = ({
               continue;
             }
 
-            if (nim && nama) {
-              parsedStudents.push({ nim, nama });
+            // Clean & validate format: NIM must consist of digits and match Unesa format
+            const nimClean = nim.replace(/['"]/g, "").trim();
+            if (nimClean && nama && /^(1[5-9]|2[0-9])\d{9,13}$/.test(nimClean) && !/[a-zA-Z]/.test(nimClean)) {
+              parsedStudents.push({ 
+                nim: nimClean, 
+                nama: toTitleCase(nama) 
+              });
             }
           }
         } else {
@@ -701,6 +788,7 @@ const AdminDashboard = ({
           if (!text) throw new Error("File kosong atau tidak terbaca.");
 
           const lines = text.split(/\r?\n/);
+          const rawRows: string[][] = [];
 
           for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
@@ -708,11 +796,18 @@ const AdminDashboard = ({
 
             const delimiter = line.includes(";") ? ";" : ",";
             const cols = line.split(delimiter).map(c => c.replace(/^["']|["']$/g, "").trim());
+            rawRows.push(cols);
+          }
 
-            if (cols.length < 2) continue;
+          // Detect column indices dynamically
+          const { nimIdx, namaIdx } = findColumnIndices(rawRows);
 
-            const nim = cols[0];
-            const nama = cols[1];
+          for (let i = 0; i < rawRows.length; i++) {
+            const cols = rawRows[i];
+            if (!cols) continue;
+
+            const nim = String(cols[nimIdx] ?? "").trim();
+            const nama = String(cols[namaIdx] ?? "").trim();
 
             if (
               i === 0 &&
@@ -726,8 +821,13 @@ const AdminDashboard = ({
               continue;
             }
 
-            if (nim && nama) {
-              parsedStudents.push({ nim, nama });
+            // Clean & validate format
+            const nimClean = nim.replace(/['"]/g, "").trim();
+            if (nimClean && nama && /^(1[5-9]|2[0-9])\d{9,13}$/.test(nimClean) && !/[a-zA-Z]/.test(nimClean)) {
+              parsedStudents.push({ 
+                nim: nimClean, 
+                nama: toTitleCase(nama) 
+              });
             }
           }
         }
@@ -735,8 +835,8 @@ const AdminDashboard = ({
         if (parsedStudents.length === 0) {
           throw new Error(
             isExcel
-              ? "Tidak ada data mahasiswa valid yang ditemukan dalam file Excel. Pastikan kolom pertama adalah NIM dan kolom kedua adalah Nama."
-              : "Tidak ada data mahasiswa valid yang ditemukan dalam CSV. Pastikan kolom pertama adalah NIM dan kolom kedua adalah Nama."
+              ? "Tidak ada data mahasiswa valid yang ditemukan dalam file Excel. Pastikan kolom NIM berisi 11-15 digit angka yang valid."
+              : "Tidak ada data mahasiswa valid yang ditemukan dalam CSV. Pastikan kolom NIM berisi 11-15 digit angka yang valid."
           );
         }
 
