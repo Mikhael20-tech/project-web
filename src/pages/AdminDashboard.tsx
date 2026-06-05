@@ -121,6 +121,19 @@ const AdminDashboard = ({
     name: string;
   } | null>(null);
   const [resetModalOpen, setResetModalOpen] = useState(false);
+  
+  // AI Import State
+  const [aiImportOpen, setAiImportOpen] = useState(false);
+  const [aiImportType, setAiImportType] = useState<"mahasiswa" | "dosen">("mahasiswa");
+  const [aiRawText, setAiRawText] = useState("");
+  const [aiInputMode, setAiInputMode] = useState<"text" | "file">("text");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiParsedItems, setAiParsedItems] = useState<any[]>([]);
+  const [aiAnomalies, setAiAnomalies] = useState<any[]>([]);
+  const [aiSummary, setAiSummary] = useState("");
+  const [aiSaveLoading, setAiSaveLoading] = useState(false);
+  const [aiMessage, setAiMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -654,6 +667,310 @@ const AdminDashboard = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAIAnalyze = async () => {
+    setAiLoading(true);
+    setAiMessage(null);
+    try {
+      let payload: any = { type: aiImportType };
+      if (aiInputMode === "text") {
+        if (!aiRawText.trim()) throw new Error("Silakan masukkan teks data terlebih dahulu.");
+        payload.rawText = aiRawText;
+      } else {
+        if (aiParsedItems.length === 0) throw new Error("Silakan unggah file CSV atau Excel terlebih dahulu.");
+        payload.parsedData = aiParsedItems.map(item => {
+          const { status, ...rest } = item;
+          return rest;
+        });
+      }
+
+      const res = await fetch("/api/admin/import/analyze-ai", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal menganalisis data.");
+
+      setAiParsedItems(data.items || []);
+      setAiAnomalies(data.anomalies || []);
+      setAiSummary(data.summary || "");
+      setAiMessage({ type: "success", text: `Analisis AI Selesai. Ditemukan ${data.items?.length || 0} baris data dan ${data.anomalies?.length || 0} anomali.` });
+    } catch (err: any) {
+      setAiMessage({ type: "error", text: err.message });
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleAIFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setAiLoading(true);
+    setAiMessage(null);
+
+    const isExcel = file.name.endsWith(".xlsx") || file.name.endsWith(".xls");
+    const reader = new FileReader();
+
+    reader.onload = async (event) => {
+      try {
+        const tempParsed: any[] = [];
+        let rows: any[][] = [];
+
+        if (isExcel) {
+          const data = new Uint8Array(event.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          rows = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1 });
+        } else {
+          const text = event.target?.result as string;
+          if (!text) throw new Error("File kosong atau tidak terbaca.");
+          const lines = text.split(/\r?\n/);
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            const delimiter = line.includes(";") ? ";" : ",";
+            const cols = line.split(delimiter).map(c => c.replace(/^["']|["']$/g, "").trim());
+            rows.push(cols);
+          }
+        }
+
+        if (aiImportType === "mahasiswa") {
+          const nimRegex = /^(1[5-9]|2[0-9])\d{9,13}$/;
+          let nimIdx = 0;
+          let namaIdx = 1;
+
+          let nimScores: { [key: number]: number } = {};
+          let namaScores: { [key: number]: number } = {};
+
+          for (let i = 0; i < Math.min(rows.length, 10); i++) {
+            const row = rows[i];
+            if (!row) continue;
+            for (let c = 0; c < row.length; c++) {
+              const val = String(row[c] ?? "").trim();
+              if (!val) continue;
+              if (nimRegex.test(val) && !/[a-zA-Z]/.test(val)) {
+                nimScores[c] = (nimScores[c] || 0) + 1;
+              } else if (
+                /[a-zA-Z]/.test(val) &&
+                val.length > 2 &&
+                !/^(nim|nama|name|username|email|no|hp|phone|telepon|kontak|contact|angkatan|cohort|class|kelas|jurusan|prodi|timestamp|created_at|createdat)$/i.test(val)
+              ) {
+                namaScores[c] = (namaScores[c] || 0) + 1;
+              }
+            }
+          }
+
+          let maxNimScore = 0;
+          let bestNimIdx = -1;
+          for (const c in nimScores) {
+            const idx = parseInt(c);
+            if (nimScores[idx] > maxNimScore) {
+              maxNimScore = nimScores[idx];
+              bestNimIdx = idx;
+            }
+          }
+          if (bestNimIdx !== -1) nimIdx = bestNimIdx;
+
+          let maxNamaScore = 0;
+          let bestNamaIdx = -1;
+          for (const c in namaScores) {
+            const idx = parseInt(c);
+            if (idx !== nimIdx && namaScores[idx] > maxNamaScore) {
+              maxNamaScore = namaScores[idx];
+              bestNamaIdx = idx;
+            }
+          }
+          if (bestNamaIdx !== -1) namaIdx = bestNamaIdx;
+          else {
+            if (bestNimIdx === 0) namaIdx = 1;
+            else if (bestNimIdx === 1) namaIdx = 0;
+          }
+
+          for (let i = 0; i < rows.length; i++) {
+            const cols = rows[i];
+            if (!cols) continue;
+
+            const nim = String(cols[nimIdx] ?? "").trim();
+            const nama = String(cols[namaIdx] ?? "").trim();
+
+            if (
+              i === 0 &&
+              (nim.toLowerCase() === "nim" ||
+                nim.toLowerCase() === "username" ||
+                nim.toLowerCase() === "nomor induk mahasiswa" ||
+                nama.toLowerCase() === "nama" ||
+                nama.toLowerCase() === "name" ||
+                nama.toLowerCase() === "nama lengkap")
+            ) {
+              continue;
+            }
+
+            const nimClean = nim.replace(/['"]/g, "").trim();
+            if (nimClean || nama) {
+              tempParsed.push({
+                nim: nimClean,
+                nama: nama,
+                status: "Belum Dianalisis"
+              });
+            }
+          }
+        } else {
+          let nipIdx = -1, namaIdx = -1, kuotaIdx = -1, kontakIdx = -1;
+          if (rows.length > 0) {
+            const header = rows[0];
+            for (let c = 0; c < header.length; c++) {
+              const val = String(header[c] ?? "").trim().toLowerCase();
+              if (val.includes("nip")) nipIdx = c;
+              else if (val.includes("nama") || val.includes("name")) namaIdx = c;
+              else if (val.includes("kuota") || val.includes("kapasitas") || val.includes("limit") || val.includes("max")) kuotaIdx = c;
+              else if (val.includes("kontak") || val.includes("hp") || val.includes("telp") || val.includes("phone")) kontakIdx = c;
+            }
+          }
+
+          if (nipIdx === -1 || namaIdx === -1) {
+            for (let i = 0; i < Math.min(rows.length, 10); i++) {
+              const row = rows[i];
+              if (!row) continue;
+              for (let c = 0; c < row.length; c++) {
+                const val = String(row[c] ?? "").trim();
+                if (!val) continue;
+                if (/^\d{9,18}$/.test(val) && nipIdx === -1) {
+                  nipIdx = c;
+                } else if (/[a-zA-Z]/.test(val) && val.length > 2 && namaIdx === -1) {
+                  namaIdx = c;
+                }
+              }
+            }
+          }
+
+          if (namaIdx === -1) namaIdx = 0;
+          if (nipIdx === -1) nipIdx = 1;
+
+          for (let i = 0; i < rows.length; i++) {
+            const cols = rows[i];
+            if (!cols) continue;
+
+            const nip = String(cols[nipIdx] ?? "").trim();
+            const nama = String(cols[namaIdx] ?? "").trim();
+            const kuotaMax = kuotaIdx !== -1 ? parseInt(cols[kuotaIdx]) || 5 : 5;
+            const kontak = kontakIdx !== -1 ? String(cols[kontakIdx] ?? "").trim() : "";
+
+            if (
+              i === 0 &&
+              (nip.toLowerCase() === "nip" ||
+                nip.toLowerCase() === "username" ||
+                nip.toLowerCase() === "nomor induk" ||
+                nama.toLowerCase() === "nama" ||
+                nama.toLowerCase() === "name" ||
+                nama.toLowerCase() === "nama lengkap")
+            ) {
+              continue;
+            }
+
+            const nipClean = nip.replace(/['"]/g, "").trim();
+            if (nipClean || nama) {
+              tempParsed.push({
+                nip: nipClean,
+                nama: nama,
+                kuotaMax,
+                kontak,
+                status: "Belum Dianalisis"
+              });
+            }
+          }
+        }
+
+        if (tempParsed.length === 0) {
+          throw new Error("Tidak ada data yang valid ditemukan dalam file.");
+        }
+
+        setAiParsedItems(tempParsed);
+        setAiMessage({ type: "success", text: `Berhasil mengurai ${tempParsed.length} baris data. Klik 'Mulai Analisis AI' untuk validasi.` });
+      } catch (err: any) {
+        setAiMessage({ type: "error", text: err.message });
+      } finally {
+        setAiLoading(false);
+      }
+    };
+
+    if (isExcel) {
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.readAsText(file);
+    }
+  };
+
+  const handleAISave = async () => {
+    const submitItems = aiParsedItems.filter(item => item.status === "OK");
+
+    if (submitItems.length === 0) {
+      setAiMessage({ type: "error", text: "Tidak ada data valid (status OK) yang siap diimpor. Pastikan anomali telah diperbaiki atau dihapus." });
+      return;
+    }
+
+    setAiSaveLoading(true);
+    setAiMessage(null);
+    try {
+      const endpoint = aiImportType === "mahasiswa" 
+        ? "/api/admin/mahasiswa/import" 
+        : "/api/admin/dosen/import";
+
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(submitItems),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal menyimpan data.");
+
+      setAiMessage({
+        type: "success",
+        text: `Berhasil menyimpan ${data.successCount} data ke database! (Dilewati: ${data.skipCount})`
+      });
+
+      setAiParsedItems([]);
+      setAiAnomalies([]);
+      setAiSummary("");
+      setAiRawText("");
+      
+      fetchData();
+      
+      import("canvas-confetti").then((module) => {
+        const confetti = module.default;
+        confetti({
+          particleCount: 120,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      });
+    } catch (err: any) {
+      setAiMessage({ type: "error", text: err.message });
+    } finally {
+      setAiSaveLoading(false);
+    }
+  };
+
+  const handleAICellEdit = (index: number, field: string, value: any) => {
+    const updated = [...aiParsedItems];
+    updated[index] = { ...updated[index], [field]: value };
+    updated[index].status = "OK";
+    setAiParsedItems(updated);
+  };
+
+  const handleAIRemoveRow = (index: number) => {
+    setAiParsedItems(aiParsedItems.filter((_, i) => i !== index));
   };
 
   const handleCSVImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1693,7 +2010,27 @@ const AdminDashboard = ({
                   </form>
                 </div>
               </div>
-              <div className="xl:col-span-2">
+              <div className="xl:col-span-2 space-y-6">
+                <div className="flex justify-between items-center bg-[#f8fdfc] p-6 rounded-[2rem] border border-teal-50 shadow-[0_8px_30px_rgb(0,0,0,0.01)]">
+                  <div>
+                    <h3 className="text-xs font-black text-teal-950 uppercase tracking-widest flex items-center gap-2">
+                      <Users className="w-4 h-4 text-teal-500" /> Daftar Dosen
+                    </h3>
+                    <p className="text-[10px] font-bold text-teal-800/40 uppercase tracking-wider mt-0.5">{reports.length} dosen terdaftar</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAiImportType("dosen");
+                      setAiImportOpen(true);
+                    }}
+                    className="flex items-center gap-2 px-5 py-3 bg-teal-950 text-teal-400 border border-teal-900 hover:bg-teal-900 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg cursor-pointer group"
+                  >
+                    <Zap className="w-4 h-4 text-teal-400 group-hover:scale-110 transition-transform" />
+                    ✨ Impor Massal AI
+                  </button>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {reports.map((dosen, i) => (
                     <motion.div
@@ -1930,6 +2267,17 @@ const AdminDashboard = ({
                       <Upload className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
                       Impor CSV / Excel
                     </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAiImportType("mahasiswa");
+                        setAiImportOpen(true);
+                      }}
+                      className="flex items-center gap-2 px-5 py-3 bg-teal-950 text-teal-400 border border-teal-900 hover:bg-teal-900 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg cursor-pointer group animate-pulse hover:animate-none"
+                    >
+                      <Zap className="w-4 h-4 text-teal-400 group-hover:scale-110 transition-transform" />
+                      ✨ Impor Massal AI
+                    </button>
                     <span className="px-4 py-3 bg-teal-950 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg">
                       {students.length} {t("dash_admin_registered")}
                     </span>
@@ -2775,6 +3123,402 @@ const AdminDashboard = ({
                   >
                     {confirmModal.cancelText || "BATAL"}
                   </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {/* ✨ Asisten Impor AI Modal */}
+          {aiImportOpen && (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => {
+                  if (!aiLoading && !aiSaveLoading) {
+                    setAiImportOpen(false);
+                    setAiParsedItems([]);
+                    setAiAnomalies([]);
+                    setAiSummary("");
+                    setAiRawText("");
+                    setAiMessage(null);
+                  }
+                }}
+                className="absolute inset-0 bg-teal-950/60 backdrop-blur-md"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                className="relative w-full max-w-5xl bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-teal-50 pb-6 shrink-0">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-teal-950 text-teal-400 rounded-2xl flex items-center justify-center shadow-lg">
+                      <Zap className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-teal-950 tracking-tight leading-tight">
+                        Asisten Impor Massal AI ({aiImportType === "mahasiswa" ? "Mahasiswa" : "Dosen"})
+                      </h3>
+                      <p className="text-xs text-teal-800/60 font-medium mt-0.5">
+                        Ekstrak & validasi data secara instan untuk mencegah kesalahan input.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={aiLoading || aiSaveLoading}
+                    onClick={() => {
+                      setAiImportOpen(false);
+                      setAiParsedItems([]);
+                      setAiAnomalies([]);
+                      setAiSummary("");
+                      setAiRawText("");
+                      setAiMessage(null);
+                    }}
+                    className="p-3 bg-teal-50 hover:bg-rose-50 text-teal-800/40 hover:text-rose-500 rounded-full transition-all"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Body Content */}
+                <div className="flex-1 overflow-y-auto py-6 space-y-8 min-h-0 pr-1">
+                  {aiMessage && (
+                    <div className={cn(
+                      "p-5 rounded-2xl border text-sm font-semibold flex items-center gap-3",
+                      aiMessage.type === "success" 
+                        ? "bg-emerald-50 border-emerald-100 text-emerald-800" 
+                        : "bg-rose-50 border-rose-100 text-rose-800"
+                    )}>
+                      {aiMessage.type === "success" ? <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" /> : <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />}
+                      <span>{aiMessage.text}</span>
+                    </div>
+                  )}
+
+                  {/* Settings and Inputs */}
+                  {aiParsedItems.length === 0 && (
+                    <div className="space-y-6">
+                      <div className="flex gap-4 p-1 bg-teal-50 border border-teal-100 rounded-2xl w-fit">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAiInputMode("text");
+                            setAiMessage(null);
+                          }}
+                          className={cn(
+                            "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+                            aiInputMode === "text" 
+                              ? "bg-teal-500 text-white shadow-md shadow-teal-500/10" 
+                              : "text-teal-800 hover:bg-teal-100/50"
+                          )}
+                        >
+                          Teks Bebas / Salinan Chat
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAiInputMode("file");
+                            setAiMessage(null);
+                          }}
+                          className={cn(
+                            "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+                            aiInputMode === "file" 
+                              ? "bg-teal-500 text-white shadow-md shadow-teal-500/10" 
+                              : "text-teal-800 hover:bg-teal-100/50"
+                          )}
+                        >
+                          Unggah CSV / Excel
+                        </button>
+                      </div>
+
+                      {aiInputMode === "text" ? (
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                            Tempelkan Data Mentah di sini
+                          </label>
+                          <textarea
+                            value={aiRawText}
+                            onChange={(e) => setAiRawText(e.target.value)}
+                            placeholder={aiImportType === "mahasiswa" 
+                              ? "Contoh:\n1. Iqbal Amri - NIM 24050974086\n2. Aldi Maulana - 24050974069\natau data tabel dari Excel/Word yang di-copy langsung."
+                              : "Contoh:\nPak Wahyu NIP 199001012020121001 Kuota 6 Kontak 08123456789\nIbu Siti NIP 199202022021122002 Kuota 5"
+                            }
+                            rows={8}
+                            className="w-full p-5 bg-teal-50/50 border border-teal-100 rounded-[2rem] text-teal-950 text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner font-mono leading-relaxed"
+                          />
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <div className="relative">
+                            <input
+                              type="file"
+                              accept=".csv, .xlsx, .xls"
+                              onChange={handleAIFileChange}
+                              className="hidden"
+                              id="ai-file-import-input"
+                              disabled={aiLoading}
+                            />
+                            <label
+                              htmlFor="ai-file-import-input"
+                              className={cn(
+                                "flex flex-col items-center justify-center gap-4 w-full py-12 border-2 border-dashed rounded-[2.5rem] text-center cursor-pointer transition-all shadow-sm",
+                                aiLoading
+                                  ? "bg-teal-50/20 border-teal-100 text-teal-800/30"
+                                  : "bg-teal-50/50 border-teal-200 text-teal-500 hover:bg-teal-100/80 hover:border-teal-300",
+                              )}
+                            >
+                              <div className="w-16 h-16 bg-teal-100 rounded-3xl flex items-center justify-center text-teal-600">
+                                <Upload className="w-8 h-8" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-black text-teal-950 uppercase tracking-widest">Pilih File Spreadsheet</p>
+                                <p className="text-xs text-teal-800/40 font-bold mt-1 uppercase tracking-wider">Format didukung: .xlsx, .xls, .csv</p>
+                              </div>
+                            </label>
+                          </div>
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={handleAIAnalyze}
+                        disabled={aiLoading || (aiInputMode === "text" && !aiRawText.trim())}
+                        className="w-full py-5 bg-teal-950 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-teal-900 transition-all flex items-center justify-center gap-3 disabled:opacity-30 shadow-lg"
+                      >
+                        {aiLoading ? (
+                          <RefreshCcw className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <Zap className="w-5 h-5" />
+                        )}
+                        {aiLoading ? "MENGANALISIS DATA DENGAN AI..." : "MULAI ANALISIS DENGAN AI"}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Analisis Result View */}
+                  {aiParsedItems.length > 0 && (
+                    <div className="space-y-8">
+                      {/* Summary & Anomalies */}
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2 p-6 bg-teal-50/40 rounded-3xl border border-teal-100/60 flex gap-4">
+                          <Info className="w-5 h-5 text-teal-500 shrink-0 mt-0.5" />
+                          <div>
+                            <h4 className="text-xs font-black text-teal-950 uppercase tracking-widest mb-1">Hasil Analisis AI</h4>
+                            <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
+                              {aiSummary || "Data berhasil diuraikan. Periksa tabel di bawah untuk validasi dan perbaikan."}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="p-6 bg-amber-50/40 rounded-3xl border border-amber-100 flex gap-4">
+                          <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                          <div>
+                            <h4 className="text-xs font-black text-amber-950 uppercase tracking-widest mb-1">Status Anomali</h4>
+                            <p className="text-xs text-amber-950/70 font-semibold leading-relaxed">
+                              {aiAnomalies.length > 0 
+                                ? `Ditemukan ${aiAnomalies.length} anomali. Harap sunting baris kuning/merah agar berstatus OK sebelum disimpan.`
+                                : "Tidak ada anomali terdeteksi! Data aman untuk disimpan."
+                              }
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Interactive Grid Table */}
+                      <div className="bg-white border border-teal-50 rounded-[2rem] overflow-hidden shadow-sm">
+                        <div className="overflow-x-auto max-h-[300px]">
+                          <table className="w-full text-left border-collapse">
+                            <thead>
+                              <tr className="bg-teal-950 text-white uppercase text-[10px] font-black tracking-widest">
+                                <th className="px-6 py-4">Status</th>
+                                {aiImportType === "mahasiswa" ? (
+                                  <>
+                                    <th className="px-6 py-4">NIM (Double Click / Klik untuk Edit)</th>
+                                    <th className="px-6 py-4">Nama Lengkap</th>
+                                  </>
+                                ) : (
+                                  <>
+                                    <th className="px-6 py-4">NIP (Klik untuk Edit)</th>
+                                    <th className="px-6 py-4">Nama Lengkap</th>
+                                    <th className="px-6 py-4 w-28">Kuota</th>
+                                    <th className="px-6 py-4">Kontak</th>
+                                  </>
+                                )}
+                                <th className="px-6 py-4 text-right">Aksi</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-teal-50 text-xs font-semibold text-teal-950">
+                              {aiParsedItems.map((item, idx) => (
+                                <tr 
+                                  key={idx} 
+                                  className={cn(
+                                    "transition-colors",
+                                    item.status === "OK" 
+                                      ? "hover:bg-teal-50/30" 
+                                      : item.status === "Sudah Terdaftar" || item.status === "Duplikat di Input"
+                                      ? "bg-rose-50/40 hover:bg-rose-50/60"
+                                      : "bg-amber-50/40 hover:bg-amber-50/60"
+                                  )}
+                                >
+                                  {/* Status */}
+                                  <td className="px-6 py-3">
+                                    <span className={cn(
+                                      "px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5 w-fit shadow-sm",
+                                      item.status === "OK"
+                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                        : item.status === "Sudah Terdaftar" || item.status === "Duplikat di Input"
+                                        ? "bg-rose-50 text-rose-700 border border-rose-100"
+                                        : "bg-amber-50 text-amber-700 border border-amber-100"
+                                    )}>
+                                      {item.status === "OK" ? (
+                                        <>
+                                          <CheckCircle2 className="w-3.5 h-3.5" /> OK
+                                        </>
+                                      ) : item.status === "Sudah Terdaftar" ? (
+                                        <>
+                                          <Info className="w-3.5 h-3.5" /> Terdaftar
+                                        </>
+                                      ) : item.status === "Duplikat di Input" ? (
+                                        <>
+                                          <AlertCircle className="w-3.5 h-3.5" /> Duplikat
+                                        </>
+                                      ) : (
+                                        <>
+                                          <AlertCircle className="w-3.5 h-3.5" /> {item.status}
+                                        </>
+                                      )}
+                                    </span>
+                                  </td>
+
+                                  {/* Data Cells */}
+                                  {aiImportType === "mahasiswa" ? (
+                                    <>
+                                      <td className="px-6 py-2">
+                                        <input
+                                          type="text"
+                                          value={item.nim || ""}
+                                          onChange={(e) => handleAICellEdit(idx, "nim", e.target.value)}
+                                          className="w-full bg-transparent border-b border-transparent focus:border-teal-500 py-1 font-mono focus:outline-none"
+                                        />
+                                      </td>
+                                      <td className="px-6 py-2">
+                                        <input
+                                          type="text"
+                                          value={item.nama || ""}
+                                          onChange={(e) => handleAICellEdit(idx, "nama", e.target.value)}
+                                          className="w-full bg-transparent border-b border-transparent focus:border-teal-500 py-1 focus:outline-none"
+                                        />
+                                      </td>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <td className="px-6 py-2">
+                                        <input
+                                          type="text"
+                                          value={item.nip || ""}
+                                          onChange={(e) => handleAICellEdit(idx, "nip", e.target.value)}
+                                          className="w-full bg-transparent border-b border-transparent focus:border-teal-500 py-1 font-mono focus:outline-none"
+                                        />
+                                      </td>
+                                      <td className="px-6 py-2">
+                                        <input
+                                          type="text"
+                                          value={item.nama || ""}
+                                          onChange={(e) => handleAICellEdit(idx, "nama", e.target.value)}
+                                          className="w-full bg-transparent border-b border-transparent focus:border-teal-500 py-1 focus:outline-none"
+                                        />
+                                      </td>
+                                      <td className="px-6 py-2">
+                                        <input
+                                          type="number"
+                                          value={item.kuotaMax || 5}
+                                          onChange={(e) => handleAICellEdit(idx, "kuotaMax", parseInt(e.target.value) || 5)}
+                                          className="w-full bg-transparent border-b border-transparent focus:border-teal-500 py-1 focus:outline-none"
+                                        />
+                                      </td>
+                                      <td className="px-6 py-2">
+                                        <input
+                                          type="text"
+                                          value={item.kontak || ""}
+                                          onChange={(e) => handleAICellEdit(idx, "kontak", e.target.value)}
+                                          className="w-full bg-transparent border-b border-transparent focus:border-teal-500 py-1 focus:outline-none"
+                                        />
+                                      </td>
+                                    </>
+                                  )}
+
+                                  {/* Delete Row */}
+                                  <td className="px-6 py-2 text-right">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAIRemoveRow(idx)}
+                                      className="p-2 text-teal-800/30 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* Warnings / Anomaly list */}
+                      {aiAnomalies.length > 0 && (
+                        <div className="p-6 bg-rose-50/50 border border-rose-100 rounded-3xl space-y-2">
+                          <h4 className="text-xs font-black text-rose-950 uppercase tracking-widest flex items-center gap-2">
+                            <AlertCircle className="w-4 h-4 text-rose-500" /> Detail Anomali Data
+                          </h4>
+                          <ul className="text-[11px] text-rose-800/80 font-bold space-y-1.5 list-disc list-inside">
+                            {aiAnomalies.map((an, i) => (
+                              <li key={i}>{an.message}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Modal Footer Controls */}
+                      <div className="flex flex-col sm:flex-row items-center gap-4 pt-4 border-t border-teal-50">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAiParsedItems([]);
+                            setAiAnomalies([]);
+                            setAiSummary("");
+                            setAiRawText("");
+                            setAiMessage(null);
+                          }}
+                          className="w-full sm:w-auto px-6 py-4 bg-teal-50 text-teal-800/60 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-100 transition-all"
+                        >
+                          Ulangi / Bersihkan
+                        </button>
+                        <div className="flex-1" />
+                        <button
+                          type="button"
+                          onClick={handleAIAnalyze}
+                          disabled={aiLoading}
+                          className="w-full sm:w-auto px-8 py-4 bg-teal-950 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-900 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                          {aiLoading && <RefreshCcw className="w-4 h-4 animate-spin" />}
+                          Re-Analisis AI
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleAISave}
+                          disabled={aiSaveLoading || aiParsedItems.filter(item => item.status === "OK").length === 0}
+                          className="w-full sm:w-auto px-10 py-4 bg-emerald-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+                        >
+                          {aiSaveLoading && <RefreshCcw className="w-4 h-4 animate-spin" />}
+                          IMPOR DATA VALID ({aiParsedItems.filter(item => item.status === "OK").length})
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             </div>

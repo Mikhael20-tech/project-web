@@ -1124,6 +1124,246 @@ app.post("/api/admin/mahasiswa/import", authenticate, isAdmin, async (req, res) 
   }
 });
 
+// --- AI BULK IMPORT & VALIDATION ENDPOINTS ---
+app.post("/api/admin/import/analyze-ai", authenticate, isAdmin, async (req: any, res) => {
+  const { type, rawText, parsedData } = req.body;
+  if (!type || (type !== "mahasiswa" && type !== "dosen")) {
+    return res.status(400).json({ error: "Tipe data harus 'mahasiswa' atau 'dosen'." });
+  }
+
+  try {
+    let fullPrompt = "";
+    if (rawText) {
+      fullPrompt = `Kamu adalah asisten AI akademik Universitas Negeri Surabaya (UNESA) untuk Program Studi Pendidikan Teknologi Informasi.
+Tugasmu adalah menganalisis dan mengekstrak data dari teks mentah bebas (misalnya dari pesan chat WhatsApp/Telegram) menjadi format JSON terstruktur.
+
+Tipe data yang diekstrak: ${type}
+Teks Mentah:
+"${rawText}"
+
+Format Keluaran harus berupa JSON valid dengan struktur berikut (pastikan persis sama):
+{
+  "items": [
+    ${type === "mahasiswa" ? 
+      `{ "nim": "NIM_DI_SINI", "nama": "NAMA_DI_SINI" }` : 
+      `{ "nip": "NIP_DI_SINI", "nama": "NAMA_DI_SINI", "kuotaMax": 5, "kontak": "KONTAK_DI_SINI" }`
+    }
+  ],
+  "anomalies": [
+    { "row": 1, "message": "Pesan peringatan format jika ada" }
+  ],
+  "summary": "Ringkasan ekstraksi singkat"
+}
+
+Aturan ekstraksi dan validasi:
+1. Bersihkan nama menjadi Title Case (contoh: "IQBAL AMRI" -> "Iqbal Amri", "ALDI MAULANA" -> "Aldi Maulana").
+2. Untuk mahasiswa: Ekstrak NIM dan Nama. Validasi format NIM Unesa (deretan angka 11-15 digit, biasanya diawali 15 sampai 29). Jika format NIM tidak sesuai, masukkan pesan di "anomalies".
+3. Untuk dosen: Ekstrak NIP, Nama, Kuota Maksimal (jika ada, default 5), dan Kontak (jika ada). Validasi NIP (biasanya 18 digit untuk PNS). Jika format mencurigakan, masukkan pesan di "anomalies".
+4. Harap kembalikan hanya string JSON mentah yang valid di dalam blok kode \`\`\`json ... \`\`\` atau sebagai string JSON langsung. Jangan tambahkan penjelasan teks di luar JSON.`;
+    } else if (parsedData) {
+      fullPrompt = `Kamu adalah asisten AI akademik Universitas Negeri Surabaya (UNESA) untuk Program Studi Pendidikan Teknologi Informasi.
+Tugasmu adalah memverifikasi, membersihkan nama, dan menemukan anomali format pada data yang sudah diuraikan dari file Excel/CSV.
+
+Tipe data: ${type}
+Data Input (JSON):
+${JSON.stringify(parsedData)}
+
+Format Keluaran harus berupa JSON valid dengan struktur berikut (pastikan persis sama):
+{
+  "items": [
+    ${type === "mahasiswa" ? 
+      `{ "nim": "NIM_DI_SINI", "nama": "NAMA_DI_SINI" }` : 
+      `{ "nip": "NIP_DI_SINI", "nama": "NAMA_DI_SINI", "kuotaMax": 5, "kontak": "KONTAK_DI_SINI" }`
+    }
+  ],
+  "anomalies": [
+    { "row": 1, "message": "Pesan peringatan format jika ada" }
+  ],
+  "summary": "Ringkasan validasi singkat"
+}
+
+Aturan pembersihan dan validasi:
+1. Bersihkan nama menjadi Title Case (contoh: "IQBAL AMRI" -> "Iqbal Amri").
+2. NIM/NIP harus divalidasi. NIM Unesa valid adalah deretan angka 11-15 digit. NIP Dosen valid biasanya 18 digit angka (PNS). Masukkan anomali jika format tidak sesuai.
+3. Kuota bimbingan dosen jika tidak ada atau tidak valid harus diisi default 5.
+4. Harap kembalikan hanya string JSON mentah yang valid di dalam blok kode \`\`\`json ... \`\`\` atau sebagai string JSON langsung. Jangan tambahkan penjelasan teks di luar JSON.`;
+    } else {
+      return res.status(400).json({ error: "Input rawText atau parsedData wajib diisi." });
+    }
+
+    const result = await aiModel.generateContent(fullPrompt);
+    const response = await result.response;
+    const text = response.text().trim();
+
+    // Clean markdown JSON wrapper
+    let cleanText = text;
+    if (cleanText.includes("```")) {
+      cleanText = cleanText.replace(/```json/g, "").replace(/```/g, "").trim();
+    }
+
+    let parsedResult;
+    try {
+      parsedResult = JSON.parse(cleanText);
+    } catch (parseErr) {
+      console.error("Gemini Response parsing error. Raw Text:", text);
+      throw new Error("Respon AI tidak berupa JSON valid.");
+    }
+
+    const items = parsedResult.items || [];
+    const checkedItems = [];
+    const anomalies = parsedResult.anomalies || [];
+
+    // Validasi duplikasi dengan Database
+    if (type === "mahasiswa") {
+      const nims = items.map((it: any) => String(it.nim || "").trim()).filter(Boolean);
+      const existingUsers = await prisma.user.findMany({
+        where: { username: { in: nims } }
+      });
+      const existingNims = new Set(existingUsers.map(u => u.username));
+      const seenNims = new Set<string>();
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const nim = String(item.nim || "").trim();
+        const nama = String(item.nama || "").trim();
+
+        let status = "OK";
+        if (!nim) {
+          status = "NIM Kosong";
+          anomalies.push({ row: i + 1, message: `Baris ${i + 1}: NIM tidak boleh kosong.` });
+        } else if (seenNims.has(nim)) {
+          status = "Duplikat di Input";
+          anomalies.push({ row: i + 1, message: `Baris ${i + 1}: NIM ${nim} duplikat di dalam input.` });
+        } else if (existingNims.has(nim)) {
+          status = "Sudah Terdaftar";
+          anomalies.push({ row: i + 1, message: `Baris ${i + 1}: NIM ${nim} sudah terdaftar di sistem.` });
+        }
+
+        seenNims.add(nim);
+        checkedItems.push({
+          ...item,
+          nim,
+          nama,
+          status
+        });
+      }
+    } else {
+      const nips = items.map((it: any) => String(it.nip || "").trim()).filter(Boolean);
+      const existingUsers = await prisma.user.findMany({
+        where: { username: { in: nips } }
+      });
+      const existingNips = new Set(existingUsers.map(u => u.username));
+      const seenNips = new Set<string>();
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const nip = String(item.nip || "").trim();
+        const nama = String(item.nama || "").trim();
+        const kuotaMax = item.kuotaMax ? parseInt(item.kuotaMax) : 5;
+        const kontak = item.kontak ? String(item.kontak).trim() : null;
+
+        let status = "OK";
+        if (!nip) {
+          status = "NIP Kosong";
+          anomalies.push({ row: i + 1, message: `Baris ${i + 1}: NIP tidak boleh kosong.` });
+        } else if (seenNips.has(nip)) {
+          status = "Duplikat di Input";
+          anomalies.push({ row: i + 1, message: `Baris ${i + 1}: NIP ${nip} duplikat di dalam input.` });
+        } else if (existingNips.has(nip)) {
+          status = "Sudah Terdaftar";
+          anomalies.push({ row: i + 1, message: `Baris ${i + 1}: NIP ${nip} sudah terdaftar di sistem.` });
+        }
+
+        seenNips.add(nip);
+        checkedItems.push({
+          ...item,
+          nip,
+          nama,
+          kuotaMax,
+          kontak,
+          status
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      items: checkedItems,
+      anomalies,
+      summary: parsedResult.summary || "Analisis selesai."
+    });
+
+  } catch (err: any) {
+    console.error("AI Import Analysis Error:", err);
+    res.status(500).json({ error: err.message || "Gagal menganalisis data dengan AI." });
+  }
+});
+
+app.post("/api/admin/dosen/import", authenticate, isAdmin, async (req, res) => {
+  try {
+    const lecturers = req.body;
+    if (!Array.isArray(lecturers)) {
+      return res.status(400).json({ error: "Data harus berupa array." });
+    }
+
+    let successCount = 0;
+    let skipCount = 0;
+
+    for (const dsn of lecturers) {
+      const nip = String(dsn.nip || "").trim();
+      const nama = String(dsn.nama || "").trim();
+      const kuotaMax = dsn.kuotaMax ? parseInt(dsn.kuotaMax) : 5;
+      const kontak = dsn.kontak ? String(dsn.kontak).trim() : null;
+
+      if (!nip || !nama) {
+        skipCount++;
+        continue;
+      }
+
+      // Check if user already exists
+      const existingUser = await prisma.user.findUnique({ where: { username: nip } });
+      if (existingUser) {
+        skipCount++;
+        continue;
+      }
+
+      const defaultPassword = "dsn" + nip.slice(-4);
+      const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+
+      await prisma.$transaction(async (tx) => {
+        const dosen = await tx.dosen.create({
+          data: {
+            nama,
+            nip,
+            kuotaMax,
+            kontak,
+            keahlian: "Pendidikan Teknologi Informasi",
+            bio: "Dosen tetap di Program Studi Pendidikan Teknologi Informasi UNESA.",
+            moto: "Mendidik dengan hati, membangun masa depan dengan teknologi."
+          }
+        });
+
+        await tx.user.create({
+          data: {
+            username: nip,
+            password: hashedPassword,
+            role: "DOSEN",
+            dosen: { connect: { id: dosen.id } }
+          }
+        });
+      });
+
+      successCount++;
+    }
+
+    triggerQuotaUpdate();
+    res.json({ success: true, successCount, skipCount });
+  } catch (err: any) {
+    console.error("Lecturer Bulk Import Error:", err);
+    res.status(500).json({ error: err.message || "Gagal mengimpor data dosen." });
+  }
+});
+
 app.post("/api/admin/mahasiswa", authenticate, isAdmin, async (req, res) => {
   try {
     const { nim, nama, kontak, password } = req.body;
