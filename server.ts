@@ -2103,6 +2103,17 @@ async function startServer() {
       }
       console.log("✅ Migration completed.");
     }
+
+    // Migrate WarConfig category from PLP to SKRIPSI_ARTIKEL if active
+    const currentConfig = await prisma.warConfig.findUnique({ where: { id: "global_config" } });
+    if (currentConfig && (currentConfig as any).category === "PLP") {
+      console.log("🚀 Migrating active WarConfig category from PLP to SKRIPSI_ARTIKEL...");
+      await prisma.warConfig.update({
+        where: { id: "global_config" },
+        data: { category: "SKRIPSI_ARTIKEL" }
+      });
+      console.log("✅ WarConfig category migration completed.");
+    }
   } catch (mErr) {
     console.error("Migration error:", mErr);
   }
