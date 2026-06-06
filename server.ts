@@ -2120,7 +2120,17 @@ async function startServer() {
 
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: { 
+        middlewareMode: true,
+        watch: {
+          ignored: [
+            "**/prisma/**",
+            "**/uploads/**",
+            "**/.git/**",
+            "**/node_modules/**"
+          ]
+        }
+      },
       appType: "spa",
     });
     app.use(vite.middlewares);
