@@ -9,6 +9,7 @@ import {
   Globe,
   ArrowRight,
   GraduationCap,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useLanguage } from "@/src/lib/LanguageContext";
@@ -131,57 +132,53 @@ const LoginPage = ({
   };
 
   return (
-    <div className="min-h-[130vh] flex flex-col items-center justify-start pt-32 pb-40 px-4 md:p-10 bg-[#F0FAF8] relative overflow-x-hidden transition-all duration-1000 scroll-smooth">
-      {/* Deep Background Decorations for scrollable feel */}
-      <div className="absolute inset-0 w-full h-full pointer-events-none z-0">
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#F0FAF8] relative overflow-hidden font-sans p-4">
+      {/* Floating gradient blur shapes, for premium feel */}
+      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
         <div
-          className="absolute top-1/2 left-1/4 w-[600px] h-[600px] bg-gradient-to-br from-teal-200/40 to-orange-200/40 blur-[120px] rounded-full -translate-x-1/2 -translate-y-1/2 animate-pulse"
-          style={{ animationDuration: "6s" }}
+          className="absolute top-1/3 left-1/2 w-[400px] h-[400px] bg-gradient-to-br from-teal-200/35 to-orange-200/25 blur-[120px] rounded-full -translate-x-1/2 -translate-y-1/2 animate-pulse"
+          style={{ animationDuration: "8s" }}
         />
         <div
-          className="absolute top-1/2 right-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-yellow-200/40 to-teal-200/40 blur-[120px] rounded-full translate-x-1/2 -translate-y-1/2 animate-pulse"
-          style={{ animationDuration: "8s", animationDelay: "1s" }}
+          className="absolute bottom-1/3 right-10 w-[300px] h-[300px] bg-gradient-to-br from-orange-200/20 to-teal-200/30 blur-[100px] rounded-full translate-x-1/3 translate-y-1/3 animate-pulse"
+          style={{ animationDuration: "6s", animationDelay: "2s" }}
         />
-
-        {/* Extra elements further down to reward scrolling */}
-        <div className="absolute top-[100vh] left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-teal-100/30 blur-[150px] rounded-full" />
-        <div className="absolute top-[110vh] right-0 w-64 h-64 bg-orange-100/20 blur-[100px] rounded-full" />
       </div>
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 40 }}
+        initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className="w-full max-w-md relative z-10"
       >
-        <div className="bg-white/80 backdrop-blur-3xl border border-white/50 rounded-[3rem] p-10 shadow-[0_30px_70px_-20px_rgba(0,0,0,0.08),0_0_0_1px_rgba(255,255,255,0.7)] group hover:shadow-[0_40px_80px_-20px_rgba(20,184,166,0.12)] transition-all duration-700">
-          <div className="text-center space-y-4 mb-8">
+        <div className="bg-white/80 backdrop-blur-3xl border border-white/50 rounded-2xl p-6 sm:p-7 shadow-[0_30px_70px_-20px_rgba(0,0,0,0.08),0_0_0_1px_rgba(255,255,255,0.7)] group hover:shadow-[0_40px_80px_-20px_rgba(20,184,166,0.12)] transition-all duration-700">
+          <div className="text-center space-y-1 mb-4">
             <motion.div
               key={isDosenLogin ? "dosen-icon" : "student-icon"}
               initial={{ rotate: -180, scale: 0, opacity: 0 }}
               animate={{ rotate: 0, scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 260, damping: 20 }}
-              className="w-20 h-20 bg-white rounded-[1.5rem] flex items-center justify-center shadow-2xl shadow-teal-500/10 mx-auto mb-6 border border-slate-50 relative overflow-hidden group"
+              className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-md shadow-teal-500/5 mx-auto mb-2 border border-slate-50 relative overflow-hidden group"
             >
               <div className="absolute inset-0 bg-teal-50/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-              <LogoIcon className="w-14 h-14 relative z-10" />
+              <LogoIcon className="w-8 h-8 relative z-10" />
             </motion.div>
 
             <AnimatePresence mode="wait">
               <motion.div
                 key={isDosenLogin ? "dosen-title" : "student-title"}
-                initial={{ y: 10, opacity: 0 }}
+                initial={{ y: 8, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -10, opacity: 0 }}
-                transition={{ duration: 0.3 }}
+                exit={{ y: -8, opacity: 0 }}
+                transition={{ duration: 0.2 }}
               >
-                <h1 className="text-5xl font-black text-teal-950 tracking-tighter leading-none mb-3">
-                  {isDosenLogin ? t("login_dosen").split(" ")[0].toUpperCase() : t("login_student").split(" ")[0].toUpperCase()} <br />
+                <h1 className="text-xl sm:text-2xl font-black text-teal-950 tracking-tighter leading-none mb-0.5">
+                  {isDosenLogin ? t("login_dosen").split(" ")[0].toUpperCase() : t("login_student").split(" ")[0].toUpperCase()}{" "}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-orange-500 italic">
                     PORTAL
                   </span>
                 </h1>
-                <p className="text-teal-800/40 text-[10px] uppercase font-black tracking-[0.4em]">
+                <p className="text-teal-800/40 text-[8px] uppercase font-black tracking-[0.4em]">
                   {t("login_welcome")} v2.0
                 </p>
               </motion.div>
@@ -189,7 +186,7 @@ const LoginPage = ({
           </div>
 
           {/* New Tab Switcher at the top */}
-          <div className="flex p-1 bg-teal-50/50 rounded-2xl mb-8 border border-teal-100/30 relative z-10">
+          <div className="flex p-0.5 bg-teal-50/50 rounded-lg mb-4 border border-teal-100/30 relative z-10">
             <button
               type="button"
               onClick={() => {
@@ -198,9 +195,9 @@ const LoginPage = ({
                 setError("");
               }}
               className={cn(
-                "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 relative overflow-hidden",
+                "flex-1 py-1.5 rounded-md text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-500 relative overflow-hidden",
                 !isDosenLogin
-                  ? "bg-white text-teal-600 shadow-lg shadow-teal-500/10"
+                  ? "bg-white text-teal-600 shadow-sm"
                   : "text-teal-800/40 hover:text-teal-600",
               )}
             >
@@ -214,33 +211,34 @@ const LoginPage = ({
                 setError("");
               }}
               className={cn(
-                "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 relative overflow-hidden",
+                "flex-1 py-1.5 rounded-md text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-500 relative overflow-hidden",
                 isDosenLogin
-                  ? "bg-white text-teal-600 shadow-lg shadow-teal-500/10"
+                  ? "bg-white text-teal-600 shadow-sm"
                   : "text-teal-800/40 hover:text-teal-600",
               )}
             >
               {t("type_dosen")}
             </button>
           </div>
+
           <AnimatePresence mode="wait">
             {!isDosenLogin ? (
               <motion.div
                 key={isRegister ? "student-register" : "student-login"}
-                initial={{ opacity: 0, y: 15 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-6"
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-3.5"
               >
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-3.5">
                   {/* Field: NIM / Email */}
-                  <div className="space-y-2 relative">
-                    <div className="flex justify-between items-center px-2">
-                      <label className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">
+                  <div className="space-y-1 relative">
+                    <div className="flex justify-between items-center px-1">
+                      <label className="text-[9px] font-black text-teal-800/60 uppercase tracking-widest">
                         NIM / Email Unesa
                       </label>
-                      <span className="text-[9px] text-teal-800/50 font-mono tracking-tighter bg-teal-50/50 px-2 py-0.5 rounded-md border border-teal-100/30">
+                      <span className="text-[7px] text-teal-800/50 font-mono tracking-tighter bg-teal-50/50 px-1 py-0.5 rounded border border-teal-100/30">
                         24050974086
                       </span>
                     </div>
@@ -251,7 +249,7 @@ const LoginPage = ({
                       placeholder="NIM atau Email UNESA"
                       required
                       variant="primary"
-                      className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-[1.5rem] h-[60px] px-6 shadow-inner transition-all font-bold text-sm text-teal-950"
+                      className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-lg h-10 px-3 shadow-inner transition-all font-bold text-xs text-teal-950"
                     />
                   </div>
 
@@ -260,10 +258,10 @@ const LoginPage = ({
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
-                      className="space-y-2 relative overflow-hidden"
+                      className="space-y-1 relative overflow-hidden"
                     >
-                      <div className="flex justify-between items-center px-2">
-                        <label className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">
+                      <div className="flex justify-between items-center px-1">
+                        <label className="text-[9px] font-black text-teal-800/60 uppercase tracking-widest">
                           Nama Lengkap
                         </label>
                       </div>
@@ -274,15 +272,15 @@ const LoginPage = ({
                         placeholder="Masukkan nama lengkap"
                         required={isRegister}
                         variant="primary"
-                        className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-[1.5rem] h-[60px] px-6 shadow-inner transition-all font-bold text-sm text-teal-950"
+                        className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-lg h-10 px-3 shadow-inner transition-all font-bold text-xs text-teal-950"
                       />
                     </motion.div>
                   )}
 
                   {/* Field: Password */}
-                  <div className="space-y-2 relative">
-                    <div className="flex justify-between items-center px-2">
-                      <label className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">
+                  <div className="space-y-1 relative">
+                    <div className="flex justify-between items-center px-1">
+                      <label className="text-[9px] font-black text-teal-800/60 uppercase tracking-widest">
                         {t("login_password")}
                       </label>
                     </div>
@@ -293,15 +291,15 @@ const LoginPage = ({
                       placeholder="Ketuk sandi rahasia"
                       required
                       variant="primary"
-                      className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-[1.5rem] h-[60px] px-6 shadow-inner transition-all font-bold text-sm text-teal-950"
+                      className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-lg h-10 px-3 shadow-inner transition-all font-bold text-xs text-teal-950"
                     />
                   </div>
 
                   {error && (
-                    <Alert status="danger">
+                    <Alert status="danger" className="py-1 px-2.5">
                       <Alert.Indicator />
                       <Alert.Content>
-                        <Alert.Title>{error}</Alert.Title>
+                        <Alert.Title className="text-[10px]">{error}</Alert.Title>
                       </Alert.Content>
                     </Alert>
                   )}
@@ -310,13 +308,13 @@ const LoginPage = ({
                   <Button
                     type="submit"
                     isDisabled={loading}
-                    className="w-full h-16 bg-teal-950 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-teal-950/30 hover:bg-teal-600 hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3 group relative overflow-hidden"
+                    className="w-full h-10 bg-teal-950 text-white rounded-lg font-black text-[9px] uppercase tracking-[0.3em] shadow-md shadow-teal-950/20 hover:bg-teal-600 hover:-translate-y-0.5 active:scale-95 transition-all flex items-center justify-center gap-1.5 group relative overflow-hidden"
                   >
                     {loading ? (
-                      <RefreshCcw className="w-5 h-5 animate-spin text-white" />
+                      <RefreshCcw className="w-3.5 h-3.5 animate-spin text-white" />
                     ) : (
                       <>
-                        <LogIn className="w-4 h-4 group-hover:rotate-12 transition-transform" />{" "}
+                        <LogIn className="w-3 h-3 group-hover:rotate-12 transition-transform" />{" "}
                         {isRegister ? "Daftar Akun" : t("login_btn_enter")}
                       </>
                     )}
@@ -324,11 +322,11 @@ const LoginPage = ({
                 </form>
 
                 {/* SSO Google separator and button */}
-                <div className="relative flex items-center justify-center py-2">
+                <div className="relative flex items-center justify-center py-0.5">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-teal-100/30" />
                   </div>
-                  <span className="relative px-4 bg-white/80 backdrop-blur-md rounded-full text-[9px] font-black text-teal-800/30 uppercase tracking-[0.4em]">
+                  <span className="relative px-2 bg-white/80 backdrop-blur-md rounded-full text-[7px] font-black text-teal-800/30 uppercase tracking-[0.4em]">
                     ATAU
                   </span>
                 </div>
@@ -336,9 +334,9 @@ const LoginPage = ({
                 <Button
                   type="button"
                   onClick={handleGoogleLogin}
-                  className="w-full h-14 bg-white border-2 border-teal-100/80 hover:border-teal-400 text-teal-950 rounded-[1.5rem] font-black text-xs uppercase tracking-widest flex items-center justify-center gap-4 transition-all duration-300 hover:bg-teal-50/30 hover:-translate-y-1 active:scale-95 shadow-xl shadow-teal-950/5 group relative overflow-hidden"
+                  className="w-full h-10 bg-white border border-teal-100/80 hover:border-teal-400 text-teal-950 rounded-lg font-black text-[9px] uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-300 hover:bg-teal-50/30 hover:-translate-y-0.5 active:scale-95 shadow-sm group relative overflow-hidden"
                 >
-                  <svg className="w-5 h-5 shrink-0 group-hover:scale-110 transition-transform duration-300 relative z-10" viewBox="0 0 24 24" fill="none">
+                  <svg className="w-4 h-4 shrink-0 group-hover:scale-110 transition-transform duration-300 relative z-10" viewBox="0 0 24 24" fill="none">
                     <path
                       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                       fill="#4285F4"
@@ -356,45 +354,45 @@ const LoginPage = ({
                       fill="#EA4335"
                     />
                   </svg>
-                  <span className="relative z-10 font-black tracking-[0.1em]">
-                    {isRegister ? "Daftar lewat Google UNESA" : "Login lewat Google UNESA"}
+                  <span className="relative z-10 font-black tracking-[0.05em]">
+                    Google UNESA
                   </span>
                 </Button>
 
                 {/* Account status switch */}
-                <div className="text-center pt-4 border-t border-teal-50/50">
+                <div className="text-center pt-2 border-t border-teal-50/50">
                   <button
                     type="button"
                     onClick={() => {
                       setIsRegister(!isRegister);
                       setError("");
                     }}
-                    className="text-[10px] font-black text-teal-600 hover:text-orange-500 uppercase tracking-[0.2em] transition-colors flex items-center justify-center gap-2 mx-auto group"
+                    className="text-[8px] font-black text-teal-600 hover:text-orange-500 uppercase tracking-[0.2em] transition-colors flex items-center justify-center gap-1.5 mx-auto group"
                   >
                     {isRegister
                       ? t("login_has_account")
                       : t("login_no_account")}
-                    <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-2 h-2 group-hover:translate-x-0.5 transition-transform" />
                   </button>
                 </div>
               </motion.div>
             ) : (
               <motion.div
                 key={isRegister ? "dosen-register" : "dosen-login"}
-                initial={{ opacity: 0, y: 15 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-6"
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-3.5"
               >
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-3.5">
                   {/* Field: NIP */}
-                  <div className="space-y-2 relative">
-                    <div className="flex justify-between items-center px-2">
-                      <label className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">
+                  <div className="space-y-1 relative">
+                    <div className="flex justify-between items-center px-1">
+                      <label className="text-[9px] font-black text-teal-800/60 uppercase tracking-widest">
                         {t("login_nip")}
                       </label>
-                      <span className="text-[9px] text-teal-800/50 font-mono tracking-tighter bg-teal-50/50 px-2 py-0.5 rounded-md border border-teal-100/30">
+                      <span className="text-[7px] text-teal-800/50 font-mono tracking-tighter bg-teal-50/50 px-1 py-0.5 rounded border border-teal-100/30">
                         19800101
                       </span>
                     </div>
@@ -405,7 +403,7 @@ const LoginPage = ({
                       placeholder={t("login_nip")}
                       required
                       variant="primary"
-                      className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-[1.5rem] h-[60px] px-6 shadow-inner transition-all font-bold text-sm text-teal-950"
+                      className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-lg h-10 px-3 shadow-inner transition-all font-bold text-xs text-teal-950"
                     />
                   </div>
 
@@ -414,10 +412,10 @@ const LoginPage = ({
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
-                      className="space-y-2 relative overflow-hidden"
+                      className="space-y-1 relative overflow-hidden"
                     >
-                      <div className="flex justify-between items-center px-2">
-                        <label className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">
+                      <div className="flex justify-between items-center px-1">
+                        <label className="text-[9px] font-black text-teal-800/60 uppercase tracking-widest">
                           Nama Lengkap
                         </label>
                       </div>
@@ -428,15 +426,15 @@ const LoginPage = ({
                         placeholder="Masukkan nama lengkap"
                         required={isRegister}
                         variant="primary"
-                        className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-[1.5rem] h-[60px] px-6 shadow-inner transition-all font-bold text-sm text-teal-950"
+                        className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-lg h-10 px-3 shadow-inner transition-all font-bold text-xs text-teal-950"
                       />
                     </motion.div>
                   )}
 
                   {/* Field: Password */}
-                  <div className="space-y-2 relative">
-                    <div className="flex justify-between items-center px-2">
-                      <label className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">
+                  <div className="space-y-1 relative">
+                    <div className="flex justify-between items-center px-1">
+                      <label className="text-[9px] font-black text-teal-800/60 uppercase tracking-widest">
                         {t("login_password")}
                       </label>
                     </div>
@@ -447,15 +445,15 @@ const LoginPage = ({
                       placeholder="Ketuk sandi rahasia"
                       required
                       variant="primary"
-                      className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-[1.5rem] h-[60px] px-6 shadow-inner transition-all font-bold text-sm text-teal-950"
+                      className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-lg h-10 px-3 shadow-inner transition-all font-bold text-xs text-teal-950"
                     />
                   </div>
 
                   {error && (
-                    <Alert status="danger">
+                    <Alert status="danger" className="py-1 px-2.5">
                       <Alert.Indicator />
                       <Alert.Content>
-                        <Alert.Title>{error}</Alert.Title>
+                        <Alert.Title className="text-[10px]">{error}</Alert.Title>
                       </Alert.Content>
                     </Alert>
                   )}
@@ -464,13 +462,13 @@ const LoginPage = ({
                   <Button
                     type="submit"
                     isDisabled={loading}
-                    className="w-full h-16 bg-teal-950 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-teal-950/30 hover:bg-teal-600 hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3 group relative overflow-hidden"
+                    className="w-full h-10 bg-teal-950 text-white rounded-lg font-black text-[9px] uppercase tracking-[0.3em] shadow-md shadow-teal-950/20 hover:bg-teal-600 hover:-translate-y-0.5 active:scale-95 transition-all flex items-center justify-center gap-1.5 group relative overflow-hidden"
                   >
                     {loading ? (
-                      <RefreshCcw className="w-5 h-5 animate-spin text-white" />
+                      <RefreshCcw className="w-3.5 h-3.5 animate-spin text-white" />
                     ) : (
                       <>
-                        <LogIn className="w-4 h-4 group-hover:rotate-12 transition-transform" />{" "}
+                        <LogIn className="w-3 h-3 group-hover:rotate-12 transition-transform" />{" "}
                         {isRegister ? "Daftar Akun Dosen" : t("login_btn_enter")}
                       </>
                     )}
@@ -478,11 +476,11 @@ const LoginPage = ({
                 </form>
 
                 {/* SSO Google separator and button */}
-                <div className="relative flex items-center justify-center py-2">
+                <div className="relative flex items-center justify-center py-0.5">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-teal-100/30" />
                   </div>
-                  <span className="relative px-4 bg-white/80 backdrop-blur-md rounded-full text-[9px] font-black text-teal-800/30 uppercase tracking-[0.4em]">
+                  <span className="relative px-2 bg-white/80 backdrop-blur-md rounded-full text-[7px] font-black text-teal-800/30 uppercase tracking-[0.4em]">
                     ATAU
                   </span>
                 </div>
@@ -490,9 +488,9 @@ const LoginPage = ({
                 <Button
                   type="button"
                   onClick={handleGoogleLogin}
-                  className="w-full h-14 bg-white border-2 border-teal-100/80 hover:border-teal-400 text-teal-950 rounded-[1.5rem] font-black text-xs uppercase tracking-widest flex items-center justify-center gap-4 transition-all duration-300 hover:bg-teal-50/30 hover:-translate-y-1 active:scale-95 shadow-xl shadow-teal-950/5 group relative overflow-hidden"
+                  className="w-full h-10 bg-white border border-teal-100/80 hover:border-teal-400 text-teal-950 rounded-lg font-black text-[9px] uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-300 hover:bg-teal-50/30 hover:-translate-y-0.5 active:scale-95 shadow-sm group relative overflow-hidden"
                 >
-                  <svg className="w-5 h-5 shrink-0 group-hover:scale-110 transition-transform duration-300 relative z-10" viewBox="0 0 24 24" fill="none">
+                  <svg className="w-4 h-4 shrink-0 group-hover:scale-110 transition-transform duration-300 relative z-10" viewBox="0 0 24 24" fill="none">
                     <path
                       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                       fill="#4285F4"
@@ -510,25 +508,25 @@ const LoginPage = ({
                       fill="#EA4335"
                     />
                   </svg>
-                  <span className="relative z-10 font-black tracking-[0.1em]">
-                    {isRegister ? "Daftar lewat Google UNESA" : "Login lewat Google UNESA"}
+                  <span className="relative z-10 font-black tracking-[0.05em]">
+                    Google UNESA
                   </span>
                 </Button>
 
                 {/* Account status switch */}
-                <div className="text-center pt-4 border-t border-teal-50/50">
+                <div className="text-center pt-2 border-t border-teal-50/50">
                   <button
                     type="button"
                     onClick={() => {
                       setIsRegister(!isRegister);
                       setError("");
                     }}
-                    className="text-[10px] font-black text-teal-600 hover:text-orange-500 uppercase tracking-[0.2em] transition-colors flex items-center justify-center gap-2 mx-auto group"
+                    className="text-[8px] font-black text-teal-600 hover:text-orange-500 uppercase tracking-[0.2em] transition-colors flex items-center justify-center gap-1.5 mx-auto group"
                   >
                     {isRegister
                       ? t("login_has_account")
                       : t("login_no_account")}
-                    <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-2 h-2 group-hover:translate-x-0.5 transition-transform" />
                   </button>
                 </div>
               </motion.div>
@@ -536,21 +534,16 @@ const LoginPage = ({
           </AnimatePresence>
         </div>
 
-        {/* Subtle footer indicator for scroll feedback */}
-        <div className="mt-20 text-center">
-          <p className="text-[9px] font-black text-teal-800/10 uppercase tracking-[0.5em]">
-            Scroll ke bawah untuk informasi lebih lanjut
-          </p>
+        {/* Small footer under the form */}
+        <div className="relative mt-4 z-10 text-center opacity-30">
+          <div className="flex items-center justify-center gap-1.5">
+            <GraduationCap className="w-3.5 h-3.5 text-teal-500" />
+            <span className="text-[8px] font-black text-teal-950 uppercase tracking-[0.3em]">
+              PTI UNESA
+            </span>
+          </div>
         </div>
       </motion.div>
-
-      {/* Decorative footer elements at the bottom of the long page */}
-      <div className="mt-[40vh] relative z-10 text-center opacity-20 hover:opacity-50 transition-opacity duration-1000">
-        <GraduationCap className="w-16 h-16 text-teal-500 mx-auto mb-4" />
-        <p className="text-[10px] font-black text-teal-950 uppercase tracking-[1em] ml-[1em]">
-          PTI UNESA
-        </p>
-      </div>
     </div>
   );
 };

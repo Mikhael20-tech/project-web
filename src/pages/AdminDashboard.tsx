@@ -156,6 +156,20 @@ const AdminDashboard = ({
     }
   }, [message]);
 
+  useEffect(() => {
+    if (deleteData || aiImportOpen || confirmModal) {
+      document.body.style.overflow = "hidden";
+      document.body.classList.add("modal-open");
+    } else {
+      document.body.style.overflow = "";
+      document.body.classList.remove("modal-open");
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.body.classList.remove("modal-open");
+    };
+  }, [deleteData, aiImportOpen, confirmModal]);
+
   const fetchData = async () => {
     try {
       const auth = { headers: { Authorization: `Bearer ${token}` } };
@@ -2140,11 +2154,11 @@ const AdminDashboard = ({
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: i * 0.05 }}
                       className={cn(
-                        "bg-white p-6 rounded-[2.5rem] border shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_40px_-15px_rgba(79,70,229,0.15)] transition-all flex flex-col md:flex-row items-start md:items-center justify-between group relative",
+                        "bg-white p-6 rounded-[2.5rem] border shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_40px_-15px_rgba(79,70,229,0.15)] transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between group relative",
                         selectedDosen.includes(dosen.id) ? "border-teal-400 bg-teal-50/30" : "border-teal-50 hover:border-teal-100"
                       )}
                     >
-                      <div className="absolute top-5 right-5 md:top-auto md:left-4 z-10">
+                      <div className="absolute top-5 right-5 sm:top-auto sm:left-4 z-10">
                         <input
                           type="checkbox"
                           className="w-4 h-4 rounded border-teal-200 text-teal-500 focus:ring-teal-500 cursor-pointer accent-teal-500"
@@ -2155,7 +2169,7 @@ const AdminDashboard = ({
                           }}
                         />
                       </div>
-                      <div className="flex items-center gap-5 md:ml-6 mt-4 md:mt-0">
+                      <div className="flex items-center gap-5 sm:ml-6 mt-4 sm:mt-0">
                         <div className="w-16 h-16 rounded-[1.25rem] bg-teal-50 overflow-hidden border border-teal-100 shadow-inner group-hover:scale-110 transition-transform">
                           {dosen.foto ? (
                             <img
@@ -2177,7 +2191,7 @@ const AdminDashboard = ({
                           </span>
                         </div>
                       </div>
-                      <div className="flex flex-wrap gap-2 transition-opacity justify-end">
+                      <div className="flex flex-wrap gap-2 transition-opacity justify-end w-full sm:w-auto mt-4 sm:mt-0">
                         <button
                           type="button"
                           onClick={(e) => {

@@ -11,6 +11,7 @@ import {
   BookOpen,
   Plus,
   Star,
+  X,
 } from "lucide-react";
 
 const PortfolioPage = () => {
@@ -20,6 +21,20 @@ const PortfolioPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDosen, setSelectedDosen] = useState<any>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (selectedDosen) {
+      document.body.style.overflow = "hidden";
+      document.body.classList.add("modal-open");
+    } else {
+      document.body.style.overflow = "";
+      document.body.classList.remove("modal-open");
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.body.classList.remove("modal-open");
+    };
+  }, [selectedDosen]);
 
   useEffect(() => {
     fetch("/api/dosen")
@@ -267,7 +282,7 @@ const PortfolioPage = () => {
               className="relative w-full max-w-4xl bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row h-[90vh] md:h-auto md:max-h-[85vh]"
             >
               {/* Left Side: Photo */}
-              <div className="w-full md:w-[40%] relative bg-teal-900 overflow-hidden shrink-0 min-h-[350px] md:min-h-0">
+              <div className="hidden md:block w-full md:w-[40%] relative bg-teal-900 overflow-hidden shrink-0 min-h-[350px] md:min-h-0">
                 <div className="absolute inset-0 z-0">
                   <img
                     src={
@@ -290,7 +305,31 @@ const PortfolioPage = () => {
 
               {/* Right Side: Content */}
               <div className="flex-1 bg-[#F8FEFD] overflow-y-auto relative scroll-smooth custom-scrollbar">
+                {/* Close Button for Mobile */}
+                <button
+                  onClick={() => setSelectedDosen(null)}
+                  className="absolute top-6 right-6 md:hidden w-10 h-10 bg-teal-50 hover:bg-teal-100 text-teal-800 rounded-full flex items-center justify-center border border-teal-100 shadow-sm z-30"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
                 <div className="p-10 md:p-14 space-y-12">
+                  {/* Mobile Profile Photo (Centered Avatar) */}
+                  <div className="md:hidden flex justify-center -mb-4">
+                    <div className="w-36 h-36 rounded-[2.25rem] overflow-hidden bg-teal-50 border-4 border-white shadow-xl ring-1 ring-teal-100">
+                      {selectedDosen.foto ? (
+                        <img
+                          src={selectedDosen.foto}
+                          className="w-full h-full object-cover"
+                          alt={selectedDosen.nama}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Users className="w-16 h-16 text-teal-200" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}

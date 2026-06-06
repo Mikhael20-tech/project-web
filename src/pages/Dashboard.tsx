@@ -172,6 +172,20 @@ const Dashboard = ({
   }, []);
 
   useEffect(() => {
+    if (confirmingDosen || isProfileModalOpen) {
+      document.body.style.overflow = "hidden";
+      document.body.classList.add("modal-open");
+    } else {
+      document.body.style.overflow = "";
+      document.body.classList.remove("modal-open");
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.body.classList.remove("modal-open");
+    };
+  }, [confirmingDosen, isProfileModalOpen]);
+
+  useEffect(() => {
     if (!config) return;
 
     const timer = setInterval(() => {

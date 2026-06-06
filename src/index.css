@@ -113,3 +113,10 @@ body::after {
 .dark .glass-card {
   @apply bg-slate-800/50 backdrop-blur-xl border border-white/5 shadow-2xl;
 }
+
+/* Hide global navigation bar when a modal is open */
+body.modal-open nav {
+  transform: translateY(-100%) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
