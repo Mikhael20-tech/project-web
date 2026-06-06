@@ -359,13 +359,13 @@ const DosenDashboard = ({
       <AnimatePresence>
         {loading && <LoadingOverlay />}
       </AnimatePresence>
-      <div className="min-h-screen bg-[#F0FAF8] pt-32 pb-12 px-6">
+      <div className="min-h-screen bg-[#F0FAF8] pt-32 pb-12 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/70 backdrop-blur-2xl rounded-[3rem] p-10 shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-10 items-center border border-white"
+          className="bg-white/70 backdrop-blur-2xl rounded-3xl md:rounded-[3rem] p-6 md:p-10 shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-6 md:gap-10 items-center border border-white"
         >
           {/* Animated background accent */}
           <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-500/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 animate-pulse" />
@@ -450,11 +450,11 @@ const DosenDashboard = ({
         </motion.div>
 
         {/* Tab Navigation */}
-        <div className="flex flex-wrap gap-4 p-2 bg-white/50 backdrop-blur-md border border-teal-100 rounded-[2rem] w-fit mx-auto md:mx-0">
+        <div className="grid grid-cols-2 md:flex md:flex-wrap gap-2 md:gap-4 p-1.5 md:p-2 bg-white/50 backdrop-blur-md border border-teal-100 rounded-2xl md:rounded-[2rem] w-full md:w-fit mx-auto md:mx-0">
           <button
             onClick={() => setActiveTab("overview")}
             className={cn(
-              "px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
+              "px-4 md:px-8 py-2.5 md:py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center",
               activeTab === "overview"
                 ? "bg-teal-500 text-white shadow-lg"
                 : "text-teal-800/50 hover:bg-teal-50",
@@ -465,7 +465,7 @@ const DosenDashboard = ({
           <button
             onClick={() => setActiveTab("research")}
             className={cn(
-              "px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
+              "px-4 md:px-8 py-2.5 md:py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center",
               activeTab === "research"
                 ? "bg-teal-500 text-white shadow-lg"
                 : "text-teal-800/50 hover:bg-teal-50",
@@ -476,7 +476,7 @@ const DosenDashboard = ({
           <button
             onClick={() => setActiveTab("profile")}
             className={cn(
-              "px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
+              "px-4 md:px-8 py-2.5 md:py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center",
               activeTab === "profile"
                 ? "bg-teal-500 text-white shadow-lg"
                 : "text-teal-800/50 hover:bg-teal-50",
@@ -487,7 +487,7 @@ const DosenDashboard = ({
           <button
             onClick={() => setActiveTab("security")}
             className={cn(
-              "px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
+              "px-4 md:px-8 py-2.5 md:py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center",
               activeTab === "security"
                 ? "bg-teal-500 text-white shadow-lg"
                 : "text-teal-800/50 hover:bg-teal-50",
@@ -605,7 +605,7 @@ const DosenDashboard = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              <div className="bg-white rounded-[2.5rem] p-10 border border-teal-50 shadow-sm relative overflow-hidden">
+              <div className="bg-white rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-10 border border-teal-50 shadow-sm relative overflow-hidden">
                 <h2 className="text-xl font-black text-teal-950 uppercase tracking-tighter mb-8 flex items-center gap-3">
                   <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center text-teal-500 shadow-inner">
                     <Users className="w-5 h-5" />
@@ -712,8 +712,8 @@ const DosenDashboard = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              <div className="bg-white rounded-[2.5rem] p-10 border border-teal-50 shadow-sm relative overflow-hidden">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+              <div className="bg-white rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-10 border border-teal-50 shadow-sm relative overflow-hidden">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6 sm:mb-10">
                   <h2 className="text-xl font-black text-teal-950 uppercase tracking-tighter flex items-center gap-3">
                     <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center text-teal-500 shadow-inner">
                       <BookOpen className="w-5 h-5" />
@@ -721,36 +721,36 @@ const DosenDashboard = ({
                     {t("dash_dosen_project_management")}
                   </h2>
                 </div>
-
-                <form onSubmit={handleAddResearch} className="flex gap-4 mb-10">
+ 
+                <form onSubmit={handleAddResearch} className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-10">
                   <input
                     value={researchJudul}
                     onChange={(e) => setResearchJudul(e.target.value)}
                     placeholder={t("dash_dosen_project_placeholder")}
-                    className="flex-1 p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:ring-4 focus:ring-teal-500/10 transition-all outline-none"
+                    className="flex-1 p-3.5 sm:p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:ring-4 focus:ring-teal-500/10 transition-all outline-none"
                   />
                   <button
                     type="submit"
-                    className="px-8 py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg flex items-center gap-2"
+                    className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg flex items-center justify-center gap-2 shrink-0"
                   >
                     <Plus className="w-4 h-4" /> {t("dash_dosen_project_add")}
                   </button>
                 </form>
-
+ 
                 <div className="space-y-4">
                   {dosenData.penelitian?.length > 0 ? (
                     dosenData.penelitian.map((p: any) => (
                       <div
                         key={p.id}
                         className={cn(
-                          "p-6 rounded-[2rem] border transition-all flex items-center justify-between gap-6",
+                          "p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6",
                           p.isActive
                             ? "bg-white border-teal-100 shadow-sm"
                             : "bg-slate-50 border-slate-200/80 shadow-sm",
                         )}
                       >
                         <div className="flex-1">
-                          <h4 className="font-bold text-teal-900 leading-relaxed">
+                          <h4 className="font-bold text-teal-900 leading-relaxed text-sm sm:text-base">
                             {p.judul}
                           </h4>
                           <p className="text-[9px] font-black uppercase tracking-widest text-teal-800/30 mt-2">
@@ -758,11 +758,11 @@ const DosenDashboard = ({
                             {new Date(p.createdAt).toLocaleDateString()}
                           </p>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 justify-end w-full sm:w-auto shrink-0">
                           <button
                             onClick={() => handleToggleResearch(p.id)}
                             className={cn(
-                              "px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-3 border shadow-md hover:scale-[1.03] active:scale-95 cursor-pointer",
+                              "px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl text-[11px] sm:text-xs font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-2.5 sm:gap-3 border shadow-md hover:scale-[1.02] active:scale-95 cursor-pointer",
                               p.isActive
                                 ? "bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-600 shadow-emerald-500/20"
                                 : "bg-white hover:bg-slate-50 text-slate-500 border-slate-200 hover:text-slate-800 shadow-sm"
@@ -785,7 +785,7 @@ const DosenDashboard = ({
                           </button>
                           <button
                             onClick={() => handleDeleteResearch(p.id)}
-                            className="p-3.5 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all border border-rose-100 shadow-sm hover:scale-[1.03] active:scale-95 cursor-pointer"
+                            className="p-3 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all border border-rose-100 shadow-sm hover:scale-[1.02] active:scale-95 cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -815,7 +815,7 @@ const DosenDashboard = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              <div className="bg-white rounded-[2.5rem] p-10 border border-teal-50 shadow-sm">
+              <div className="bg-white rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-10 border border-teal-50 shadow-sm">
                 <h2 className="text-xl font-black text-teal-950 uppercase tracking-tighter mb-8 flex items-center gap-3">
                   <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center text-teal-500 shadow-inner">
                     <Edit className="w-5 h-5" />
@@ -941,7 +941,7 @@ const DosenDashboard = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              <div className="max-w-2xl mx-auto bg-white rounded-[2.5rem] p-10 border border-teal-50 shadow-sm">
+              <div className="max-w-2xl mx-auto bg-white rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-10 border border-teal-50 shadow-sm">
                 <h2 className="text-xl font-black text-teal-950 uppercase tracking-tighter mb-8 flex items-center gap-3">
                   <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center text-teal-500 shadow-inner">
                     <Lock className="w-5 h-5" />
