@@ -74,6 +74,7 @@ const AppContent = ({
                     user={currentUser}
                     token={token || ""}
                     onProfileUpdate={updateProfile}
+                    onLogout={handleLogout}
                   />
                 </PageTransition>
               ) : (
@@ -90,6 +91,7 @@ const AppContent = ({
                     user={currentUser}
                     token={token || ""}
                     onProfileUpdate={updateProfile}
+                    onLogout={handleLogout}
                   />
                 </PageTransition>
               ) : (
@@ -118,6 +120,7 @@ const AppContent = ({
                     token={token}
                     currentUser={currentUser}
                     onUserUpdate={(data) => setCurrentUser({...currentUser, ...data})}
+                    onLogout={handleLogout}
                   />
                 </PageTransition>
               ) : (

@@ -34,10 +34,12 @@ const Dashboard = ({
   user: initialUser,
   token,
   onProfileUpdate,
+  onLogout,
 }: {
   user: any;
   token: string;
   onProfileUpdate: (s: any) => void;
+  onLogout?: () => void;
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -72,6 +74,12 @@ const Dashboard = ({
     try {
       const auth = { headers: { Authorization: `Bearer ${token}` } };
       const [meRes] = await Promise.all([fetch("/api/me", auth)]);
+      if (meRes.status === 401) {
+        if (onLogout) {
+          onLogout();
+          return;
+        }
+      }
       if (!meRes.ok) {
         throw new Error(`Server unreachable (status: ${meRes.status})`);
       }

@@ -24,10 +24,12 @@ const DosenDashboard = ({
   user,
   token,
   onProfileUpdate,
+  onLogout,
 }: {
   user: any;
   token: string;
   onProfileUpdate?: (updatedDosen: any) => void;
+  onLogout?: () => void;
 }) => {
   const { t, lang } = useLanguage();
   const [dosenData, setDosenData] = useState<any>(null);
@@ -73,6 +75,12 @@ const DosenDashboard = ({
       const res = await fetch("/api/me-dosen", {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (res.status === 401) {
+        if (onLogout) {
+          onLogout();
+          return;
+        }
+      }
       if (res.ok) {
         const data = await res.json();
         setDosenData(data);

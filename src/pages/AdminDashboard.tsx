@@ -83,10 +83,12 @@ const AdminDashboard = ({
   token,
   currentUser,
   onUserUpdate,
+  onLogout,
 }: {
   token: string;
   currentUser: any;
   onUserUpdate: (user: any) => void;
+  onLogout?: () => void;
 }) => {
   const { t, lang } = useLanguage();
   const [activeTab, setActiveTab] = useState<
@@ -231,6 +233,13 @@ const AdminDashboard = ({
         fetch("/api/war-config"),
         fetch("/api/documents")
       ]);
+
+      if (repRes.status === 401 || stuRes.status === 401) {
+        if (onLogout) {
+          onLogout();
+          return;
+        }
+      }
 
       if (repRes.ok) {
         const repData = await repRes.json();
