@@ -2393,7 +2393,15 @@ async function startServer() {
             "**/prisma/**",
             "**/uploads/**",
             "**/.git/**",
-            "**/node_modules/**"
+            "**/node_modules/**",
+            "**\\prisma\\**",
+            "**\\uploads\\**",
+            "**\\.git\\**",
+            "**\\node_modules\\**",
+            "**/prisma\\\\**",
+            "**/uploads\\\\**",
+            "**/.git\\\\**",
+            "**/node_modules\\\\**"
           ]
         }
       },
