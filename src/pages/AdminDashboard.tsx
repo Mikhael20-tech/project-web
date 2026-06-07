@@ -45,6 +45,18 @@ import {
 } from "recharts";
 import * as XLSX from "xlsx";
 
+const formatLocalDate = (dateVal: any) => {
+  if (!dateVal) return "";
+  const d = new Date(dateVal);
+  if (isNaN(d.getTime())) return "";
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
 const AdminDashboard = ({
   token,
   currentUser,
@@ -193,8 +205,8 @@ const AdminDashboard = ({
         if (confData) {
           setConfig(confData);
           setConfigForm({
-            startTime: new Date(confData.startTime).toISOString().slice(0, 16),
-            endTime: new Date(confData.endTime).toISOString().slice(0, 16),
+            startTime: formatLocalDate(confData.startTime),
+            endTime: formatLocalDate(confData.endTime),
             periode: confData.periode || "",
             targetAngkatan: confData.targetAngkatan || "All",
             announcement: confData.announcement || "",
@@ -620,13 +632,19 @@ const AdminDashboard = ({
     e.preventDefault();
     setMessage(null);
     try {
+      const payload = {
+        ...configForm,
+        startTime: configForm.startTime ? new Date(configForm.startTime).toISOString() : "",
+        endTime: configForm.endTime ? new Date(configForm.endTime).toISOString() : "",
+      };
+
       const res = await fetch("/api/admin/war-config", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(configForm),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal memperbarui jadwal.");
