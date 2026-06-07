@@ -95,3 +95,28 @@ model WarConfig {
   isForcedClosed Boolean  @default(false)
   category       WarCategory @default(SKRIPSI_ARTIKEL)
 }
+
+enum DocumentCategory {
+  MOA
+  IA
+  PROPOSAL_MAGANG
+  SURAT_PERNYATAAN_BERDAMPAK
+  TEMPLATE_LAPORAN_AKHIR_MAGANG
+  TEMPLATE_MOA_IA_MOBILITAS_AKADEMIK
+  OTHER
+}
+
+model AcademicDocument {
+  id          String           @id @default(uuid())
+  title       String
+  description String?
+  category    DocumentCategory
+  fileUrl     String?          // URL Supabase / file lokal
+  driveUrl    String?          // URL Google Drive / external link
+  fileType    String?          // e.g. "pdf", "docx", "link"
+  fileSize    Int?             // Ukuran file dalam bytes
+  uploadedBy  String           // Username admin
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+

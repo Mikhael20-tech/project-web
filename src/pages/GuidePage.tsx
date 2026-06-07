@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -14,18 +14,64 @@ import {
   Calendar,
   ArrowLeft,
   AlertCircle,
+  Search,
+  Download,
+  Folder,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 
+const categoryLabels: Record<string, string> = {
+  MOA: "Memorandum of Agreement (MoA)",
+  IA: "Implementation Agreement (IA)",
+  PROPOSAL_MAGANG: "Proposal Magang",
+  SURAT_PERNYATAAN_BERDAMPAK: "Surat Pernyataan Berdampak",
+  TEMPLATE_LAPORAN_AKHIR_MAGANG: "Template Laporan Akhir Magang",
+  TEMPLATE_MOA_IA_MOBILITAS_AKADEMIK: "Template MoA & IA Mobilitas Akademik",
+  OTHER: "Lain-lain / Dokumen Umum",
+};
+
+const categoryColors: Record<string, string> = {
+  MOA: "bg-blue-50 text-blue-700 border-blue-100",
+  IA: "bg-indigo-50 text-indigo-700 border-indigo-100",
+  PROPOSAL_MAGANG: "bg-amber-50 text-amber-700 border-amber-100",
+  SURAT_PERNYATAAN_BERDAMPAK: "bg-rose-50 text-rose-700 border-rose-100",
+  TEMPLATE_LAPORAN_AKHIR_MAGANG: "bg-purple-50 text-purple-700 border-purple-100",
+  TEMPLATE_MOA_IA_MOBILITAS_AKADEMIK: "bg-teal-50 text-teal-700 border-teal-100",
+  OTHER: "bg-slate-50 text-slate-700 border-slate-100",
+};
+
 const GuidePage = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"mahasiswa" | "dosen" | "admin" | "kategori">("mahasiswa");
+  const [activeTab, setActiveTab] = useState<"mahasiswa" | "dosen" | "admin" | "kategori" | "documents">("mahasiswa");
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("All");
+
+  useEffect(() => {
+    const fetchDocs = async () => {
+      try {
+        const res = await fetch("/api/documents");
+        if (res.ok) {
+          const data = await res.json();
+          setDocuments(data);
+        }
+      } catch (err) {
+        console.error("Gagal memuat dokumen:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDocs();
+  }, []);
 
   const tabs = [
     { id: "mahasiswa", label: "Mahasiswa", icon: <Users className="w-4 h-4" /> },
     { id: "dosen", label: "Dosen", icon: <GraduationCap className="w-4 h-4" /> },
     { id: "admin", label: "Admin", icon: <Settings className="w-4 h-4" /> },
     { id: "kategori", label: "Kategori War", icon: <Zap className="w-4 h-4" /> },
+    { id: "documents", label: "Unduh Dokumen & Template", icon: <Folder className="w-4 h-4" /> },
   ];
 
   return (
@@ -156,6 +202,24 @@ const GuidePage = () => {
                     </div>
                   </div>
 
+                  {/* Info Link to Documents */}
+                  <div className="p-6 bg-teal-50 border border-teal-100 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mt-8 shadow-sm">
+                    <div className="flex gap-4 items-start">
+                      <FileText className="w-6 h-6 text-teal-600 shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-extrabold text-teal-950 text-sm">Butuh Dokumen Pendukung?</h4>
+                        <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
+                          Template MoA, IA, Proposal Magang, Surat Pernyataan Berdampak, dan Template Laporan Akhir tersedia untuk diunduh langsung.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setActiveTab("documents")}
+                      className="px-5 py-2.5 bg-teal-950 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-teal-800 transition-all shrink-0 shadow-md shadow-teal-950/10"
+                    >
+                      Unduh Dokumen & Template
+                    </button>
+                  </div>
 
                 </div>
               )}
@@ -311,6 +375,130 @@ const GuidePage = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* --- DOCUMENTS TAB --- */}
+              {activeTab === "documents" && (
+                <div className="space-y-8">
+                  <div className="space-y-2">
+                    <h2 className="text-2xl font-black text-teal-950 tracking-tight">Unduh Dokumen & Template Akademik</h2>
+                    <p className="text-sm text-teal-800/60 font-medium">
+                      Unduh berkas template administrasi resmi, pedoman magang, format proposal, MoA, serta IA untuk keperluan akademik Anda.
+                    </p>
+                  </div>
+
+                  {/* Search and Category Filter */}
+                  <div className="flex flex-col sm:flex-row gap-4 p-6 bg-teal-50/20 border border-teal-50 rounded-[2rem]">
+                    <div className="relative flex-1">
+                      <Search className="w-4 h-4 text-teal-400 absolute left-4 top-3.5" />
+                      <input
+                        type="text"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Cari nama dokumen..."
+                        className="w-full pl-11 pr-4 py-2.5 bg-white border border-teal-100 rounded-xl text-xs font-bold text-teal-950 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                      />
+                    </div>
+                    <select
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      className="p-2.5 bg-white border border-teal-100 rounded-xl text-xs font-bold text-teal-950 focus:outline-none w-full sm:w-64"
+                    >
+                      <option value="All">Semua Kategori</option>
+                      {Object.entries(categoryLabels).map(([key, label]) => (
+                        <option key={key} value={key}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Documents Grid */}
+                  {loading ? (
+                    <div className="py-12 text-center text-teal-800/40 uppercase tracking-widest font-black flex items-center justify-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-teal-500 animate-ping" />
+                      Memuat Dokumen...
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {documents
+                        .filter((doc) => {
+                          const matchSearch = doc.title.toLowerCase().includes(search.toLowerCase());
+                          const matchCat = categoryFilter === "All" || doc.category === categoryFilter;
+                          return matchSearch && matchCat;
+                        })
+                        .map((doc) => (
+                          <motion.div
+                            key={doc.id}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="bg-white border border-teal-50 rounded-[2rem] p-6 hover:shadow-xl hover:border-teal-200 transition-all flex flex-col justify-between gap-6"
+                          >
+                            <div className="space-y-4">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <span className={cn(
+                                  "px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border",
+                                  categoryColors[doc.category] || "bg-slate-50 text-slate-700 border-slate-100"
+                                )}>
+                                  {categoryLabels[doc.category] || doc.category}
+                                </span>
+                                <span className="px-2 py-0.5 bg-teal-50 text-teal-600 rounded text-[9px] font-black uppercase tracking-wider">
+                                  {doc.fileUrl ? (doc.fileType || "FILE") : "LINK"}
+                                </span>
+                              </div>
+
+                              <div className="space-y-2">
+                                <h3 className="text-lg font-black text-teal-950 tracking-tight leading-snug">
+                                  {doc.title}
+                                </h3>
+                                <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
+                                  {doc.description || "Tidak ada deskripsi singkat."}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-4 pt-4 border-t border-teal-50/50">
+                              <div className="text-[9px] font-bold text-teal-800/40 uppercase tracking-wider">
+                                Diunggah: {new Date(doc.createdAt).toLocaleDateString()}
+                              </div>
+                              {doc.fileUrl ? (
+                                <a
+                                  href={doc.fileUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="flex items-center gap-1.5 px-4 py-2.5 bg-teal-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-teal-700 transition-all shadow-md shadow-teal-500/10"
+                                >
+                                  <Download className="w-3.5 h-3.5" />
+                                  Unduh File
+                                </a>
+                              ) : (
+                                <a
+                                  href={doc.driveUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-indigo-700 transition-all shadow-md shadow-indigo-500/10"
+                                >
+                                  <Briefcase className="w-3.5 h-3.5" />
+                                  Buka Link Drive
+                                </a>
+                              )}
+                            </div>
+                          </motion.div>
+                        ))}
+
+                      {documents.filter((doc) => {
+                        const matchSearch = doc.title.toLowerCase().includes(search.toLowerCase());
+                        const matchCat = categoryFilter === "All" || doc.category === categoryFilter;
+                        return matchSearch && matchCat;
+                      }).length === 0 && (
+                        <div className="col-span-full py-16 text-center border-2 border-dashed border-teal-100 rounded-[2.5rem] bg-teal-50/10 text-teal-800/30 uppercase tracking-widest font-black">
+                          <Folder className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                          Tidak Ada Dokumen
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </motion.div>

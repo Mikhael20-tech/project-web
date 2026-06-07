@@ -2089,6 +2089,272 @@ app.get("/api/war-config", async (req, res) => {
   }
 });
 
+// --- ACADEMIC DOCUMENTS MANAGEMENT ENDPOINTS ---
+
+// Multer Configuration for Documents
+const docStorage = multer.memoryStorage();
+const docUpload = multer({
+  storage: docStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB Limit
+  fileFilter: (req, file, cb) => {
+    const allowedMimeTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/zip",
+      "application/x-zip-compressed",
+      "text/plain"
+    ];
+    if (allowedMimeTypes.includes(file.mimetype) || file.originalname.match(/\.(pdf|doc|docx|xls|xlsx|txt|zip)$/i)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Hanya file PDF, Word, Excel, Text, atau ZIP yang diperbolehkan."));
+    }
+  }
+});
+
+// Ensure local uploads/documents directory exists
+const docsDir = path.join(process.cwd(), "uploads", "documents");
+if (!fs.existsSync(docsDir)) {
+  fs.mkdirSync(docsDir, { recursive: true });
+}
+
+// 1. GET /api/documents (Public / Students)
+app.get("/api/documents", async (req, res) => {
+  try {
+    const { category, search } = req.query;
+    const whereClause: any = {};
+    
+    if (category && category !== "All") {
+      whereClause.category = category;
+    }
+    if (search) {
+      whereClause.title = {
+        contains: String(search),
+        mode: "insensitive"
+      };
+    }
+
+    const docs = await prisma.academicDocument.findMany({
+      where: whereClause,
+      orderBy: { createdAt: "desc" }
+    });
+    res.json(docs);
+  } catch (err: any) {
+    console.error("Get documents error:", err);
+    res.status(500).json({ error: "Gagal memuat dokumen akademik." });
+  }
+});
+
+// 2. POST /api/admin/documents/upload (Admin Upload File)
+app.post("/api/admin/documents/upload", authenticate, isAdmin, (req: any, res: any) => {
+  docUpload.single("file")(req, res, async (err) => {
+    if (err) {
+      console.error("Document Upload Error:", err);
+      return res.status(400).json({ error: err.message || "Gagal mengupload dokumen." });
+    }
+    if (!req.file) return res.status(400).json({ error: "Tidak ada file yang diunggah." });
+
+    try {
+      const fileExt = path.extname(req.file.originalname);
+      const cleanOriginalName = path.basename(req.file.originalname, fileExt).replace(/[^a-zA-Z0-9]/g, "_");
+      const uniqueFilename = `${Date.now()}-${cleanOriginalName}${fileExt}`;
+      let fileUrl = "";
+
+      // Try uploading to Supabase first
+      if (supabase) {
+        try {
+          const { data, error } = await supabase.storage
+            .from("academic-documents")
+            .upload(uniqueFilename, req.file.buffer, {
+              contentType: req.file.mimetype,
+              upsert: true
+            });
+          
+          if (!error) {
+            const { data: { publicUrl } } = supabase.storage
+              .from("academic-documents")
+              .getPublicUrl(data.path);
+            fileUrl = publicUrl;
+          } else {
+            console.warn("Supabase bucket may not exist or error occurred. Error:", error);
+          }
+        } catch (sbErr) {
+          console.warn("⚠️ Supabase upload error. Falling back to local storage.", sbErr);
+        }
+      }
+
+      // Fallback: local storage
+      if (!fileUrl) {
+        const localFilePath = path.join(docsDir, uniqueFilename);
+        await fs.promises.writeFile(localFilePath, req.file.buffer);
+        const origin = req.protocol + "://" + req.get("host");
+        fileUrl = `${origin}/uploads/documents/${uniqueFilename}`;
+      }
+
+      res.json({
+        url: fileUrl,
+        size: req.file.size,
+        type: fileExt.replace(".", "").toLowerCase(),
+        name: req.file.originalname
+      });
+    } catch (uploadErr: any) {
+      console.error("Document Upload Process Error:", uploadErr);
+      res.status(500).json({ error: "Gagal memproses unggahan file." });
+    }
+  });
+});
+
+// 3. POST /api/admin/documents/analyze-ai (AI Document Classification & Suggestion)
+app.post("/api/admin/documents/analyze-ai", authenticate, isAdmin, async (req, res) => {
+  const { filename, driveUrl, rawText } = req.body;
+  if (!filename && !driveUrl && !rawText) {
+    return res.status(400).json({ error: "Setidaknya salah satu parameter (filename/driveUrl/rawText) wajib diisi untuk analisis." });
+  }
+
+  try {
+    const fullPrompt = `Kamu adalah asisten akademik AI. Tugasmu adalah mengidentifikasi dan mengklasifikasikan dokumen akademik berdasarkan nama file, link drive, atau deskripsi singkat yang diberikan.
+Kategori yang tersedia wajib dipilih dari salah satu berikut:
+- MOA (Memorandum of Agreement / Perjanjian Kerja Sama)
+- IA (Implementation Agreement / Rencana Kerja Sama)
+- PROPOSAL_MAGANG (Template / Panduan Proposal Magang)
+- SURAT_PERNYATAAN_BERDAMPAK (Surat Pernyataan Berdampak / Kerja Sama)
+- TEMPLATE_LAPORAN_AKHIR_MAGANG (Panduan / Template Laporan Akhir Magang)
+- TEMPLATE_MOA_IA_MOBILITAS_AKADEMIK (Template MoA dan IA Mobilitas Akademik)
+- OTHER (Dokumen/Panduan Lainnya)
+
+Input:
+Nama File: "${filename || '-'}"
+Link Drive: "${driveUrl || '-'}"
+Deskripsi Singkat: "${rawText || '-'}"
+
+Berikan respons dalam format JSON valid (jangan gunakan pembungkus markdown, langsung string JSON mentah):
+{
+  "title": "Nama Dokumen yang Rapi dan Jelas (contoh: 'Template MoA UNESA 2026')",
+  "category": "Kategori yang paling tepat (pilih satu: MOA, IA, PROPOSAL_MAGANG, SURAT_PERNYATAAN_BERDAMPAK, TEMPLATE_LAPORAN_AKHIR_MAGANG, TEMPLATE_MOA_IA_MOBILITAS_AKADEMIK, OTHER)",
+  "description": "Deskripsi singkat mengenai dokumen tersebut dalam Bahasa Indonesia (maksimal 2 kalimat)"
+}`;
+
+    const result = await aiModel.generateContent(fullPrompt);
+    const response = await result.response;
+    const text = response.text().trim();
+
+    let cleanText = text;
+    if (cleanText.includes("```")) {
+      cleanText = cleanText.replace(/```json/g, "").replace(/```/g, "").trim();
+    }
+
+    const parsedResult = JSON.parse(cleanText);
+    res.json(parsedResult);
+  } catch (err: any) {
+    console.error("AI Document Analysis Error:", err);
+    res.status(500).json({ error: "Gagal menganalisis dokumen dengan AI." });
+  }
+});
+
+// 4. POST /api/admin/documents (Create Document)
+app.post("/api/admin/documents", authenticate, isAdmin, async (req: any, res) => {
+  const { title, description, category, fileUrl, driveUrl, fileType, fileSize } = req.body;
+  if (!title || !category) {
+    return res.status(400).json({ error: "Judul dan Kategori dokumen wajib diisi." });
+  }
+
+  try {
+    const document = await prisma.academicDocument.create({
+      data: {
+        title,
+        description,
+        category,
+        fileUrl: fileUrl || null,
+        driveUrl: driveUrl || null,
+        fileType: fileType || "link",
+        fileSize: fileSize ? parseInt(fileSize) : null,
+        uploadedBy: req.user.nim || "ADMIN"
+      }
+    });
+
+    io.emit("document_update", { action: "create", document });
+    res.status(201).json(document);
+  } catch (err: any) {
+    console.error("Create document error:", err);
+    res.status(500).json({ error: "Gagal menyimpan dokumen akademik." });
+  }
+});
+
+// 5. PUT /api/admin/documents/:id (Update Document)
+app.put("/api/admin/documents/:id", authenticate, isAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { title, description, category, fileUrl, driveUrl, fileType, fileSize } = req.body;
+  
+  try {
+    const existing = await prisma.academicDocument.findUnique({ where: { id } });
+    if (!existing) return res.status(404).json({ error: "Dokumen tidak ditemukan." });
+
+    const document = await prisma.academicDocument.update({
+      where: { id },
+      data: {
+        title,
+        description,
+        category,
+        fileUrl: fileUrl !== undefined ? fileUrl : existing.fileUrl,
+        driveUrl: driveUrl !== undefined ? driveUrl : existing.driveUrl,
+        fileType: fileType !== undefined ? fileType : existing.fileType,
+        fileSize: fileSize !== undefined ? (fileSize ? parseInt(fileSize) : null) : existing.fileSize
+      }
+    });
+
+    io.emit("document_update", { action: "update", document });
+    res.json(document);
+  } catch (err: any) {
+    console.error("Update document error:", err);
+    res.status(500).json({ error: "Gagal memperbarui dokumen akademik." });
+  }
+});
+
+// 6. DELETE /api/admin/documents/:id (Delete Document)
+app.delete("/api/admin/documents/:id", authenticate, isAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const doc = await prisma.academicDocument.findUnique({ where: { id } });
+    if (!doc) return res.status(404).json({ error: "Dokumen tidak ditemukan." });
+
+    // Try to delete physical file if local or Supabase
+    if (doc.fileUrl) {
+      if (doc.fileUrl.includes("supabase.co/storage")) {
+        try {
+          const filename = doc.fileUrl.split("/").pop();
+          if (filename && supabase) {
+            await supabase.storage.from("academic-documents").remove([filename]);
+          }
+        } catch (e) {
+          console.warn("Failed to delete from Supabase storage:", e);
+        }
+      } else if (doc.fileUrl.includes("/uploads/documents/")) {
+        try {
+          const filename = doc.fileUrl.split("/").pop();
+          if (filename) {
+            const filepath = path.join(docsDir, filename);
+            if (fs.existsSync(filepath)) {
+              fs.unlinkSync(filepath);
+            }
+          }
+        } catch (e) {
+          console.warn("Failed to delete local document file:", e);
+        }
+      }
+    }
+
+    await prisma.academicDocument.delete({ where: { id } });
+    io.emit("document_update", { action: "delete", id });
+    res.json({ success: true, message: "Dokumen berhasil dihapus." });
+  } catch (err: any) {
+    console.error("Delete document error:", err);
+    res.status(500).json({ error: "Gagal menghapus dokumen akademik." });
+  }
+});
+
 // --- VITE SETUP ---
 async function startServer() {
   // Migration for Angkatan on startup

@@ -24,6 +24,8 @@ import {
   ChevronDown,
   Briefcase,
   ShieldCheck,
+  Folder,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useLanguage } from "@/src/lib/LanguageContext";
@@ -57,6 +59,26 @@ const formatLocalDate = (dateVal: any) => {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
+const categoryLabels: Record<string, string> = {
+  MOA: "Memorandum of Agreement (MoA)",
+  IA: "Implementation Agreement (IA)",
+  PROPOSAL_MAGANG: "Proposal Magang",
+  SURAT_PERNYATAAN_BERDAMPAK: "Surat Pernyataan Berdampak",
+  TEMPLATE_LAPORAN_AKHIR_MAGANG: "Template Laporan Akhir Magang",
+  TEMPLATE_MOA_IA_MOBILITAS_AKADEMIK: "Template MoA & IA Mobilitas Akademik",
+  OTHER: "Lain-lain / Dokumen Umum",
+};
+
+const categoryColors: Record<string, string> = {
+  MOA: "bg-blue-50 text-blue-700 border-blue-100",
+  IA: "bg-indigo-50 text-indigo-700 border-indigo-100",
+  PROPOSAL_MAGANG: "bg-amber-50 text-amber-700 border-amber-100",
+  SURAT_PERNYATAAN_BERDAMPAK: "bg-rose-50 text-rose-700 border-rose-100",
+  TEMPLATE_LAPORAN_AKHIR_MAGANG: "bg-purple-50 text-purple-700 border-purple-100",
+  TEMPLATE_MOA_IA_MOBILITAS_AKADEMIK: "bg-teal-50 text-teal-700 border-teal-100",
+  OTHER: "bg-slate-50 text-slate-700 border-slate-100",
+};
+
 const AdminDashboard = ({
   token,
   currentUser,
@@ -68,12 +90,29 @@ const AdminDashboard = ({
 }) => {
   const { t, lang } = useLanguage();
   const [activeTab, setActiveTab] = useState<
-    "monitoring" | "dosen" | "students" | "settings" | "admin_profile" | "broadcast"
+    "monitoring" | "dosen" | "students" | "settings" | "admin_profile" | "broadcast" | "documents"
   >("monitoring");
   const [reports, setReports] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [selectedDosen, setSelectedDosen] = useState<string[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [docForm, setDocForm] = useState({
+    id: "",
+    title: "",
+    description: "",
+    category: "MOA",
+    type: "upload" as "upload" | "link",
+    fileUrl: "",
+    driveUrl: "",
+    fileType: "",
+    fileSize: 0,
+    fileName: "",
+  });
+  const [aiDocAnalyzing, setAiDocAnalyzing] = useState(false);
+  const [docSaveLoading, setDocSaveLoading] = useState(false);
+  const [docSearch, setDocSearch] = useState("");
+  const [docFilterCategory, setDocFilterCategory] = useState("All");
   const [config, setConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<{
@@ -186,10 +225,11 @@ const AdminDashboard = ({
     try {
       const auth = { headers: { Authorization: `Bearer ${token}` } };
 
-      const [repRes, stuRes, confRes] = await Promise.all([
+      const [repRes, stuRes, confRes, docRes] = await Promise.all([
         fetch("/api/admin/reports", auth),
         fetch("/api/admin/mahasiswa", auth),
         fetch("/api/war-config"),
+        fetch("/api/documents")
       ]);
 
       if (repRes.ok) {
@@ -215,6 +255,10 @@ const AdminDashboard = ({
           } as any);
         }
       }
+      if (docRes.ok) {
+        const docData = await docRes.json();
+        setDocuments(docData);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -224,24 +268,178 @@ const AdminDashboard = ({
 
   useEffect(() => {
     fetchData();
-
-    // Fix #9 (Admin): Use named handlers so socket.off removes only these specific listeners
-    const handleQuotaUpdate = () => fetchData();
-    const handleNewSelection = (data: any) => {
-      setActivities(prev => [
-        { id: Date.now(), ...data },
-        ...prev.slice(0, 49) // Keep last 50
-      ]);
-    };
-
-    socket.on("quota_update", handleQuotaUpdate);
-    socket.on("new_selection", handleNewSelection);
-
+    socket.on("quota_update", () => fetchData());
+    socket.on("document_update", () => fetchData());
     return () => {
-      socket.off("quota_update", handleQuotaUpdate);
-      socket.off("new_selection", handleNewSelection);
+      socket.off("quota_update");
+      socket.off("document_update");
     };
   }, []);
+
+  const handleDocFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadLoading(true);
+    setMessage(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/admin/documents/upload", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal mengunggah file.");
+
+      setDocForm((prev) => ({
+        ...prev,
+        fileUrl: data.url,
+        fileName: data.name,
+        fileType: data.type,
+        fileSize: data.size,
+      }));
+      setMessage({ type: "success", text: "File berhasil diunggah!" });
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message });
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  const handleDocAnalyzeAI = async () => {
+    setMessage(null);
+    setAiDocAnalyzing(true);
+    try {
+      const payload = {
+        filename: docForm.fileName || "",
+        driveUrl: docForm.driveUrl || "",
+        rawText: docForm.description || "",
+      };
+
+      if (!payload.filename && !payload.driveUrl && !payload.rawText) {
+        throw new Error("Tuliskan nama file, link drive, atau deskripsi singkat untuk dianalisis oleh AI.");
+      }
+
+      const res = await fetch("/api/admin/documents/analyze-ai", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal menganalisis dokumen dengan AI.");
+
+      setDocForm((prev) => ({
+        ...prev,
+        title: data.title || prev.title,
+        category: data.category || prev.category,
+        description: data.description || prev.description,
+      }));
+      setMessage({ type: "success", text: "Analisis AI berhasil! Form terisi otomatis. ✨" });
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message });
+    } finally {
+      setAiDocAnalyzing(false);
+    }
+  };
+
+  const handleDocSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage(null);
+    setDocSaveLoading(true);
+
+    try {
+      const isEdit = !!docForm.id;
+      const url = isEdit ? `/api/admin/documents/${docForm.id}` : "/api/admin/documents";
+      
+      const payload = {
+        title: docForm.title,
+        description: docForm.description,
+        category: docForm.category,
+        fileUrl: docForm.type === "upload" ? docForm.fileUrl : null,
+        driveUrl: docForm.type === "link" ? docForm.driveUrl : null,
+        fileType: docForm.type === "upload" ? docForm.fileType : "link",
+        fileSize: docForm.type === "upload" ? docForm.fileSize : null,
+      };
+
+      if (!payload.title || !payload.category) {
+        throw new Error("Judul dan Kategori dokumen wajib diisi.");
+      }
+
+      if (docForm.type === "upload" && !payload.fileUrl) {
+        throw new Error("Silakan upload file terlebih dahulu.");
+      }
+
+      if (docForm.type === "link" && !payload.driveUrl) {
+        throw new Error("Silakan masukkan tautan link dokumen (Google Drive).");
+      }
+
+      const res = await fetch(url, {
+        method: isEdit ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal menyimpan dokumen.");
+
+      setMessage({
+        type: "success",
+        text: isEdit ? "Dokumen berhasil diperbarui!" : "Dokumen baru berhasil disimpan!",
+      });
+
+      // Reset form
+      setDocForm({
+        id: "",
+        title: "",
+        description: "",
+        category: "MOA",
+        type: "upload",
+        fileUrl: "",
+        driveUrl: "",
+        fileType: "",
+        fileSize: 0,
+        fileName: "",
+      });
+      fetchData();
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message });
+    } finally {
+      setDocSaveLoading(false);
+    }
+  };
+
+  const handleDocDelete = async (id: string, title: string) => {
+    if (!window.confirm(`Apakah Anda yakin ingin menghapus dokumen "${title}"?`)) return;
+    setMessage(null);
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/documents/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal menghapus dokumen.");
+
+      setMessage({ type: "success", text: "Dokumen berhasil dihapus." });
+      fetchData();
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1449,6 +1647,7 @@ const AdminDashboard = ({
               { id: "dosen", label: t("dash_admin_tab_dosen"), icon: Users },
               { id: "students", label: t("dash_admin_tab_students"), icon: UserPlus },
               { id: "broadcast", label: t("dash_admin_tab_broadcast"), icon: Zap },
+              { id: "documents", label: t("dash_admin_tab_documents"), icon: Folder },
               { id: "settings", label: t("dash_admin_tab_schedule"), icon: Calendar },
               { id: "admin_profile", label: t("dash_admin_tab_profile"), icon: Settings },
             ].map((tab) => (
@@ -3135,6 +3334,386 @@ const AdminDashboard = ({
                       SIMPAN PASSWORD
                     </button>
                   </form>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === "documents" && (
+            <motion.div
+              key="documents"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              transition={{ type: "spring", stiffness: 200, damping: 25 }}
+              className="grid grid-cols-1 xl:grid-cols-3 gap-8"
+            >
+              {/* Form Input Dokumen */}
+              <div className="xl:col-span-1">
+                <div className="bg-white border border-teal-50 rounded-[2.5rem] p-8 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] sticky top-28">
+                  <h3 className="text-2xl font-black text-teal-950 mb-8 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center text-teal-500">
+                      {docForm.id ? <Edit className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                    </div>
+                    {docForm.id ? "Edit Dokumen" : "Tambah Dokumen"}
+                  </h3>
+                  
+                  <form onSubmit={handleDocSubmit} className="space-y-6">
+                    {/* Tipe Dokumen: Upload File vs Tautan Link */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                        Sumber Dokumen
+                      </label>
+                      <div className="flex gap-2 p-1 bg-teal-50 border border-teal-100 rounded-2xl">
+                        <button
+                          type="button"
+                          onClick={() => setDocForm(prev => ({ ...prev, type: "upload" }))}
+                          className={cn(
+                            "flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all",
+                            docForm.type === "upload" 
+                              ? "bg-teal-500 text-white shadow-md" 
+                              : "text-teal-800 hover:bg-teal-100/50"
+                          )}
+                        >
+                          Unggah File
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDocForm(prev => ({ ...prev, type: "link" }))}
+                          className={cn(
+                            "flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all",
+                            docForm.type === "link" 
+                              ? "bg-teal-500 text-white shadow-md" 
+                              : "text-teal-800 hover:bg-teal-100/50"
+                          )}
+                        >
+                          Tautan Drive
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Conditional Input based on type */}
+                    {docForm.type === "upload" ? (
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                          File Dokumen
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="file"
+                            id="doc-file-input"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
+                            onChange={handleDocFileUpload}
+                            className="hidden"
+                          />
+                          {docForm.fileUrl ? (
+                            <div className="p-4 bg-teal-50 border border-teal-100 rounded-2xl flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center text-teal-600 shrink-0">
+                                  <FileText className="w-5 h-5" />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-bold text-teal-950 truncate">{docForm.fileName || "File Terunggah"}</p>
+                                  <p className="text-[10px] font-medium text-teal-800/50">
+                                    {docForm.fileSize ? `${(docForm.fileSize / 1024).toFixed(1)} KB` : ""} ({docForm.fileType?.toUpperCase()})
+                                  </p>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setDocForm(prev => ({ ...prev, fileUrl: "", fileName: "", fileType: "", fileSize: 0 }))}
+                                className="p-1.5 hover:bg-rose-50 text-teal-400 hover:text-rose-500 rounded-lg transition-colors"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <label
+                              htmlFor="doc-file-input"
+                              className={cn(
+                                "flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed rounded-2xl text-center cursor-pointer transition-all bg-teal-50/20 border-teal-200 text-teal-500 hover:bg-teal-50/50",
+                                uploadLoading && "opacity-50 pointer-events-none"
+                              )}
+                            >
+                              <div className="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center text-teal-600">
+                                {uploadLoading ? <RefreshCcw className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+                              </div>
+                              <div>
+                                <p className="text-[11px] font-black uppercase tracking-wider text-teal-950">
+                                  {uploadLoading ? "Mengunggah..." : "Pilih File Dokumen"}
+                                </p>
+                                <p className="text-[9px] text-teal-800/40 font-bold mt-0.5">
+                                  Maksimal 10MB (PDF, Word, Excel, ZIP, TXT)
+                                </p>
+                              </div>
+                            </label>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                          Tautan Dokumen (Google Drive, dll)
+                        </label>
+                        <input
+                          type="url"
+                          value={docForm.driveUrl}
+                          onChange={(e) => setDocForm({ ...docForm, driveUrl: e.target.value })}
+                          placeholder="https://drive.google.com/..."
+                          className="w-full p-4 bg-teal-50 border border-teal-100 rounded-[1.25rem] text-teal-950 text-xs font-bold focus:outline-none focus:border-teal-400 transition-all shadow-inner"
+                        />
+                      </div>
+                    )}
+
+                    {/* AI AUTO CLASSIFICATION BUTTON */}
+                    <button
+                      type="button"
+                      onClick={handleDocAnalyzeAI}
+                      disabled={aiDocAnalyzing || (docForm.type === "upload" ? !docForm.fileName : !docForm.driveUrl)}
+                      className="w-full py-3.5 bg-gradient-to-r from-teal-950 to-teal-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-wider hover:from-teal-900 hover:to-teal-800 transition-all flex items-center justify-center gap-2 disabled:opacity-40 shadow-md shadow-teal-950/10"
+                    >
+                      {aiDocAnalyzing ? (
+                        <RefreshCcw className="w-4 h-4 animate-spin text-teal-400" />
+                      ) : (
+                        <Zap className="w-4 h-4 text-teal-400" />
+                      )}
+                      {aiDocAnalyzing ? "Menganalisis..." : "Klasifikasi AI ✨"}
+                    </button>
+                    <p className="text-[8px] text-teal-800/40 font-semibold uppercase tracking-wider text-center">
+                      * AI Gemini akan menebak judul, kategori, dan deskripsi dari nama file/link.
+                    </p>
+
+                    <div className="h-px bg-teal-50" />
+
+                    {/* Judul Dokumen */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                        Judul Dokumen
+                      </label>
+                      <input
+                        type="text"
+                        value={docForm.title}
+                        onChange={(e) => setDocForm({ ...docForm, title: e.target.value })}
+                        placeholder="Contoh: Proposal Magang PTI UNESA"
+                        required
+                        className="w-full p-4 bg-teal-50 border border-teal-100 rounded-[1.25rem] text-teal-950 text-xs font-bold focus:outline-none focus:border-teal-400 transition-all shadow-inner"
+                      />
+                    </div>
+
+                    {/* Kategori Dokumen */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                        Kategori Dokumen
+                      </label>
+                      <select
+                        value={docForm.category}
+                        onChange={(e) => setDocForm({ ...docForm, category: e.target.value })}
+                        required
+                        className="w-full p-4 bg-teal-50 border border-teal-100 rounded-[1.25rem] text-teal-950 text-xs font-bold focus:outline-none focus:border-teal-400 transition-all shadow-inner"
+                      >
+                        {Object.entries(categoryLabels).map(([key, label]) => (
+                          <option key={key} value={key}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Deskripsi Dokumen */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                        Deskripsi Singkat
+                      </label>
+                      <textarea
+                        value={docForm.description}
+                        onChange={(e) => setDocForm({ ...docForm, description: e.target.value })}
+                        placeholder="Berikan deskripsi singkat tentang kegunaan dokumen ini..."
+                        rows={3}
+                        className="w-full p-4 bg-teal-50 border border-teal-100 rounded-[1.25rem] text-teal-950 text-xs font-bold focus:outline-none focus:border-teal-400 transition-all shadow-inner resize-none"
+                      />
+                    </div>
+
+                    <div className="flex gap-2 pt-4">
+                      {docForm.id && (
+                        <button
+                          type="button"
+                          onClick={() => setDocForm({
+                            id: "",
+                            title: "",
+                            description: "",
+                            category: "MOA",
+                            type: "upload",
+                            fileUrl: "",
+                            driveUrl: "",
+                            fileType: "",
+                            fileSize: 0,
+                            fileName: "",
+                          })}
+                          className="px-4 py-4 bg-teal-50 hover:bg-teal-100 text-teal-800/60 rounded-2xl font-black text-[10px] uppercase tracking-wider transition-all"
+                        >
+                          Batal
+                        </button>
+                      )}
+                      <button
+                        type="submit"
+                        disabled={docSaveLoading}
+                        className="flex-1 py-4 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-teal-500/10"
+                      >
+                        {docSaveLoading ? (
+                          <RefreshCcw className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4" />
+                        )}
+                        {docForm.id ? "PERBARUI" : "SIMPAN"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              {/* Table List Dokumen */}
+              <div className="xl:col-span-2 space-y-6">
+                <div className="bg-white border border-teal-50 rounded-[2.5rem] overflow-hidden shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]">
+                  <div className="p-8 border-b border-teal-50 bg-[#f8fdfc] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h3 className="text-xl font-black text-teal-950 tracking-tight">Daftar Dokumen Akademik</h3>
+                      <p className="text-xs text-teal-800/60 font-medium">Unggah template MoA, IA, Panduan Magang, & Dokumen Penting</p>
+                    </div>
+                  </div>
+
+                  {/* Filter and Search */}
+                  <div className="p-6 border-b border-teal-50 bg-[#f8fdfc] flex flex-col sm:flex-row gap-4">
+                    <div className="relative flex-1">
+                      <Search className="w-4 h-4 text-teal-400 absolute left-4 top-3.5" />
+                      <input
+                        type="text"
+                        value={docSearch}
+                        onChange={(e) => setDocSearch(e.target.value)}
+                        placeholder="Cari judul dokumen..."
+                        className="w-full pl-11 pr-4 py-2.5 bg-white border border-teal-100 rounded-xl text-xs font-bold text-teal-950 focus:outline-none"
+                      />
+                    </div>
+                    <select
+                      value={docFilterCategory}
+                      onChange={(e) => setDocFilterCategory(e.target.value)}
+                      className="p-2.5 bg-white border border-teal-100 rounded-xl text-xs font-bold text-teal-950 focus:outline-none w-full sm:w-64"
+                    >
+                      <option value="All">Semua Kategori</option>
+                      {Object.entries(categoryLabels).map(([key, label]) => (
+                        <option key={key} value={key}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Table */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-teal-950 text-white uppercase text-[9px] font-black tracking-widest">
+                          <th className="px-6 py-4">Nama Dokumen</th>
+                          <th className="px-6 py-4">Kategori</th>
+                          <th className="px-6 py-4">Tipe</th>
+                          <th className="px-6 py-4">Diunggah</th>
+                          <th className="px-6 py-4 text-right">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-teal-50 text-xs font-semibold text-teal-950">
+                        {documents
+                          .filter((doc) => {
+                            const matchSearch = doc.title.toLowerCase().includes(docSearch.toLowerCase());
+                            const matchCat = docFilterCategory === "All" || doc.category === docFilterCategory;
+                            return matchSearch && matchCat;
+                          })
+                          .map((doc) => (
+                            <tr key={doc.id} className="hover:bg-teal-50/20 transition-colors">
+                              <td className="px-6 py-4 max-w-xs sm:max-w-sm">
+                                <span className="font-extrabold text-teal-950 block mb-1 text-sm">{doc.title}</span>
+                                <span className="text-[10px] text-teal-800/60 font-medium block leading-relaxed">{doc.description || "Tidak ada deskripsi."}</span>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className={cn(
+                                  "px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border",
+                                  categoryColors[doc.category] || "bg-slate-50 text-slate-700 border-slate-100"
+                                )}>
+                                  {categoryLabels[doc.category] || doc.category}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 font-mono text-[10px]">
+                                {doc.fileUrl ? (
+                                  <a
+                                    href={doc.fileUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center gap-1 text-teal-600 hover:text-teal-800 underline uppercase"
+                                  >
+                                    <FileText className="w-3.5 h-3.5" />
+                                    {doc.fileType || "FILE"}
+                                  </a>
+                                ) : (
+                                  <a
+                                    href={doc.driveUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center gap-1 text-teal-600 hover:text-teal-800 underline uppercase"
+                                  >
+                                    <Briefcase className="w-3.5 h-3.5" />
+                                    LINK
+                                  </a>
+                                )}
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className="block text-[10px] font-bold text-teal-900">{doc.uploadedBy}</span>
+                                <span className="block text-[8px] text-teal-800/40 uppercase font-black">{new Date(doc.createdAt).toLocaleDateString()}</span>
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => setDocForm({
+                                      id: doc.id,
+                                      title: doc.title,
+                                      description: doc.description || "",
+                                      category: doc.category,
+                                      type: doc.fileUrl ? "upload" : "link",
+                                      fileUrl: doc.fileUrl || "",
+                                      driveUrl: doc.driveUrl || "",
+                                      fileType: doc.fileType || "",
+                                      fileSize: doc.fileSize || 0,
+                                      fileName: doc.fileUrl ? doc.fileUrl.split("/").pop() || "" : "",
+                                    })}
+                                    className="p-1.5 hover:bg-teal-50 text-teal-500 rounded-lg transition-all"
+                                    title="Edit Dokumen"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDocDelete(doc.id, doc.title)}
+                                    className="p-1.5 hover:bg-rose-50 text-rose-400 hover:text-rose-600 rounded-lg transition-all"
+                                    title="Hapus Dokumen"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        
+                        {documents.filter((doc) => {
+                          const matchSearch = doc.title.toLowerCase().includes(docSearch.toLowerCase());
+                          const matchCat = docFilterCategory === "All" || doc.category === docFilterCategory;
+                          return matchSearch && matchCat;
+                        }).length === 0 && (
+                          <tr>
+                            <td colSpan={5} className="py-12 text-center text-teal-800/30 uppercase tracking-widest font-black">
+                              <Folder className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                              Dokumen Tidak Ditemukan
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </motion.div>
