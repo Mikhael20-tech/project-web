@@ -12,10 +12,13 @@ import {
   Plus,
   Star,
   X,
+  Smartphone,
 } from "lucide-react";
+import { useToast } from "@/src/components/ToastProvider";
 
 const PortfolioPage = () => {
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [dosenList, setDosenList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -346,6 +349,30 @@ const PortfolioPage = () => {
                       <div className="w-2 h-2 rounded-full bg-orange-400" />
                       NIP. {selectedDosen.nip}
                     </p>
+
+                    <button
+                      onClick={() => {
+                        if (selectedDosen.kontak) {
+                          let cleaned = selectedDosen.kontak.replace(/\D/g, "");
+                          if (cleaned.startsWith("0")) {
+                            cleaned = "62" + cleaned.slice(1);
+                          } else if (cleaned.startsWith("8")) {
+                            cleaned = "62" + cleaned;
+                          }
+                          window.open(`https://wa.me/${cleaned}`, "_blank", "noopener,noreferrer");
+                        } else {
+                          toast({
+                            title: "KONTAK TIDAK TERSEDIA",
+                            description: "Dosen yang bersangkutan belum melengkapi nomor kontak WhatsApp di profil mereka.",
+                            variant: "error",
+                          });
+                        }
+                      }}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 group cursor-pointer shadow-lg shadow-emerald-500/20 w-fit"
+                    >
+                      <Smartphone className="w-3.5 h-3.5 text-white group-hover:scale-110 transition-transform" />
+                      <span>{selectedDosen.kontak ? "Hubungi Dosen" : "Hubungi Dosen (Kontak Belum Ada)"}</span>
+                    </button>
                   </motion.div>
 
                   <motion.section

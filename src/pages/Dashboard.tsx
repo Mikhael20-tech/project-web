@@ -702,25 +702,29 @@ const Dashboard = ({
                         <span className="text-[10px] font-bold text-teal-500 uppercase tracking-wider mt-1">{studentData.dosen.keahlian}</span>
                       )}
                       
-                      {studentData.dosen.kontak && (
-                        <a
-                          href={(() => {
+                      <button
+                        onClick={() => {
+                          if (studentData.dosen.kontak) {
                             let cleaned = studentData.dosen.kontak.replace(/\D/g, "");
                             if (cleaned.startsWith("0")) {
                               cleaned = "62" + cleaned.slice(1);
                             } else if (cleaned.startsWith("8")) {
                               cleaned = "62" + cleaned;
                             }
-                            return `https://wa.me/${cleaned}`;
-                          })()}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 mt-4 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-300 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 group cursor-pointer shadow-lg shadow-emerald-950/20"
-                        >
-                          <Smartphone className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
-                          <span>{studentData.dosen.kontak}</span>
-                        </a>
-                      )}
+                            window.open(`https://wa.me/${cleaned}`, "_blank", "noopener,noreferrer");
+                          } else {
+                            toast({
+                              title: "KONTAK TIDAK TERSEDIA",
+                              description: "Dosen yang bersangkutan belum melengkapi nomor kontak WhatsApp di profil mereka.",
+                              variant: "error",
+                            });
+                          }
+                        }}
+                        className="flex items-center gap-2 mt-4 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-300 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 group cursor-pointer shadow-lg shadow-emerald-950/20"
+                      >
+                        <Smartphone className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
+                        <span>{studentData.dosen.kontak ? "Hubungi Dosen" : "Hubungi Dosen (Kontak Belum Ada)"}</span>
+                      </button>
                     </div>
                   </div>
                 </div>
