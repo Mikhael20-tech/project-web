@@ -1,4 +1,4 @@
-﻿import "dotenv/config";
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { createServer } from "http";
@@ -99,6 +99,19 @@ const JWT_SECRET = process.env.JWT_SECRET || "WarDosPem-secret-key-123";
 if (!process.env.JWT_SECRET) {
   console.warn("⚠️  WARNING: JWT_SECRET tidak diatur di .env! Menggunakan fallback yang tidak aman untuk production.");
 }
+
+// Helper: Convert ALL CAPS or lowercase names to proper Title Case
+// e.g., "BUDI SANTOSO" → "Budi Santoso", "AHMAD NUR HIDAYAT" → "Ahmad Nur Hidayat"
+const toTitleCase = (str: string): string => {
+  if (!str) return str;
+  // If already mixed case (not all upper, not all lower), keep as-is
+  if (str !== str.toUpperCase() && str !== str.toLowerCase()) return str;
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 // Multer Storage Configuration (Use memory storage for Supabase upload)
@@ -420,7 +433,7 @@ app.get("/api/auth/google/callback", async (req, res) => {
     const userData = await userResponse.json();
 
     const email = userData.email;
-    const name = userData.name;
+    const name = toTitleCase(userData.name || "");
     const picture = userData.picture;
     
     if (!email) throw new Error("No email returned from Google");
