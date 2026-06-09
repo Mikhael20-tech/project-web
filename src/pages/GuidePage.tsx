@@ -183,7 +183,7 @@ const GuidePage = () => {
                       <div className="space-y-2">
                         <h3 className="font-extrabold text-teal-950 text-base leading-tight">Input Judul / Lokasi Rencana</h3>
                         <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                          Masukkan draf rencana judul skripsi, posisi magang, atau nama mitra sekolah Anda di pengaturan profil. Data ini akan otomatis dilampirkan dan dikunci saat Anda mengklik tombol pilih dosen.
+                          Masukkan draf Rencana Judul Tugas Akhir, posisi magang, atau nama mitra sekolah Anda di pengaturan profil. Data ini akan otomatis dilampirkan dan dikunci saat Anda mengklik tombol pilih dosen.
                         </p>
                       </div>
                     </div>
@@ -249,7 +249,7 @@ const GuidePage = () => {
                         <h3 className="font-extrabold text-teal-950 text-base">Tawarkan Projek Penelitian</h3>
                       </div>
                       <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                        Di tab "Projek Dosen", tambahkan topik-topik penelitian aktif yang Anda tawarkan. Mahasiswa skripsi dapat langsung memilih topik tersebut saat proses war berlangsung.
+                        Di tab "Projek Dosen", tambahkan topik-topik penelitian aktif yang Anda tawarkan. Mahasiswa Tugas Akhir dapat langsung memilih topik tersebut saat proses war berlangsung.
                       </p>
                     </div>
 
@@ -361,15 +361,15 @@ const GuidePage = () => {
                         <BookOpen className="w-6 h-6" />
                       </div>
                       <div className="space-y-2">
-                        <h3 className="text-lg font-black text-teal-950">2. War Skripsi / Artikel</h3>
+                        <h3 className="text-lg font-black text-teal-950">2. War Tugas Akhir / Artikel</h3>
                         <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                          Masa pemilihan <strong>Dosen Pembimbing Skripsi Utama</strong>. Mahasiswa bertanding memperebutkan kuota dospem berdasarkan kecocokan bidang riset.
+                          Masa pemilihan <strong>dosen pembimbing Tugas Akhir Utama</strong>. Mahasiswa bertanding memperebutkan kuota dospem berdasarkan kecocokan bidang riset.
                         </p>
                         <div className="p-3 bg-emerald-50/50 rounded-xl text-[10px] text-emerald-950 font-bold border border-emerald-100">
                           Mekanisme Pemilihan: <br/>
                           <span className="font-normal italic leading-tight block mt-1">
                             • Memilih judul penelitian yang ditawarkan dosen. <br/>
-                            • Atau mengajukan judul rencana proposal skripsi sendiri dari profil.
+                            • Atau mengajukan judul rencana proposal Tugas Akhir sendiri dari profil.
                           </span>
                         </div>
                       </div>

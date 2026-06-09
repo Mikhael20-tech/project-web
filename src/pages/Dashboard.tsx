@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -479,11 +479,11 @@ const Dashboard = ({
       return {
         dosenChoice: t("dash_student_dosen_choice"),
         selected: t("dash_student_selected"),
-        timelineLabel: t("dash_student_timeline_label") && !t("dash_student_timeline_label").includes("TIMELINE") ? t("dash_student_timeline_label") : "Milestone Pemilihan Skripsi",
+        timelineLabel: t("dash_student_timeline_label") && !t("dash_student_timeline_label").includes("TIMELINE") ? t("dash_student_timeline_label") : "Milestone Pemilihan Tugas Akhir",
         step2Title: "Input Rencana Judul",
-        step2Desc: profileStatus.title || "Rencana judul skripsi belum diisi",
+        step2Desc: profileStatus.title || "Rencana Judul Tugas Akhir belum diisi",
         step3Title: "Pilihan Dosen Dikunci",
-        step3Desc: "Kandidat pembimbing skripsi berhasil dikunci dan terdaftar",
+        step3Desc: "Kandidat pembimbing Tugas Akhir berhasil dikunci dan terdaftar",
         guidanceStatus: t("dash_student_guidance_status"),
       };
     }
@@ -560,7 +560,7 @@ const Dashboard = ({
                 Dosen <span className="text-teal-500 italic">War</span>
               </h1>
               <p className="text-teal-800/60 text-sm font-medium pr-12">
-                Portal resmi perebutan kuota pembimbing skripsi. Pastikan profil
+                Portal resmi perebutan kuota pembimbing Tugas Akhir. Pastikan profil
                 Anda sudah lengkap sebelum masa pemilihan dibuka.
               </p>
               <div className="flex items-center gap-2 mt-4 text-[9px] font-black text-teal-400 uppercase tracking-widest bg-teal-50/50 w-fit px-3 py-1.5 rounded-full border border-teal-100">
@@ -780,7 +780,7 @@ const Dashboard = ({
                       </div>
                     </div>
 
-                    {/* Step 2: Rencana Judul Skripsi */}
+                    {/* Step 2: Rencana Judul Tugas Akhir */}
                     <div className="relative flex items-start gap-4">
                       <div className="absolute -left-[23px] w-4 h-4 rounded-full bg-emerald-500/20 border border-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.3)]">
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />

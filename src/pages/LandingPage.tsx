@@ -123,7 +123,7 @@ const LandingPage = () => {
           >
             {lang === "id" ? (
               <>
-                Sistem pemilihan dosen pembimbing skripsi yang{" "}
+                Sistem pemilihan dosen pembimbing Tugas Akhir yang{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-orange-500 font-extrabold">
                   cepat
                 </span>{" "}
