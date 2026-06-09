@@ -1,4 +1,4 @@
-import "dotenv/config";
+﻿import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { createServer } from "http";
@@ -95,7 +95,7 @@ if (process.env.REDIS_URL) {
   });
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || "wardosen-secret-key-123";
+const JWT_SECRET = process.env.JWT_SECRET || "WarDosPem-secret-key-123";
 if (!process.env.JWT_SECRET) {
   console.warn("⚠️  WARNING: JWT_SECRET tidak diatur di .env! Menggunakan fallback yang tidak aman untuk production.");
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -95,7 +95,7 @@ const GuidePage = () => {
                 Pusat Bantuan Akademik
               </span>
               <h1 className="text-4xl md:text-5xl font-black tracking-tighter leading-none">
-                Panduan <span className="text-teal-400 italic">Portal WarDosen</span>
+                Panduan <span className="text-teal-400 italic">Portal WarDosPem</span>
               </h1>
               <p className="text-teal-100/70 text-sm md:text-base font-medium leading-relaxed">
                 Pelajari langkah-langkah, aturan, dan mekanisme pemilihan dosen pembimbing secara kompetitif, adil, dan transparan. Panduan ini mencakup peran mahasiswa, dosen, admin, serta penjelasan khusus dua kategori war.

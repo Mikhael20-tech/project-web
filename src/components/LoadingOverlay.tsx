@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { motion } from "motion/react";
 import { LogoIcon } from "@/src/components/Logo";
 
@@ -30,7 +30,7 @@ const LoadingOverlay: React.FC = () => {
         transition={{ delay: 0.2 }}
         className="mt-6 text-[10px] font-black uppercase tracking-[0.3em] text-teal-900/40"
       >
-        Loading WarDosen...
+        Loading WarDosPem...
       </motion.p>
     </motion.div>
   );

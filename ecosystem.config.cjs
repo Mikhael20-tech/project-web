@@ -1,7 +1,7 @@
-module.exports = {
+﻿module.exports = {
   apps: [
     {
-      name: "wardosen",
+      name: "WarDosPem",
       script: "./server.ts",
       interpreter: "./node_modules/.bin/tsx",
       watch: false,

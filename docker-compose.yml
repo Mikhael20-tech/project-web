@@ -1,9 +1,9 @@
-version: '3.8'
+﻿version: '3.8'
 
 services:
-  wardosen-app:
+  WarDosPem-app:
     image: ghcr.io/mikhael20-tech/project-web:latest
-    container_name: wardosen-service
+    container_name: WarDosPem-service
     restart: always
     expose:
       - "3000"
@@ -22,12 +22,12 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    command: caddy reverse-proxy --from wardospem.tech --to wardosen-app:3000
+    command: caddy reverse-proxy --from wardospem.tech --to WarDosPem-app:3000
     volumes:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - wardosen-app
+      - WarDosPem-app
 
 volumes:
   caddy_data:

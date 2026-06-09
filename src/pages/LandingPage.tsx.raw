@@ -365,7 +365,7 @@ const LandingPage = ({ user }: { user: any }) => {
                 <GraduationCap className="text-white w-6 h-6" />
               </div>
               <span className="text-2xl font-black text-teal-950 tracking-tighter">
-                WarDosen<span className="text-teal-500">.</span>
+                WarDosPem<span className="text-teal-500">.</span>
               </span>
             </div>
             <p className="text-teal-800/70 text-sm font-bold">

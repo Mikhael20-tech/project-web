@@ -1,11 +1,11 @@
-#!/bin/bash
+﻿#!/bin/bash
 set -e
 
-# --- AUTOMATED DEPLOYMENT SCRIPT FOR WARDOSEN ---
+# --- AUTOMATED DEPLOYMENT SCRIPT FOR WarDosPem ---
 # Jalankan skrip ini di VPS KVM Anda dengan perintah: bash deploy.sh
 
 echo "=================================================="
-echo "🚀 MEMULAI OTOMASI DEPLOYMENT WARDOSEN DI VPS KVM"
+echo "🚀 MEMULAI OTOMASI DEPLOYMENT WarDosPem DI VPS KVM"
 echo "=================================================="
 
 # 1. Tarik Kode Terbaru Dari GitHub
@@ -27,7 +27,7 @@ npm run build
 
 # 5. Kelola Proses Server Dengan PM2 (Zero Downtime)
 echo "🔄 Langkah 5: Memuat ulang server dengan PM2..."
-if pm2 list | grep -q "wardosen"; then
+if pm2 list | grep -q "WarDosPem"; then
     echo "✅ Server aktif ditemukan. Melakukan reload tanpa downtime (Zero Downtime)..."
     pm2 reload ecosystem.config.cjs
 else

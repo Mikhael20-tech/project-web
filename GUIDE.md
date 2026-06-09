@@ -1,6 +1,6 @@
-# Panduan Penggunaan WarDosen PTI UNESA
+﻿# Panduan Penggunaan WarDosPem PTI UNESA
 
-Dokumen ini berisi panduan teknis dan operasional untuk tiga peran utama dalam sistem WarDosen: **Administrator**, **Dosen**, dan **Mahasiswa**.
+Dokumen ini berisi panduan teknis dan operasional untuk tiga peran utama dalam sistem WarDosPem: **Administrator**, **Dosen**, dan **Mahasiswa**.
 
 ---
 
@@ -64,4 +64,4 @@ Mahasiswa adalah pengguna utama yang berpartisipasi dalam "War Dosen".
 4.  **Logout:** Selalu keluar dari akun Anda setelah selesai digunakan, terutama di perangkat publik.
 
 ---
-*Dibuat oleh Tim Pengembang WarDosen PTI UNESA - 2024/2025*
+*Dibuat oleh Tim Pengembang WarDosPem PTI UNESA - 2024/2025*

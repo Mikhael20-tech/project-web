@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
@@ -175,7 +175,7 @@ const LandingPage = () => {
       <section id="features" className="py-24 px-6 relative z-10 bg-transparent">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-20">
-            <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-4">{t("why_wardosen")}</h2>
+            <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-4">{t("why_WarDosPem")}</h2>
             <div className="w-20 h-1.5 bg-teal-500 mx-auto rounded-full" />
           </div>
 
