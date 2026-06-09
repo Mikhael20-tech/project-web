@@ -69,6 +69,16 @@ const categoryLabels: Record<string, string> = {
   OTHER: "Lain-lain / Dokumen Umum",
 };
 
+const categoryTranslationKeys: Record<string, string> = {
+  MOA: "cat_label_moa",
+  IA: "cat_label_ia",
+  PROPOSAL_MAGANG: "cat_label_proposal_magang",
+  SURAT_PERNYATAAN_BERDAMPAK: "cat_label_surat_berdampak",
+  TEMPLATE_LAPORAN_AKHIR_MAGANG: "cat_label_laporan_magang",
+  TEMPLATE_MOA_IA_MOBILITAS_AKADEMIK: "cat_label_moa_ia_mobilitas",
+  OTHER: "cat_label_other",
+};
+
 const categoryColors: Record<string, string> = {
   MOA: "bg-blue-50 text-blue-700 border-blue-100",
   IA: "bg-indigo-50 text-indigo-700 border-indigo-100",
@@ -3374,14 +3384,14 @@ const AdminDashboard = ({
                     <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center text-teal-500">
                       {docForm.id ? <Edit className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
                     </div>
-                    {docForm.id ? "Edit Dokumen" : "Tambah Dokumen"}
+                    {docForm.id ? t("doc_edit") : t("doc_add")}
                   </h3>
                   
                   <form onSubmit={handleDocSubmit} className="space-y-6">
                     {/* Tipe Dokumen: Upload File vs Tautan Link */}
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                        Sumber Dokumen
+                        {t("doc_source")}
                       </label>
                       <div className="flex gap-2 p-1 bg-teal-50 border border-teal-100 rounded-2xl">
                         <button
@@ -3394,7 +3404,7 @@ const AdminDashboard = ({
                               : "text-teal-800 hover:bg-teal-100/50"
                           )}
                         >
-                          Unggah File
+                          {t("doc_source_upload")}
                         </button>
                         <button
                           type="button"
@@ -3406,7 +3416,7 @@ const AdminDashboard = ({
                               : "text-teal-800 hover:bg-teal-100/50"
                           )}
                         >
-                          Tautan Drive
+                          {t("doc_source_link")}
                         </button>
                       </div>
                     </div>
@@ -3415,7 +3425,7 @@ const AdminDashboard = ({
                     {docForm.type === "upload" ? (
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                          File Dokumen
+                          {t("doc_file")}
                         </label>
                         <div className="relative">
                           <input
@@ -3432,7 +3442,7 @@ const AdminDashboard = ({
                                   <FileText className="w-5 h-5" />
                                 </div>
                                 <div className="min-w-0">
-                                  <p className="text-xs font-bold text-teal-950 truncate">{docForm.fileName || "File Terunggah"}</p>
+                                  <p className="text-xs font-bold text-teal-950 truncate">{docForm.fileName || t("doc_file_uploaded")}</p>
                                   <p className="text-[10px] font-medium text-teal-800/50">
                                     {docForm.fileSize ? `${(docForm.fileSize / 1024).toFixed(1)} KB` : ""} ({docForm.fileType?.toUpperCase()})
                                   </p>
@@ -3459,10 +3469,10 @@ const AdminDashboard = ({
                               </div>
                               <div>
                                 <p className="text-[11px] font-black uppercase tracking-wider text-teal-950">
-                                  {uploadLoading ? "Mengunggah..." : "Pilih File Dokumen"}
+                                  {uploadLoading ? t("doc_uploading") : t("doc_choose_file")}
                                 </p>
                                 <p className="text-[9px] text-teal-800/40 font-bold mt-0.5">
-                                  Maksimal 10MB (PDF, Word, Excel, ZIP, TXT)
+                                  {t("doc_max_size_hint")}
                                 </p>
                               </div>
                             </label>
@@ -3472,7 +3482,7 @@ const AdminDashboard = ({
                     ) : (
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                          Tautan Dokumen (Google Drive, dll)
+                          {t("doc_link_label")}
                         </label>
                         <input
                           type="url"
@@ -3496,10 +3506,10 @@ const AdminDashboard = ({
                       ) : (
                         <Zap className="w-4 h-4 text-teal-400" />
                       )}
-                      {aiDocAnalyzing ? "Menganalisis..." : "Klasifikasi AI ✨"}
+                      {aiDocAnalyzing ? t("doc_ai_analyzing") : t("doc_ai_classify")}
                     </button>
                     <p className="text-[8px] text-teal-800/40 font-semibold uppercase tracking-wider text-center">
-                      * AI Gemini akan menebak judul, kategori, dan deskripsi dari nama file/link.
+                      {t("doc_ai_hint")}
                     </p>
 
                     <div className="h-px bg-teal-50" />
@@ -3507,13 +3517,13 @@ const AdminDashboard = ({
                     {/* Judul Dokumen */}
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                        Judul Dokumen
+                        {t("doc_title_label")}
                       </label>
                       <input
                         type="text"
                         value={docForm.title}
                         onChange={(e) => setDocForm({ ...docForm, title: e.target.value })}
-                        placeholder="Contoh: Proposal Magang PTI UNESA"
+                        placeholder={t("doc_title_placeholder")}
                         required
                         className="w-full p-4 bg-teal-50 border border-teal-100 rounded-[1.25rem] text-teal-950 text-xs font-bold focus:outline-none focus:border-teal-400 transition-all shadow-inner"
                       />
@@ -3522,7 +3532,7 @@ const AdminDashboard = ({
                     {/* Kategori Dokumen */}
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                        Kategori Dokumen
+                        {t("doc_category_label")}
                       </label>
                       <select
                         value={docForm.category}
@@ -3530,9 +3540,9 @@ const AdminDashboard = ({
                         required
                         className="w-full p-4 bg-teal-50 border border-teal-100 rounded-[1.25rem] text-teal-950 text-xs font-bold focus:outline-none focus:border-teal-400 transition-all shadow-inner"
                       >
-                        {Object.entries(categoryLabels).map(([key, label]) => (
+                        {Object.keys(categoryTranslationKeys).map((key) => (
                           <option key={key} value={key}>
-                            {label}
+                            {t(categoryTranslationKeys[key])}
                           </option>
                         ))}
                       </select>
@@ -3541,12 +3551,12 @@ const AdminDashboard = ({
                     {/* Deskripsi Dokumen */}
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                        Deskripsi Singkat
+                        {t("doc_desc_label")}
                       </label>
                       <textarea
                         value={docForm.description}
                         onChange={(e) => setDocForm({ ...docForm, description: e.target.value })}
-                        placeholder="Berikan deskripsi singkat tentang kegunaan dokumen ini..."
+                        placeholder={t("doc_desc_placeholder")}
                         rows={3}
                         className="w-full p-4 bg-teal-50 border border-teal-100 rounded-[1.25rem] text-teal-950 text-xs font-bold focus:outline-none focus:border-teal-400 transition-all shadow-inner resize-none"
                       />
@@ -3570,7 +3580,7 @@ const AdminDashboard = ({
                           })}
                           className="px-4 py-4 bg-teal-50 hover:bg-teal-100 text-teal-800/60 rounded-2xl font-black text-[10px] uppercase tracking-wider transition-all"
                         >
-                          Batal
+                          {t("doc_cancel")}
                         </button>
                       )}
                       <button
@@ -3583,7 +3593,7 @@ const AdminDashboard = ({
                         ) : (
                           <Save className="w-4 h-4" />
                         )}
-                        {docForm.id ? "PERBARUI" : "SIMPAN"}
+                        {docForm.id ? t("doc_btn_update") : t("doc_btn_save")}
                       </button>
                     </div>
                   </form>
@@ -3595,8 +3605,8 @@ const AdminDashboard = ({
                 <div className="bg-white border border-teal-50 rounded-[2.5rem] overflow-hidden shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]">
                   <div className="p-8 border-b border-teal-50 bg-[#f8fdfc] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <h3 className="text-xl font-black text-teal-950 tracking-tight">Daftar Dokumen Akademik</h3>
-                      <p className="text-xs text-teal-800/60 font-medium">Unggah template MoA, IA, Panduan Magang, & Dokumen Penting</p>
+                      <h3 className="text-xl font-black text-teal-950 tracking-tight">{t("doc_list_title")}</h3>
+                      <p className="text-xs text-teal-800/60 font-medium">{t("doc_list_subtitle")}</p>
                     </div>
                   </div>
 
@@ -3608,7 +3618,7 @@ const AdminDashboard = ({
                         type="text"
                         value={docSearch}
                         onChange={(e) => setDocSearch(e.target.value)}
-                        placeholder="Cari judul dokumen..."
+                        placeholder={t("doc_search_placeholder")}
                         className="w-full pl-11 pr-4 py-2.5 bg-white border border-teal-100 rounded-xl text-xs font-bold text-teal-950 focus:outline-none"
                       />
                     </div>
@@ -3617,10 +3627,10 @@ const AdminDashboard = ({
                       onChange={(e) => setDocFilterCategory(e.target.value)}
                       className="p-2.5 bg-white border border-teal-100 rounded-xl text-xs font-bold text-teal-950 focus:outline-none w-full sm:w-64"
                     >
-                      <option value="All">Semua Kategori</option>
-                      {Object.entries(categoryLabels).map(([key, label]) => (
+                      <option value="All">{t("doc_category_all")}</option>
+                      {Object.keys(categoryTranslationKeys).map((key) => (
                         <option key={key} value={key}>
-                          {label}
+                          {t(categoryTranslationKeys[key])}
                         </option>
                       ))}
                     </select>
@@ -3631,11 +3641,11 @@ const AdminDashboard = ({
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="bg-teal-950 text-white uppercase text-[9px] font-black tracking-widest">
-                          <th className="px-6 py-4">Nama Dokumen</th>
-                          <th className="px-6 py-4">Kategori</th>
-                          <th className="px-6 py-4">Tipe</th>
-                          <th className="px-6 py-4">Diunggah</th>
-                          <th className="px-6 py-4 text-right">Aksi</th>
+                          <th className="px-6 py-4">{t("doc_th_name")}</th>
+                          <th className="px-6 py-4">{t("doc_th_category")}</th>
+                          <th className="px-6 py-4">{t("doc_th_type")}</th>
+                          <th className="px-6 py-4">{t("doc_th_uploaded")}</th>
+                          <th className="px-6 py-4 text-right">{t("doc_th_action")}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-teal-50 text-xs font-semibold text-teal-950">
@@ -3649,14 +3659,14 @@ const AdminDashboard = ({
                             <tr key={doc.id} className="hover:bg-teal-50/20 transition-colors">
                               <td className="px-6 py-4 max-w-xs sm:max-w-sm">
                                 <span className="font-extrabold text-teal-950 block mb-1 text-sm">{doc.title}</span>
-                                <span className="text-[10px] text-teal-800/60 font-medium block leading-relaxed">{doc.description || "Tidak ada deskripsi."}</span>
+                                <span className="text-[10px] text-teal-800/60 font-medium block leading-relaxed">{doc.description || t("doc_no_desc")}</span>
                               </td>
                               <td className="px-6 py-4">
                                 <span className={cn(
                                   "px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border",
                                   categoryColors[doc.category] || "bg-slate-50 text-slate-700 border-slate-100"
                                 )}>
-                                  {categoryLabels[doc.category] || doc.category}
+                                  {t(categoryTranslationKeys[doc.category] || "cat_label_other")}
                                 </span>
                               </td>
                               <td className="px-6 py-4 font-mono text-[10px]">
