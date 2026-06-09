@@ -1884,12 +1884,21 @@ app.post("/api/admin/broadcast/send", authenticate, isAdmin, async (req: any, re
     });
 
     const data = await response.json();
-    if (!data.status) throw new Error(data.reason || "Gagal mengirim ke Fonnte.");
+    if (!data.status) {
+      let friendlyReason = data.reason || "Gagal mengirim ke Fonnte.";
+      const reasonLower = friendlyReason.toLowerCase();
+      if (reasonLower.includes("disconnect") || reasonLower.includes("offline")) {
+        friendlyReason = "Device WhatsApp Anda terputus di Fonnte. Silakan masuk ke dashboard Fonnte Anda dan scan ulang QR code untuk menghubungkan WhatsApp Anda.";
+      } else if (reasonLower.includes("credential") || reasonLower.includes("token") || reasonLower.includes("unauthorized") || reasonLower.includes("invalid")) {
+        friendlyReason = "Token Fonnte tidak valid atau tidak diizinkan. Silakan periksa kembali konfigurasi FONNTE_TOKEN di file .env server Anda.";
+      }
+      throw new Error(friendlyReason);
+    }
 
     res.json({ success: true, count: students.length, details: data });
   } catch (err: any) {
     console.error("WA Broadcast Error:", err);
-    res.status(500).json({ error: err.message || "Gagal mengirim pesan WhatsApp." });
+    res.status(400).json({ error: err.message || "Gagal mengirim pesan WhatsApp." });
   }
 });
 

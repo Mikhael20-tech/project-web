@@ -170,6 +170,7 @@ const AdminDashboard = ({
     newPassword: "",
     confirmPassword: "",
   });
+  const [isChartReady, setIsChartReady] = useState(false);
   const [deleteData, setDeleteData] = useState<{
     type: "dosen" | "mahasiswa";
     id: string;
@@ -208,6 +209,13 @@ const AdminDashboard = ({
       return () => clearTimeout(timer);
     }
   }, [message]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsChartReady(true);
+    }, 300); // 300ms delay to let layouts stabilize
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (deleteData || aiImportOpen || confirmModal) {
@@ -1731,35 +1739,36 @@ const AdminDashboard = ({
                         <Zap className="w-4 h-4 text-teal-500" /> {t("dash_admin_occupancy_per_dosen")}
                       </h4>
                       <span className="text-[10px] font-black text-teal-300 uppercase tracking-widest">{t("dash_admin_top_10")}</span>
-                    </div>
-                    <div className="h-[300px] w-full min-w-0">
-                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                        <BarChart data={reports.slice(0, 10).map(d => ({ name: d.nama.split(" ")[0], terisi: d.mahasiswa.length, kuota: d.kuotaMax }))}>
-                          <defs>
-                            <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#14B8A6" stopOpacity={1} />
-                              <stop offset="100%" stopColor="#0D9488" stopOpacity={0.8} />
-                            </linearGradient>
-                            <linearGradient id="fullGradient" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#F43F5E" stopOpacity={1} />
-                              <stop offset="100%" stopColor="#E11D48" stopOpacity={0.8} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F0FAF8" />
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 900, fill: "#0D2E28" }} />
-                          <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 900, fill: "#0D2E28" }} />
-                          <Tooltip 
-                            cursor={{ fill: '#F8FDF9' }}
-                            contentStyle={{ borderRadius: "1.5rem", border: "none", boxShadow: "0 10px 30px rgba(0,0,0,0.1)", padding: "1rem" }}
-                            itemStyle={{ fontSize: "11px", fontWeight: "bold" }}
-                          />
-                          <Bar dataKey="terisi" radius={[8, 8, 0, 0]} animationDuration={1500}>
-                            {reports.slice(0, 10).map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.mahasiswa.length >= entry.kuotaMax ? "url(#fullGradient)" : "url(#barGradient)"} />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
+                    </div>                     <div className="h-[300px] w-full min-w-0">
+                      {isChartReady && (
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                          <BarChart data={reports.slice(0, 10).map(d => ({ name: d.nama.split(" ")[0], terisi: d.mahasiswa.length, kuota: d.kuotaMax }))}>
+                            <defs>
+                              <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#14B8A6" stopOpacity={1} />
+                                <stop offset="100%" stopColor="#0D9488" stopOpacity={0.8} />
+                              </linearGradient>
+                              <linearGradient id="fullGradient" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#F43F5E" stopOpacity={1} />
+                                <stop offset="100%" stopColor="#E11D48" stopOpacity={0.8} />
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F0FAF8" />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 900, fill: "#0D2E28" }} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 900, fill: "#0D2E28" }} />
+                            <Tooltip 
+                              cursor={{ fill: '#F8FDF9' }}
+                              contentStyle={{ borderRadius: "1.5rem", border: "none", boxShadow: "0 10px 30px rgba(0,0,0,0.1)", padding: "1rem" }}
+                              itemStyle={{ fontSize: "11px", fontWeight: "bold" }}
+                            />
+                            <Bar dataKey="terisi" radius={[8, 8, 0, 0]} animationDuration={1500}>
+                              {reports.slice(0, 10).map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.mahasiswa.length >= entry.kuotaMax ? "url(#fullGradient)" : "url(#barGradient)"} />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      )}
                     </div>
                   </div>
 
@@ -1791,37 +1800,38 @@ const AdminDashboard = ({
                               {t("dash_admin_filled")}
                             </span>
                           </div>
-
-                          <div className="h-[220px] w-full relative mt-4 min-w-0">
-                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                              <PieChart>
-                                <defs>
-                                  <linearGradient id="pieGradient" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stopColor="#14B8A6" />
-                                    <stop offset="100%" stopColor="#0D9488" />
-                                  </linearGradient>
-                                </defs>
-                                <Pie
-                                  data={[
-                                    { name: t("dash_admin_filled"), value: totalFilled },
-                                    { name: "Empty", value: Math.max(0, totalQuota - totalFilled) }
-                                  ]}
-                                  innerRadius={70}
-                                  outerRadius={90}
-                                  paddingAngle={8}
-                                  dataKey="value"
-                                  stroke="none"
-                                  startAngle={90}
-                                  endAngle={450}
-                                >
-                                  <Cell fill="url(#pieGradient)" />
-                                  <Cell fill="#F0FAF8" />
-                                </Pie>
-                                <Tooltip 
-                                  contentStyle={{ borderRadius: "1.25rem", border: "none", boxShadow: "0 10px 30px rgba(0,0,0,0.05)" }}
-                                />
-                              </PieChart>
-                            </ResponsiveContainer>
+                           <div className="h-[220px] w-full relative mt-4 min-w-0">
+                            {isChartReady && (
+                              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                                <PieChart>
+                                  <defs>
+                                    <linearGradient id="pieGradient" x1="0" y1="0" x2="0" y2="1">
+                                      <stop offset="0%" stopColor="#14B8A6" />
+                                      <stop offset="100%" stopColor="#0D9488" />
+                                    </linearGradient>
+                                  </defs>
+                                  <Pie
+                                    data={[
+                                      { name: t("dash_admin_filled"), value: totalFilled },
+                                      { name: "Empty", value: Math.max(0, totalQuota - totalFilled) }
+                                    ]}
+                                    innerRadius={70}
+                                    outerRadius={90}
+                                    paddingAngle={8}
+                                    dataKey="value"
+                                    stroke="none"
+                                    startAngle={90}
+                                    endAngle={450}
+                                  >
+                                    <Cell fill="url(#pieGradient)" />
+                                    <Cell fill="#F0FAF8" />
+                                  </Pie>
+                                  <Tooltip 
+                                    contentStyle={{ borderRadius: "1.25rem", border: "none", boxShadow: "0 10px 30px rgba(0,0,0,0.05)" }}
+                                  />
+                                </PieChart>
+                              </ResponsiveContainer>
+                            )}
                             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                                 <Users className="w-6 h-6 text-teal-100 mb-1" />
                                 <span className="text-[10px] font-black text-teal-800/20 uppercase tracking-[0.2em]">LIVE</span>
