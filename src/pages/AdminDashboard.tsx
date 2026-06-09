@@ -1732,8 +1732,8 @@ const AdminDashboard = ({
                       </h4>
                       <span className="text-[10px] font-black text-teal-300 uppercase tracking-widest">{t("dash_admin_top_10")}</span>
                     </div>
-                    <div className="h-[300px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
+                    <div className="h-[300px] w-full min-w-0">
+                      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <BarChart data={reports.slice(0, 10).map(d => ({ name: d.nama.split(" ")[0], terisi: d.mahasiswa.length, kuota: d.kuotaMax }))}>
                           <defs>
                             <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
@@ -1792,8 +1792,8 @@ const AdminDashboard = ({
                             </span>
                           </div>
 
-                          <div className="h-[220px] w-full relative mt-4">
-                            <ResponsiveContainer width="100%" height="100%">
+                          <div className="h-[220px] w-full relative mt-4 min-w-0">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                               <PieChart>
                                 <defs>
                                   <linearGradient id="pieGradient" x1="0" y1="0" x2="0" y2="1">

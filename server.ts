@@ -32,7 +32,7 @@ if (supabaseUrl && supabaseKey) {
 
 // Initialize Google Generative AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-const aiModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const aiModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 let _prisma: PrismaClient | null = null;
 const prisma = new Proxy({} as PrismaClient, {
@@ -1838,8 +1838,8 @@ app.post("/api/admin/broadcast/ai", authenticate, isAdmin, async (req, res) => {
     
     res.json({ message: text });
   } catch (err: any) {
-    console.error("AI Broadcast Error:", err);
-    res.status(500).json({ error: "Gagal menghasilkan pesan AI." });
+    console.error("AI Broadcast Error:", err?.message || err);
+    res.status(500).json({ error: `Gagal menghasilkan pesan AI: ${err?.message || "Unknown error"}` });
   }
 });
 
