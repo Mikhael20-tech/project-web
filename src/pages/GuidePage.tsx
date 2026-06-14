@@ -359,7 +359,7 @@ const GuidePage = () => {
                         </p>
                         <div className="p-3 bg-indigo-50/50 rounded-xl text-[10px] text-indigo-950 font-bold border border-indigo-100">
                           {t("guide_cat_magang_format_label")} <br/>
-                          <span className="font-mono text-[9px]">"Posisi Magang - Nama Mitra"</span> <br/>
+                          <span className="font-mono text-[9px]">"{t("guide_cat_magang_format_template")}"</span> <br/>
                           {t("guide_cat_magang_format_example")}
                         </div>
                       </div>
