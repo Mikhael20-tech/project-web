@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -9,7 +9,6 @@ import {
   BookOpen,
   Briefcase,
   Award,
-  CheckCircle2,
   Info,
   Calendar,
   ArrowLeft,
@@ -20,16 +19,7 @@ import {
   FileText,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
-
-const categoryLabels: Record<string, string> = {
-  MOA: "Memorandum of Agreement (MoA)",
-  IA: "Implementation Agreement (IA)",
-  PROPOSAL_MAGANG: "Proposal Magang",
-  SURAT_PERNYATAAN_BERDAMPAK: "Surat Pernyataan Berdampak",
-  TEMPLATE_LAPORAN_AKHIR_MAGANG: "Template Laporan Akhir Magang",
-  TEMPLATE_MOA_IA_MOBILITAS_AKADEMIK: "Template MoA & IA Mobilitas Akademik",
-  OTHER: "Lain-lain / Dokumen Umum",
-};
+import { useLanguage } from "@/src/lib/LanguageContext";
 
 const categoryColors: Record<string, string> = {
   MOA: "bg-blue-50 text-blue-700 border-blue-100",
@@ -43,11 +33,23 @@ const categoryColors: Record<string, string> = {
 
 const GuidePage = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<"mahasiswa" | "dosen" | "admin" | "kategori" | "documents">("mahasiswa");
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
+
+  // Category labels built from translations so they switch with language
+  const categoryLabels: Record<string, string> = {
+    MOA: t("cat_label_moa"),
+    IA: t("cat_label_ia"),
+    PROPOSAL_MAGANG: t("cat_label_proposal_magang"),
+    SURAT_PERNYATAAN_BERDAMPAK: t("cat_label_surat_berdampak"),
+    TEMPLATE_LAPORAN_AKHIR_MAGANG: t("cat_label_laporan_magang"),
+    TEMPLATE_MOA_IA_MOBILITAS_AKADEMIK: t("cat_label_moa_ia_mobilitas"),
+    OTHER: t("cat_label_other"),
+  };
 
   useEffect(() => {
     const fetchDocs = async () => {
@@ -67,11 +69,11 @@ const GuidePage = () => {
   }, []);
 
   const tabs = [
-    { id: "mahasiswa", label: "Mahasiswa", icon: <Users className="w-4 h-4" /> },
-    { id: "dosen", label: "Dosen", icon: <GraduationCap className="w-4 h-4" /> },
-    { id: "admin", label: "Admin", icon: <Settings className="w-4 h-4" /> },
-    { id: "kategori", label: "Kategori War", icon: <Zap className="w-4 h-4" /> },
-    { id: "documents", label: "Unduh Dokumen & Template", icon: <Folder className="w-4 h-4" /> },
+    { id: "mahasiswa", label: t("type_student"), icon: <Users className="w-4 h-4" /> },
+    { id: "dosen", label: t("type_dosen"), icon: <GraduationCap className="w-4 h-4" /> },
+    { id: "admin", label: t("nav_admin"), icon: <Settings className="w-4 h-4" /> },
+    { id: "kategori", label: t("guide_tab_kategori"), icon: <Zap className="w-4 h-4" /> },
+    { id: "documents", label: t("guide_tab_documents"), icon: <Folder className="w-4 h-4" /> },
   ];
 
   return (
@@ -85,20 +87,28 @@ const GuidePage = () => {
             className="flex items-center gap-2 px-5 py-2.5 bg-white border border-teal-100 rounded-xl text-teal-800 text-[10px] font-black uppercase tracking-widest hover:bg-teal-50 hover:border-teal-200 transition-all shadow-sm w-fit"
           >
             <ArrowLeft className="w-4 h-4" />
-            Kembali
+            {t("port_back")}
           </button>
 
           <div className="bg-gradient-to-r from-teal-950 to-teal-900 rounded-[3rem] p-10 md:p-14 text-white shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-80 h-80 bg-teal-500/10 rounded-full blur-[100px] pointer-events-none" />
             <div className="relative z-10 max-w-2xl space-y-4">
               <span className="px-4 py-1.5 bg-teal-500/20 border border-teal-500/30 text-teal-300 rounded-full text-[9px] font-black uppercase tracking-widest inline-block">
-                Pusat Bantuan Akademik
+                {t("guide_badge")}
               </span>
               <h1 className="text-4xl md:text-5xl font-black tracking-tighter leading-none">
-                Panduan <span className="text-teal-400 italic">Portal WarDosPem</span>
+                {t("guide_title").split("Portal WarDosPem").length > 1 ? (
+                  <>
+                    {t("guide_title").split("Portal WarDosPem")[0]}
+                    <span className="text-teal-400 italic">Portal WarDosPem</span>
+                    {t("guide_title").split("Portal WarDosPem")[1]}
+                  </>
+                ) : (
+                  <span className="text-teal-400 italic">{t("guide_title")}</span>
+                )}
               </h1>
               <p className="text-teal-100/70 text-sm md:text-base font-medium leading-relaxed">
-                Pelajari langkah-langkah, aturan, dan mekanisme pemilihan dosen pembimbing secara kompetitif, adil, dan transparan. Panduan ini mencakup peran mahasiswa, dosen, admin, serta penjelasan khusus dua kategori war.
+                {t("guide_desc")}
               </p>
             </div>
           </div>
@@ -144,8 +154,8 @@ const GuidePage = () => {
               {activeTab === "mahasiswa" && (
                 <div className="space-y-8">
                   <div className="space-y-2">
-                    <h2 className="text-2xl font-black text-teal-950 tracking-tight">Panduan Alur untuk Mahasiswa</h2>
-                    <p className="text-sm text-teal-800/60 font-medium">Langkah demi langkah bagi mahasiswa untuk memenangkan war dosen pembimbing pilihan.</p>
+                    <h2 className="text-2xl font-black text-teal-950 tracking-tight">{t("guide_mhs_title")}</h2>
+                    <p className="text-sm text-teal-800/60 font-medium">{t("guide_mhs_subtitle")}</p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
@@ -155,9 +165,9 @@ const GuidePage = () => {
                         1
                       </div>
                       <div className="space-y-2">
-                        <h3 className="font-extrabold text-teal-950 text-base leading-tight">Lengkapi Profil Wajib</h3>
+                        <h3 className="font-extrabold text-teal-950 text-base leading-tight">{t("guide_mhs_step1_title")}</h3>
                         <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                          Sebelum masa war dimulai, lengkapi foto profil asli, nomor WhatsApp aktif, dan perbarui password bawaan Anda. Profil yang tidak lengkap akan memblokir tombol pemilihan.
+                          {t("guide_mhs_step1_desc")}
                         </p>
                       </div>
                     </div>
@@ -168,9 +178,9 @@ const GuidePage = () => {
                         2
                       </div>
                       <div className="space-y-2">
-                        <h3 className="font-extrabold text-teal-950 text-base leading-tight">Eksplorasi Portofolio Dosen</h3>
+                        <h3 className="font-extrabold text-teal-950 text-base leading-tight">{t("guide_mhs_step2_title")}</h3>
                         <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                          Pelajari direktori portofolio dosen di menu utama. Tinjau bidang keahlian, topik riset yang ditawarkan (jika ada), sisa kuota bimbingan, serta kesesuaian dengan rencana riset/lokasi magang Anda.
+                          {t("guide_mhs_step2_desc")}
                         </p>
                       </div>
                     </div>
@@ -181,9 +191,9 @@ const GuidePage = () => {
                         3
                       </div>
                       <div className="space-y-2">
-                        <h3 className="font-extrabold text-teal-950 text-base leading-tight">Input Judul / Lokasi Rencana</h3>
+                        <h3 className="font-extrabold text-teal-950 text-base leading-tight">{t("guide_mhs_step3_title")}</h3>
                         <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                          Masukkan draf Rencana Judul Tugas Akhir, posisi magang, atau nama mitra sekolah Anda di pengaturan profil. Data ini akan otomatis dilampirkan dan dikunci saat Anda mengklik tombol pilih dosen.
+                          {t("guide_mhs_step3_desc")}
                         </p>
                       </div>
                     </div>
@@ -194,9 +204,9 @@ const GuidePage = () => {
                         4
                       </div>
                       <div className="space-y-2">
-                        <h3 className="font-extrabold text-teal-950 text-base leading-tight">Ikuti Real-time Live War</h3>
+                        <h3 className="font-extrabold text-teal-950 text-base leading-tight">{t("guide_mhs_step4_title")}</h3>
                         <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                          Pantau penghitung mundur server. Saat status beralih menjadi <strong>LIVE WAR</strong>, klik tombol "PILIH" di samping nama dosen target secepat mungkin. Kuota diproses real-time (first-come, first-served).
+                          {t("guide_mhs_step4_desc")}
                         </p>
                       </div>
                     </div>
@@ -207,9 +217,9 @@ const GuidePage = () => {
                     <div className="flex gap-4 items-start">
                       <FileText className="w-6 h-6 text-teal-600 shrink-0 mt-0.5" />
                       <div>
-                        <h4 className="font-extrabold text-teal-950 text-sm">Butuh Dokumen Pendukung?</h4>
+                        <h4 className="font-extrabold text-teal-950 text-sm">{t("guide_mhs_doc_title")}</h4>
                         <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                          Template MoA, IA, Proposal Magang, Surat Pernyataan Berdampak, dan Template Laporan Akhir tersedia untuk diunduh langsung.
+                          {t("guide_mhs_doc_desc")}
                         </p>
                       </div>
                     </div>
@@ -217,7 +227,7 @@ const GuidePage = () => {
                       onClick={() => setActiveTab("documents")}
                       className="px-5 py-2.5 bg-teal-950 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-teal-800 transition-all shrink-0 shadow-md shadow-teal-950/10"
                     >
-                      Unduh Dokumen & Template
+                      {t("guide_mhs_doc_btn")}
                     </button>
                   </div>
 
@@ -228,48 +238,48 @@ const GuidePage = () => {
               {activeTab === "dosen" && (
                 <div className="space-y-8">
                   <div className="space-y-2">
-                    <h2 className="text-2xl font-black text-teal-950 tracking-tight">Panduan Alur untuk Dosen</h2>
-                    <p className="text-sm text-teal-800/60 font-medium">Bagaimana dosen memantau kuota bimbingan, menyusun projek penawaran, dan mengelola daftar bimbingan.</p>
+                    <h2 className="text-2xl font-black text-teal-950 tracking-tight">{t("guide_dosen_title")}</h2>
+                    <p className="text-sm text-teal-800/60 font-medium">{t("guide_dosen_subtitle")}</p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                     <div className="p-6 bg-teal-50/30 border border-teal-50/50 rounded-3xl space-y-3">
                       <div className="flex items-center gap-3">
                         <Award className="w-5 h-5 text-teal-600" />
-                        <h3 className="font-extrabold text-teal-950 text-base">Kelola Profil & Keahlian</h3>
+                        <h3 className="font-extrabold text-teal-950 text-base">{t("guide_dosen_card1_title")}</h3>
                       </div>
                       <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                        Lengkapi bidang keahlian spesifik, riwayat pendidikan singkat, dan kutipan riset/bio Anda. Informasi profil yang menarik akan membantu mahasiswa mengenali relevansi topik Anda.
+                        {t("guide_dosen_card1_desc")}
                       </p>
                     </div>
 
                     <div className="p-6 bg-teal-50/30 border border-teal-50/50 rounded-3xl space-y-3">
                       <div className="flex items-center gap-3">
                         <BookOpen className="w-5 h-5 text-teal-600" />
-                        <h3 className="font-extrabold text-teal-950 text-base">Tawarkan Projek Penelitian</h3>
+                        <h3 className="font-extrabold text-teal-950 text-base">{t("guide_dosen_card2_title")}</h3>
                       </div>
                       <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                        Di tab "Projek Dosen", tambahkan topik-topik penelitian aktif yang Anda tawarkan. Mahasiswa Tugas Akhir dapat langsung memilih topik tersebut saat proses war berlangsung.
+                        {t("guide_dosen_card2_desc")}
                       </p>
                     </div>
 
                     <div className="p-6 bg-teal-50/30 border border-teal-50/50 rounded-3xl space-y-3">
                       <div className="flex items-center gap-3">
                         <Users className="w-5 h-5 text-teal-600" />
-                        <h3 className="font-extrabold text-teal-950 text-base">Pantau Mahasiswa Bimbingan</h3>
+                        <h3 className="font-extrabold text-teal-950 text-base">{t("guide_dosen_card3_title")}</h3>
                       </div>
                       <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                        Lihat daftar nama mahasiswa yang berhasil memenangkan kuota Anda secara real-time. Anda dapat langsung mengklik tombol kontak WhatsApp untuk segera terhubung dan berdiskusi.
+                        {t("guide_dosen_card3_desc")}
                       </p>
                     </div>
 
                     <div className="p-6 bg-teal-50/30 border border-teal-50/50 rounded-3xl space-y-3">
                       <div className="flex items-center gap-3">
                         <AlertCircle className="w-5 h-5 text-teal-600" />
-                        <h3 className="font-extrabold text-teal-950 text-base">Manajemen Bimbingan</h3>
+                        <h3 className="font-extrabold text-teal-950 text-base">{t("guide_dosen_card4_title")}</h3>
                       </div>
                       <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                        Dosen memiliki hak prerogatif untuk menyetujui rencana bimbingan. Jika terdapat ketidaksesuaian topik yang krusial, dosen dapat mengeluarkan mahasiswa dari daftar agar kuota slot kembali terbuka.
+                        {t("guide_dosen_card4_desc")}
                       </p>
                     </div>
                   </div>
@@ -280,17 +290,17 @@ const GuidePage = () => {
               {activeTab === "admin" && (
                 <div className="space-y-8">
                   <div className="space-y-2">
-                    <h2 className="text-2xl font-black text-teal-950 tracking-tight">Panduan Ruang Kontrol Admin</h2>
-                    <p className="text-sm text-teal-800/60 font-medium">Pengelolaan pintu akses war, integrasi blast WhatsApp, dan manajemen data server.</p>
+                    <h2 className="text-2xl font-black text-teal-950 tracking-tight">{t("guide_admin_title")}</h2>
+                    <p className="text-sm text-teal-800/60 font-medium">{t("guide_admin_subtitle")}</p>
                   </div>
 
                   <div className="space-y-4">
                     <div className="flex items-start gap-4 p-5 border border-teal-50 rounded-2xl hover:bg-slate-50 transition-colors">
                       <Calendar className="w-5 h-5 text-teal-500 shrink-0 mt-0.5" />
                       <div className="space-y-1">
-                        <h4 className="text-sm font-extrabold text-teal-950">Konfigurasi Jadwal & Target Periode</h4>
+                        <h4 className="text-sm font-extrabold text-teal-950">{t("guide_admin_item1_title")}</h4>
                         <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                          Atur waktu mulai (START) dan waktu selesai (END) secara presisi. Tentukan juga Kategori War yang aktif (Magang atau Skripsi) serta target angkatan yang boleh ikut bertanding (misal: "22, 23").
+                          {t("guide_admin_item1_desc")}
                         </p>
                       </div>
                     </div>
@@ -298,9 +308,9 @@ const GuidePage = () => {
                     <div className="flex items-start gap-4 p-5 border border-teal-50 rounded-2xl hover:bg-slate-50 transition-colors">
                       <Zap className="w-5 h-5 text-teal-500 shrink-0 mt-0.5" />
                       <div className="space-y-1">
-                        <h4 className="text-sm font-extrabold text-teal-950">Impor Massal Terverifikasi AI</h4>
+                        <h4 className="text-sm font-extrabold text-teal-950">{t("guide_admin_item2_title")}</h4>
                         <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                          Gunakan Asisten Impor AI untuk meregistrasikan ribuan mahasiswa atau puluhan dosen baru. Cukup upload Excel/CSV atau copy-paste chat WA daftar mentah. AI akan merapikan nama (Title Case), mendeteksi anomali NIM/NIP, dan memeriksa duplikasi sebelum masuk ke database.
+                          {t("guide_admin_item2_desc")}
                         </p>
                       </div>
                     </div>
@@ -308,9 +318,9 @@ const GuidePage = () => {
                     <div className="flex items-start gap-4 p-5 border border-teal-50 rounded-2xl hover:bg-slate-50 transition-colors">
                       <Info className="w-5 h-5 text-teal-500 shrink-0 mt-0.5" />
                       <div className="space-y-1">
-                        <h4 className="text-sm font-extrabold text-teal-950">Emergency Stop & Emergency Control</h4>
+                        <h4 className="text-sm font-extrabold text-teal-950">{t("guide_admin_item3_title")}</h4>
                         <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                          Jika terjadi kendala sistem atau kebocoran jadwal, Admin dapat mengklik tombol "EMERGENCY STOP" di tab Jadwal untuk langsung mengunci seluruh aksi pemilihan dosen di seluruh portal secara instan.
+                          {t("guide_admin_item3_desc")}
                         </p>
                       </div>
                     </div>
@@ -318,9 +328,9 @@ const GuidePage = () => {
                     <div className="flex items-start gap-4 p-5 border border-teal-50 rounded-2xl hover:bg-slate-50 transition-colors">
                       <Users className="w-5 h-5 text-teal-500 shrink-0 mt-0.5" />
                       <div className="space-y-1">
-                        <h4 className="text-sm font-extrabold text-teal-950">WhatsApp AI Broadcast Center</h4>
+                        <h4 className="text-sm font-extrabold text-teal-950">{t("guide_admin_item4_title")}</h4>
                         <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                          Gunakan generator teks AI (Gemini) untuk menyusun pesan pengumuman resmi WhatsApp dengan gaya profesional dan ikonik, lalu kirimkan blast pesan tersebut secara massal ke angkatan aktif terpilih.
+                          {t("guide_admin_item4_desc")}
                         </p>
                       </div>
                     </div>
@@ -332,8 +342,8 @@ const GuidePage = () => {
               {activeTab === "kategori" && (
                 <div className="space-y-8">
                   <div className="space-y-2">
-                    <h2 className="text-2xl font-black text-teal-950 tracking-tight">Kategori Pemilihan (War Kategori)</h2>
-                    <p className="text-sm text-teal-800/60 font-medium">Sistem portal ini terbagi menjadi 2 fokus kategori sesuai dengan agenda akademik semester prodi:</p>
+                    <h2 className="text-2xl font-black text-teal-950 tracking-tight">{t("guide_cat_title")}</h2>
+                    <p className="text-sm text-teal-800/60 font-medium">{t("guide_cat_subtitle")}</p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 max-w-3xl">
@@ -343,14 +353,14 @@ const GuidePage = () => {
                         <Briefcase className="w-6 h-6" />
                       </div>
                       <div className="space-y-2">
-                        <h3 className="text-lg font-black text-teal-950">1. War Magang</h3>
+                        <h3 className="text-lg font-black text-teal-950">{t("guide_cat_magang_title")}</h3>
                         <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                          Masa pemilihan <strong>Dosen Pembimbing Lapangan (DPL) Magang Industri</strong>. 
+                          <strong>{t("guide_cat_magang_desc")}</strong>
                         </p>
                         <div className="p-3 bg-indigo-50/50 rounded-xl text-[10px] text-indigo-950 font-bold border border-indigo-100">
-                          Format Judul Profil: <br/>
+                          {t("guide_cat_magang_format_label")} <br/>
                           <span className="font-mono text-[9px]">"Posisi Magang - Nama Mitra"</span> <br/>
-                          Contoh: <span className="font-normal italic">UI/UX Designer - PT GoTo</span>
+                          {t("guide_cat_magang_format_example")}
                         </div>
                       </div>
                     </div>
@@ -361,15 +371,15 @@ const GuidePage = () => {
                         <BookOpen className="w-6 h-6" />
                       </div>
                       <div className="space-y-2">
-                        <h3 className="text-lg font-black text-teal-950">2. War Tugas Akhir / Artikel</h3>
+                        <h3 className="text-lg font-black text-teal-950">{t("guide_cat_skripsi_title")}</h3>
                         <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                          Masa pemilihan <strong>dosen pembimbing Tugas Akhir Utama</strong>. Mahasiswa bertanding memperebutkan kuota dospem berdasarkan kecocokan bidang riset.
+                          {t("guide_cat_skripsi_desc")}
                         </p>
                         <div className="p-3 bg-emerald-50/50 rounded-xl text-[10px] text-emerald-950 font-bold border border-emerald-100">
-                          Mekanisme Pemilihan: <br/>
+                          {t("guide_cat_skripsi_mech_label")} <br/>
                           <span className="font-normal italic leading-tight block mt-1">
-                            • Memilih judul penelitian yang ditawarkan dosen. <br/>
-                            • Atau mengajukan judul rencana proposal Tugas Akhir sendiri dari profil.
+                            • {t("guide_cat_skripsi_mech_1")} <br/>
+                            • {t("guide_cat_skripsi_mech_2")}
                           </span>
                         </div>
                       </div>
@@ -382,9 +392,9 @@ const GuidePage = () => {
               {activeTab === "documents" && (
                 <div className="space-y-8">
                   <div className="space-y-2">
-                    <h2 className="text-2xl font-black text-teal-950 tracking-tight">Unduh Dokumen & Template Akademik</h2>
+                    <h2 className="text-2xl font-black text-teal-950 tracking-tight">{t("guide_doc_title")}</h2>
                     <p className="text-sm text-teal-800/60 font-medium">
-                      Unduh berkas template administrasi resmi, pedoman magang, format proposal, MoA, serta IA untuk keperluan akademik Anda.
+                      {t("guide_doc_subtitle")}
                     </p>
                   </div>
 
@@ -396,7 +406,7 @@ const GuidePage = () => {
                         type="text"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Cari nama dokumen..."
+                        placeholder={t("doc_search_placeholder")}
                         className="w-full pl-11 pr-4 py-2.5 bg-white border border-teal-100 rounded-xl text-xs font-bold text-teal-950 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
                       />
                     </div>
@@ -405,7 +415,7 @@ const GuidePage = () => {
                       onChange={(e) => setCategoryFilter(e.target.value)}
                       className="p-2.5 bg-white border border-teal-100 rounded-xl text-xs font-bold text-teal-950 focus:outline-none w-full sm:w-64"
                     >
-                      <option value="All">Semua Kategori</option>
+                      <option value="All">{t("doc_category_all")}</option>
                       {Object.entries(categoryLabels).map(([key, label]) => (
                         <option key={key} value={key}>
                           {label}
@@ -418,7 +428,7 @@ const GuidePage = () => {
                   {loading ? (
                     <div className="py-12 text-center text-teal-800/40 uppercase tracking-widest font-black flex items-center justify-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-teal-500 animate-ping" />
-                      Memuat Dokumen...
+                      {t("guide_doc_loading")}
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -453,14 +463,14 @@ const GuidePage = () => {
                                   {doc.title}
                                 </h3>
                                 <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                                  {doc.description || "Tidak ada deskripsi singkat."}
+                                  {doc.description || t("guide_doc_no_desc")}
                                 </p>
                               </div>
                             </div>
 
                             <div className="flex items-center justify-between gap-4 pt-4 border-t border-teal-50/50">
                               <div className="text-[9px] font-bold text-teal-800/40 uppercase tracking-wider">
-                                Diunggah: {new Date(doc.createdAt).toLocaleDateString()}
+                                {t("guide_doc_uploaded")} {new Date(doc.createdAt).toLocaleDateString()}
                               </div>
                               {doc.fileUrl ? (
                                 <a
@@ -470,7 +480,7 @@ const GuidePage = () => {
                                   className="flex items-center gap-1.5 px-4 py-2.5 bg-teal-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-teal-700 transition-all shadow-md shadow-teal-500/10"
                                 >
                                   <Download className="w-3.5 h-3.5" />
-                                  Unduh File
+                                  {t("guide_doc_download")}
                                 </a>
                               ) : (
                                 <a
@@ -480,7 +490,7 @@ const GuidePage = () => {
                                   className="flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-indigo-700 transition-all shadow-md shadow-indigo-500/10"
                                 >
                                   <Briefcase className="w-3.5 h-3.5" />
-                                  Buka Link Drive
+                                  {t("guide_doc_open_link")}
                                 </a>
                               )}
                             </div>
@@ -494,7 +504,7 @@ const GuidePage = () => {
                       }).length === 0 && (
                         <div className="col-span-full py-16 text-center border-2 border-dashed border-teal-100 rounded-[2.5rem] bg-teal-50/10 text-teal-800/30 uppercase tracking-widest font-black">
                           <Folder className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                          Tidak Ada Dokumen
+                          {t("guide_doc_empty")}
                         </div>
                       )}
                     </div>
