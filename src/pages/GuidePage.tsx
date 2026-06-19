@@ -17,6 +17,7 @@ import {
   Download,
   Folder,
   FileText,
+  PlayCircle,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useLanguage } from "@/src/lib/LanguageContext";
@@ -34,7 +35,7 @@ const categoryColors: Record<string, string> = {
 const GuidePage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<"mahasiswa" | "dosen" | "admin" | "kategori" | "documents">("mahasiswa");
+  const [activeTab, setActiveTab] = useState<"tutorial" | "mahasiswa" | "dosen" | "admin" | "kategori" | "documents">("tutorial");
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -69,6 +70,7 @@ const GuidePage = () => {
   }, []);
 
   const tabs = [
+    { id: "tutorial", label: "Video Tutorial", icon: <PlayCircle className="w-4 h-4" /> },
     { id: "mahasiswa", label: t("type_student"), icon: <Users className="w-4 h-4" /> },
     { id: "dosen", label: t("type_dosen"), icon: <GraduationCap className="w-4 h-4" /> },
     { id: "admin", label: t("nav_admin"), icon: <Settings className="w-4 h-4" /> },
@@ -150,6 +152,58 @@ const GuidePage = () => {
               transition={{ duration: 0.25 }}
               className="space-y-10"
             >
+              {/* --- TUTORIAL TAB --- */}
+              {activeTab === "tutorial" && (
+                <div className="space-y-8">
+                  <div className="space-y-2">
+                    <h2 className="text-2xl font-black text-teal-950 tracking-tight">Video Tutorial</h2>
+                    <p className="text-sm text-teal-800/60 font-medium">Panduan visual penggunaan portal untuk Mahasiswa dan Dosen.</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4">
+                    {/* Tutorial Mahasiswa */}
+                    <div className="bg-white border border-teal-50 rounded-[2rem] p-6 shadow-sm hover:shadow-md transition-all space-y-4">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center">
+                          <Users className="w-5 h-5" />
+                        </div>
+                        <h3 className="text-lg font-black text-teal-950">Tutorial Mahasiswa</h3>
+                      </div>
+                      <div className="relative w-full rounded-2xl overflow-hidden bg-black aspect-video shadow-inner">
+                        <video 
+                          className="w-full h-full object-cover" 
+                          controls 
+                          preload="metadata"
+                        >
+                          <source src="https://res.cloudinary.com/dwk0jqeok/video/upload/v1781835982/TutorialMHS_gpciqx.mp4" type="video/mp4" />
+                          Maaf, browser Anda tidak mendukung pemutaran video.
+                        </video>
+                      </div>
+                    </div>
+
+                    {/* Tutorial Dosen */}
+                    <div className="bg-white border border-teal-50 rounded-[2rem] p-6 shadow-sm hover:shadow-md transition-all space-y-4">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                          <GraduationCap className="w-5 h-5" />
+                        </div>
+                        <h3 className="text-lg font-black text-teal-950">Tutorial Dosen</h3>
+                      </div>
+                      <div className="relative w-full rounded-2xl overflow-hidden bg-black aspect-video shadow-inner">
+                        <video 
+                          className="w-full h-full object-cover" 
+                          controls 
+                          preload="metadata"
+                        >
+                          <source src="https://res.cloudinary.com/dwk0jqeok/video/upload/v1781835984/TutorDsn_boq4z7.mp4" type="video/mp4" />
+                          Maaf, browser Anda tidak mendukung pemutaran video.
+                        </video>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* --- MAHASISWA TAB --- */}
               {activeTab === "mahasiswa" && (
                 <div className="space-y-8">
