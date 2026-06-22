@@ -359,22 +359,7 @@ const LoginPage = ({
                   </span>
                 </Button>
 
-                {/* Account status switch */}
-                <div className="text-center pt-2 border-t border-teal-50/50">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsRegister(!isRegister);
-                      setError("");
-                    }}
-                    className="text-[8px] font-black text-teal-600 hover:text-orange-500 uppercase tracking-[0.2em] transition-colors flex items-center justify-center gap-1.5 mx-auto group"
-                  >
-                    {isRegister
-                      ? t("login_has_account")
-                      : t("login_no_account")}
-                    <ArrowRight className="w-2 h-2 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-                </div>
+                {/* Account status switch disabled for production war */}
               </motion.div>
             ) : (
               <motion.div
@@ -513,22 +498,7 @@ const LoginPage = ({
                   </span>
                 </Button>
 
-                {/* Account status switch */}
-                <div className="text-center pt-2 border-t border-teal-50/50">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsRegister(!isRegister);
-                      setError("");
-                    }}
-                    className="text-[8px] font-black text-teal-600 hover:text-orange-500 uppercase tracking-[0.2em] transition-colors flex items-center justify-center gap-1.5 mx-auto group"
-                  >
-                    {isRegister
-                      ? t("login_has_account")
-                      : t("login_no_account")}
-                    <ArrowRight className="w-2 h-2 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-                </div>
+                {/* Account status switch disabled for production war */}
               </motion.div>
             )}
           </AnimatePresence>
