@@ -882,6 +882,60 @@ app.post("/api/admin/war/cancel", authenticate, isAdmin, async (req: any, res) =
   }
 });
 
+// Admin: Manually Assign Student to Lecturer
+app.post("/api/admin/war/assign", authenticate, isAdmin, async (req: any, res) => {
+  const { mahasiswaId, dosenId } = req.body;
+  try {
+    if (!mahasiswaId || !dosenId) throw new Error("Mahasiswa ID dan Dosen ID wajib diisi.");
+
+    // Check if student exists
+    const mhs = await prisma.mahasiswa.findUnique({ 
+      where: { id: mahasiswaId }
+    });
+    
+    if (!mhs) throw new Error("Mahasiswa tidak ditemukan.");
+    if (mhs.dosenId) throw new Error("Mahasiswa ini sudah memiliki dosen pembimbing.");
+
+    // Check if lecturer exists and has quota
+    const lecturer = await prisma.dosen.findUnique({
+      where: { id: dosenId },
+      include: { _count: { select: { mahasiswa: true } } }
+    });
+
+    if (!lecturer) throw new Error("Data dosen tidak ditemukan.");
+    if (lecturer._count.mahasiswa >= lecturer.kuotaMax) {
+      throw new Error(`Kuota dosen ${lecturer.nama} sudah penuh.`);
+    }
+
+    // Assign student
+    const config = await prisma.warConfig.findUnique({ where: { id: "global_config" } });
+    
+    await prisma.mahasiswa.update({
+      where: { id: mahasiswaId },
+      data: {
+        dosenId: dosenId,
+        statusBimbingan: "APPROVED",
+        periode: config?.periode || null
+      }
+    });
+
+    console.log(`Admin ${req.user.nim} menambahkan Mahasiswa ${mhs.nim} ke Dosen ${lecturer.nip}`);
+    triggerQuotaUpdate();
+    io.emit("student_update", { id: mhs.id, userId: mhs.userId, nim: mhs.nim });
+    
+    // Broadcast for Live Activity Feed
+    io.emit("new_selection", { 
+      studentName: mhs.nama,
+      lecturerName: lecturer.nama,
+      timestamp: new Date()
+    });
+
+    res.json({ message: `Berhasil menambahkan ${mhs.nama} ke bimbingan ${lecturer.nama}` });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // Photo Upload (To Supabase Storage)
 app.post("/api/upload", authenticate, (req: any, res: any) => {
   upload.single("photo")(req, res, async (err) => {

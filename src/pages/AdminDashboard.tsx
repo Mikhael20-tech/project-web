@@ -188,6 +188,14 @@ const AdminDashboard = ({
   } | null>(null);
   const [resetModalOpen, setResetModalOpen] = useState(false);
   
+  // Assign Modal State
+  const [assignModal, setAssignModal] = useState<{
+    isOpen: boolean;
+    dosenId: string;
+    dosenName: string;
+    selectedMahasiswaId: string;
+  } | null>(null);
+
   // AI Import State
   const [aiImportOpen, setAiImportOpen] = useState(false);
   const [aiImportType, setAiImportType] = useState<"mahasiswa" | "dosen">("mahasiswa");
@@ -670,6 +678,38 @@ const AdminDashboard = ({
         }
       }
     });
+  };
+
+  const handleAssignStudent = async () => {
+    if (!assignModal?.selectedMahasiswaId) {
+      setMessage({ type: "error", text: "Silakan pilih mahasiswa terlebih dahulu." });
+      return;
+    }
+    setLoading(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/war/assign", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+          mahasiswaId: assignModal.selectedMahasiswaId,
+          dosenId: assignModal.dosenId
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal menambahkan mahasiswa.");
+
+      setMessage({ type: "success", text: data.message });
+      setAssignModal(null);
+      fetchData();
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async (e?: React.MouseEvent | React.FormEvent) => {
@@ -2058,8 +2098,16 @@ const AdminDashboard = ({
                           </div>
   
                           {/* Mahasiswa Section */}
-                          <div className="col-span-6 flex flex-col justify-center mt-4 lg:mt-0">
-                            <span className="text-[10px] font-black uppercase text-teal-800/40 lg:hidden mb-3">{t("dash_admin_student_data")}</span>
+                          <div className="col-span-6 flex flex-col justify-center mt-4 lg:mt-0 relative">
+                            <div className="flex justify-between items-center mb-3">
+                              <span className="text-[10px] font-black uppercase text-teal-800/40 lg:hidden">{t("dash_admin_student_data")}</span>
+                              <button
+                                onClick={() => setAssignModal({ isOpen: true, dosenId: dosen.id, dosenName: dosen.nama, selectedMahasiswaId: "" })}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 text-teal-600 hover:bg-teal-100 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ml-auto lg:absolute lg:-top-8 lg:right-0 shadow-sm"
+                              >
+                                <Plus className="w-3.5 h-3.5" /> Tambah Mahasiswa
+                              </button>
+                            </div>
                             <div className="flex flex-wrap gap-2">
                               {dosen.mahasiswa.length > 0 ? (
                                 dosen.mahasiswa.filter((m: any) => filterAngkatan === "All" || m.angkatan === filterAngkatan).map((m: any) => (
@@ -4340,6 +4388,75 @@ const AdminDashboard = ({
                       </div>
                     </div>
                   )}
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Assign Student Modal */}
+          {assignModal?.isOpen && (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-teal-950/40 backdrop-blur-sm"
+                onClick={() => setAssignModal(null)}
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg relative z-10 overflow-hidden flex flex-col max-h-[90vh]"
+              >
+                <div className="p-6 md:p-8 border-b border-teal-50 bg-[#f8fdfc] flex items-center gap-4">
+                  <div className="w-12 h-12 bg-teal-50 text-teal-500 rounded-2xl flex items-center justify-center shrink-0">
+                    <UserPlus className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-teal-950">Tambah Mahasiswa</h3>
+                    <p className="text-xs font-bold text-teal-800/60 uppercase tracking-widest mt-1">ke {assignModal.dosenName}</p>
+                  </div>
+                </div>
+                
+                <div className="p-6 md:p-8 flex-1 overflow-y-auto">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 mb-2 block ml-1">Pilih Mahasiswa</label>
+                  <select
+                    value={assignModal.selectedMahasiswaId}
+                    onChange={(e) => setAssignModal({ ...assignModal, selectedMahasiswaId: e.target.value })}
+                    className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
+                  >
+                    <option value="">-- Pilih Mahasiswa (Belum Memilih) --</option>
+                    {students
+                      .filter((s) => !s.dosenId)
+                      .map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.nim} - {s.nama} {s.angkatan ? `(Angkatan ${s.angkatan})` : ""}
+                        </option>
+                      ))}
+                  </select>
+                  {students.filter(s => !s.dosenId).length === 0 && (
+                    <p className="text-xs text-rose-500 mt-2 font-bold px-1 flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4" /> Tidak ada mahasiswa yang belum memilih dosen.
+                    </p>
+                  )}
+                </div>
+
+                <div className="p-6 md:p-8 border-t border-teal-50 bg-gray-50 flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={() => setAssignModal(null)}
+                    className="w-full sm:w-auto px-6 py-4 bg-white border border-teal-100 text-teal-800/60 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-50 hover:text-teal-950 transition-all"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleAssignStudent}
+                    disabled={!assignModal.selectedMahasiswaId || loading}
+                    className="w-full sm:flex-1 px-6 py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-600 transition-all shadow-lg shadow-teal-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {loading ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                    Assign Mahasiswa
+                  </button>
                 </div>
               </motion.div>
             </div>
