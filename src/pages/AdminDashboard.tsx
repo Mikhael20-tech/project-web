@@ -26,6 +26,7 @@ import {
   ShieldCheck,
   Folder,
   FileText,
+  ArrowLeftRight,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useLanguage } from "@/src/lib/LanguageContext";
@@ -188,13 +189,28 @@ const AdminDashboard = ({
   } | null>(null);
   const [resetModalOpen, setResetModalOpen] = useState(false);
   
-  // Assign Modal State
   const [assignModal, setAssignModal] = useState<{
     isOpen: boolean;
     dosenId: string;
     dosenName: string;
     selectedMahasiswaId: string;
   } | null>(null);
+
+  // Searchable select states
+  const [assignSearch, setAssignSearch] = useState("");
+  const [isAssignDropOpen, setIsAssignDropOpen] = useState(false);
+
+  // Swap Modal State
+  const [swapModal, setSwapModal] = useState<{
+    isOpen: boolean;
+    student1Id: string;
+    student1Name: string;
+    student1DosenName: string;
+    student2Id: string;
+  } | null>(null);
+
+  const [swapSearch, setSwapSearch] = useState("");
+  const [isSwapDropOpen, setIsSwapDropOpen] = useState(false);
 
   // AI Import State
   const [aiImportOpen, setAiImportOpen] = useState(false);
@@ -294,6 +310,17 @@ const AdminDashboard = ({
         const docData = await docRes.json();
         setDocuments(docData);
       }
+
+      // Fetch activity history
+      try {
+        const actRes = await fetch("/api/admin/activities", auth);
+        if (actRes.ok) {
+          const actData = await actRes.json();
+          setActivities(actData);
+        }
+      } catch (actErr) {
+        console.error("Failed to fetch activities:", actErr);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -305,9 +332,22 @@ const AdminDashboard = ({
     fetchData();
     socket.on("quota_update", () => fetchData());
     socket.on("document_update", () => fetchData());
+    socket.on("new_selection", (data: any) => {
+      setActivities((prev) => [
+        {
+          id: `live-${Date.now()}`,
+          studentName: data.studentName,
+          lecturerName: data.lecturerName,
+          status: "APPROVED",
+          timestamp: data.timestamp || new Date().toISOString(),
+        },
+        ...prev,
+      ].slice(0, 50));
+    });
     return () => {
       socket.off("quota_update");
       socket.off("document_update");
+      socket.off("new_selection");
     };
   }, []);
 
@@ -704,6 +744,38 @@ const AdminDashboard = ({
 
       setMessage({ type: "success", text: data.message });
       setAssignModal(null);
+      fetchData();
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSwapStudents = async () => {
+    if (!swapModal?.student2Id) {
+      setMessage({ type: "error", text: "Silakan pilih mahasiswa kedua untuk ditukar." });
+      return;
+    }
+    setLoading(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/war/swap", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          studentId1: swapModal.student1Id,
+          studentId2: swapModal.student2Id
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal menukar bimbingan mahasiswa.");
+
+      setMessage({ type: "success", text: data.message });
+      setSwapModal(null);
       fetchData();
     } catch (err: any) {
       setMessage({ type: "error", text: err.message });
@@ -1922,7 +1994,7 @@ const AdminDashboard = ({
                       {t("dash_admin_recent_activity")}
                     </h3>
                     
-                    <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar relative z-10 mt-6">
+                    <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar relative z-10 mt-6 max-h-[480px]">
                       {activities.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center py-10 text-teal-300/50">
                           <Zap className="w-8 h-8 text-orange-400 animate-pulse mb-3" />
@@ -1937,11 +2009,22 @@ const AdminDashboard = ({
                               animate={{ opacity: 1, x: 0 }}
                               className="bg-white/5 border border-white/5 p-4 rounded-2xl"
                             >
-                              <p className="text-[9px] font-bold text-teal-200/80 leading-relaxed">
-                                <span className="text-teal-400">{act.studentName || t("dash_admin_activity_prefix")}</span> {t("dash_admin_activity_suffix")} <span className="text-white">{act.lecturerName}</span>
-                              </p>
+                              <div className="flex items-center justify-between">
+                                <p className="text-[9px] font-bold text-teal-200/80 leading-relaxed">
+                                  <span className="text-teal-400">{act.studentName || t("dash_admin_activity_prefix")}</span>{act.studentNim ? ` (${act.studentNim})` : ""} {t("dash_admin_activity_suffix")} <span className="text-white">{act.lecturerName}</span>
+                                </p>
+                                {act.status && (
+                                  <span className={`text-[7px] font-black uppercase px-2 py-0.5 rounded-full ${
+                                    act.status === "APPROVED" ? "bg-emerald-500/20 text-emerald-400" :
+                                    act.status === "REJECTED" ? "bg-red-500/20 text-red-400" :
+                                    "bg-yellow-500/20 text-yellow-400"
+                                  }`}>
+                                    {act.status}
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-[7px] font-black text-teal-500 mt-2 uppercase tracking-widest">
-                                {new Date(act.timestamp).toLocaleTimeString()}
+                                {new Date(act.timestamp).toLocaleString()}
                               </p>
                             </motion.div>
                           ))}
@@ -2102,7 +2185,11 @@ const AdminDashboard = ({
                             <div className="flex justify-between items-center mb-3">
                               <span className="text-[10px] font-black uppercase text-teal-800/40 lg:hidden">{t("dash_admin_student_data")}</span>
                               <button
-                                onClick={() => setAssignModal({ isOpen: true, dosenId: dosen.id, dosenName: dosen.nama, selectedMahasiswaId: "" })}
+                                onClick={() => {
+                                  setAssignModal({ isOpen: true, dosenId: dosen.id, dosenName: dosen.nama, selectedMahasiswaId: "" });
+                                  setAssignSearch("");
+                                  setIsAssignDropOpen(false);
+                                }}
                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 text-teal-600 hover:bg-teal-100 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ml-auto lg:absolute lg:-top-8 lg:right-0 shadow-sm"
                               >
                                 <Plus className="w-3.5 h-3.5" /> Tambah Mahasiswa
@@ -2127,18 +2214,40 @@ const AdminDashboard = ({
                                           {m.nama}
                                         </span>
                                       </div>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.preventDefault();
-                                          e.stopPropagation();
-                                          handleCancelSelection(m.id, m.nama);
-                                        }}
-                                        className="p-1.5 hover:bg-rose-50 text-teal-300 hover:text-rose-500 rounded-lg transition-colors group/btn shrink-0"
-                                        title={t("dash_student_cancel")}
-                                      >
-                                        <X className="w-3.5 h-3.5" />
-                                      </button>
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            setSwapModal({
+                                              isOpen: true,
+                                              student1Id: m.id,
+                                              student1Name: m.nama,
+                                              student1DosenName: dosen.nama,
+                                              student2Id: ""
+                                            });
+                                            setSwapSearch("");
+                                            setIsSwapDropOpen(false);
+                                          }}
+                                          className="p-1.5 hover:bg-teal-50 text-teal-300 hover:text-teal-600 rounded-lg transition-colors group/btn"
+                                          title="Tukar/Exchange Dosen Pembimbing"
+                                        >
+                                          <ArrowLeftRight className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            handleCancelSelection(m.id, m.nama);
+                                          }}
+                                          className="p-1.5 hover:bg-rose-50 text-teal-300 hover:text-rose-500 rounded-lg transition-colors group/btn"
+                                          title={t("dash_student_cancel")}
+                                        >
+                                          <X className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
                                     </div>
                                   </div>
                                 ))
@@ -2395,7 +2504,7 @@ const AdminDashboard = ({
                     <h3 className="text-xs font-black text-teal-950 uppercase tracking-widest flex items-center gap-2">
                       <input
                         type="checkbox"
-                        className="w-4 h-4 rounded border-teal-200 text-teal-500 focus:ring-teal-500 cursor-pointer accent-teal-500"
+                        className="appearance-none w-5 h-5 rounded-lg border border-teal-200 bg-white checked:bg-teal-500 checked:border-teal-500 focus:outline-none focus:ring-4 focus:ring-teal-500/10 cursor-pointer transition-all relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-[10px] checked:after:font-black checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center"
                         checked={reports.length > 0 && selectedDosen.length === reports.length}
                         onChange={(e) => {
                           if (e.target.checked) setSelectedDosen(reports.map(d => d.id));
@@ -2455,7 +2564,7 @@ const AdminDashboard = ({
                       <div className="absolute top-5 right-5 sm:top-auto sm:left-4 z-10">
                         <input
                           type="checkbox"
-                          className="w-4 h-4 rounded border-teal-200 text-teal-500 focus:ring-teal-500 cursor-pointer accent-teal-500"
+                          className="appearance-none w-5 h-5 rounded-lg border border-teal-200 bg-white checked:bg-teal-500 checked:border-teal-500 focus:outline-none focus:ring-4 focus:ring-teal-500/10 cursor-pointer transition-all relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-[10px] checked:after:font-black checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center"
                           checked={selectedDosen.includes(dosen.id)}
                           onChange={(e) => {
                             if (e.target.checked) setSelectedDosen([...selectedDosen, dosen.id]);
@@ -2506,21 +2615,6 @@ const AdminDashboard = ({
                           className="p-2.5 bg-teal-50 text-teal-600 hover:bg-teal-500 hover:text-white border border-teal-100 rounded-xl transition-all shadow-sm"
                         >
                           <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setDeleteData({
-                              type: "dosen",
-                              id: dosen.id,
-                              name: dosen.nama,
-                            });
-                          }}
-                          className="p-2.5 bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white border border-rose-100 rounded-xl transition-all shadow-sm"
-                        >
-                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </motion.div>
@@ -2826,7 +2920,7 @@ const AdminDashboard = ({
                         <th className="px-10 py-6 w-10">
                           <input 
                             type="checkbox" 
-                            className="w-4 h-4 rounded border-teal-200 text-teal-500 focus:ring-teal-500 cursor-pointer accent-teal-500"
+                            className="appearance-none w-5 h-5 rounded-lg border border-teal-200 bg-white checked:bg-teal-500 checked:border-teal-500 focus:outline-none focus:ring-4 focus:ring-teal-500/10 cursor-pointer transition-all relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-[10px] checked:after:font-black checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center"
                             checked={students.length > 0 && selectedStudents.length === students.length}
                             onChange={(e) => {
                               if (e.target.checked) setSelectedStudents(students.map(s => s.id));
@@ -2860,7 +2954,7 @@ const AdminDashboard = ({
                           <td className="px-10 py-5">
                             <input 
                               type="checkbox" 
-                              className="w-4 h-4 rounded border-teal-200 text-teal-500 focus:ring-teal-500 cursor-pointer accent-teal-500"
+                              className="appearance-none w-5 h-5 rounded-lg border border-teal-200 bg-white checked:bg-teal-500 checked:border-teal-500 focus:outline-none focus:ring-4 focus:ring-teal-500/10 cursor-pointer transition-all relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-[10px] checked:after:font-black checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center"
                               checked={selectedStudents.includes(std.id)}
                               onChange={(e) => {
                                 if (e.target.checked) setSelectedStudents([...selectedStudents, std.id]);
@@ -4419,27 +4513,83 @@ const AdminDashboard = ({
                   </div>
                 </div>
                 
-                <div className="p-6 md:p-8 flex-1 overflow-y-auto">
+                <div className="p-6 md:p-8 flex-1 overflow-y-auto min-h-[300px]">
                   <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 mb-2 block ml-1">Pilih Mahasiswa</label>
-                  <select
-                    value={assignModal.selectedMahasiswaId}
-                    onChange={(e) => setAssignModal({ ...assignModal, selectedMahasiswaId: e.target.value })}
-                    className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
-                  >
-                    <option value="">-- Pilih Mahasiswa (Belum Memilih) --</option>
-                    {students
-                      .filter((s) => !s.dosenId)
-                      .map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.nim} - {s.nama} {s.angkatan ? `(Angkatan ${s.angkatan})` : ""}
-                        </option>
-                      ))}
-                  </select>
-                  {students.filter(s => !s.dosenId).length === 0 && (
-                    <p className="text-xs text-rose-500 mt-2 font-bold px-1 flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4" /> Tidak ada mahasiswa yang belum memilih dosen.
-                    </p>
-                  )}
+                  <div className="relative">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Cari nama atau NIM mahasiswa..."
+                        value={assignSearch}
+                        onChange={(e) => {
+                          setAssignSearch(e.target.value);
+                          setIsAssignDropOpen(true);
+                        }}
+                        onFocus={() => setIsAssignDropOpen(true)}
+                        className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
+                      />
+                      {assignModal.selectedMahasiswaId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAssignModal({ ...assignModal, selectedMahasiswaId: "" });
+                            setAssignSearch("");
+                          }}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-rose-500 text-xs font-bold uppercase tracking-wider"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+
+                    {isAssignDropOpen && (
+                      <div className="absolute z-[210] top-full left-0 right-0 mt-2 bg-white border border-teal-100 rounded-2xl shadow-xl max-h-60 overflow-y-auto custom-scrollbar">
+                        {students
+                          .filter((s) => {
+                            const query = assignSearch.toLowerCase();
+                            return s.nama.toLowerCase().includes(query) || s.nim.toLowerCase().includes(query);
+                          })
+                          .length === 0 ? (
+                            <div className="p-4 text-center text-xs text-teal-800/40 font-bold uppercase tracking-widest">
+                              Mahasiswa tidak ditemukan
+                            </div>
+                          ) : (
+                            students
+                              .filter((s) => {
+                                const query = assignSearch.toLowerCase();
+                                return s.nama.toLowerCase().includes(query) || s.nim.toLowerCase().includes(query);
+                              })
+                              .map((s) => {
+                                const hasDosen = s.dosenId;
+                                const currentDosen = hasDosen && reports.find((d: any) => d.id === s.dosenId);
+                                return (
+                                  <div
+                                    key={s.id}
+                                    onClick={() => {
+                                      setAssignModal({ ...assignModal, selectedMahasiswaId: s.id });
+                                      setAssignSearch(`${s.nim} - ${s.nama}`);
+                                      setIsAssignDropOpen(false);
+                                    }}
+                                    className="p-4 hover:bg-teal-50/50 cursor-pointer flex items-center justify-between border-b border-teal-50/50 last:border-none transition-colors"
+                                  >
+                                    <div>
+                                      <p className="text-sm font-bold text-teal-950">{s.nama}</p>
+                                      <p className="text-[10px] font-black text-teal-800/50 uppercase tracking-wider mt-0.5">
+                                        NIM: {s.nim} {s.angkatan ? `• Angkatan ${s.angkatan}` : ""}
+                                      </p>
+                                    </div>
+                                    <span className={`text-[8px] font-black uppercase px-2.5 py-1 rounded-full ${
+                                      currentDosen ? "bg-amber-500/10 text-amber-600 border border-amber-500/10" : "bg-emerald-500/10 text-emerald-600 border border-emerald-500/10"
+                                    }`}>
+                                      {currentDosen ? `Dosen: ${currentDosen.nama}` : "Belum Memilih"}
+                                    </span>
+                                  </div>
+                                );
+                              })
+                          )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="p-6 md:p-8 border-t border-teal-50 bg-gray-50 flex flex-col sm:flex-row gap-3">
@@ -4456,6 +4606,145 @@ const AdminDashboard = ({
                   >
                     {loading ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                     Assign Mahasiswa
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Swap Advisors Modal */}
+          {swapModal?.isOpen && (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-teal-950/40 backdrop-blur-sm"
+                onClick={() => setSwapModal(null)}
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg relative z-10 overflow-hidden flex flex-col max-h-[90vh]"
+              >
+                <div className="p-6 md:p-8 border-b border-teal-50 bg-[#f8fdfc] flex items-center gap-4">
+                  <div className="w-12 h-12 bg-teal-50 text-teal-500 rounded-2xl flex items-center justify-center shrink-0">
+                    <ArrowLeftRight className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-teal-950">Tukar Pembimbing</h3>
+                    <p className="text-xs font-bold text-teal-800/60 uppercase tracking-widest mt-1">
+                      Exchange pembimbing mahasiswa
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="p-6 md:p-8 flex-1 overflow-y-auto space-y-4">
+                  <div className="bg-teal-50/50 p-4 rounded-2xl border border-teal-50">
+                    <span className="text-[9px] font-black uppercase text-teal-800/40 tracking-wider block mb-1">Mahasiswa 1 (Sumber)</span>
+                    <p className="text-sm font-bold text-teal-950">{swapModal.student1Name}</p>
+                    <p className="text-xs font-semibold text-teal-800/60 mt-0.5">Pembimbing: {swapModal.student1DosenName || "[Belum Ada]"}</p>
+                  </div>
+
+                  <div className="min-h-[250px]">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 mb-2 block ml-1">
+                      Pilih Mahasiswa 2 (Untuk Ditukar)
+                    </label>
+                    <div className="relative">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Cari nama atau NIM mahasiswa..."
+                          value={swapSearch}
+                          onChange={(e) => {
+                            setSwapSearch(e.target.value);
+                            setIsSwapDropOpen(true);
+                          }}
+                          onFocus={() => setIsSwapDropOpen(true)}
+                          className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
+                        />
+                        {swapModal.student2Id && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSwapModal({ ...swapModal, student2Id: "" });
+                              setSwapSearch("");
+                            }}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-rose-500 text-xs font-bold uppercase tracking-wider"
+                          >
+                            Clear
+                          </button>
+                        )}
+                      </div>
+
+                      {isSwapDropOpen && (
+                        <div className="absolute z-[210] top-full left-0 right-0 mt-2 bg-white border border-teal-100 rounded-2xl shadow-xl max-h-60 overflow-y-auto custom-scrollbar">
+                          {students
+                            .filter((s) => s.id !== swapModal.student1Id)
+                            .filter((s) => {
+                              const query = swapSearch.toLowerCase();
+                              return s.nama.toLowerCase().includes(query) || s.nim.toLowerCase().includes(query);
+                            })
+                            .length === 0 ? (
+                              <div className="p-4 text-center text-xs text-teal-800/40 font-bold uppercase tracking-widest">
+                                Mahasiswa tidak ditemukan
+                              </div>
+                            ) : (
+                              students
+                                .filter((s) => s.id !== swapModal.student1Id)
+                                .filter((s) => {
+                                  const query = swapSearch.toLowerCase();
+                                  return s.nama.toLowerCase().includes(query) || s.nim.toLowerCase().includes(query);
+                                })
+                                .map((s) => {
+                                  const hasDosen = s.dosenId;
+                                  const currentDosen = hasDosen && reports.find((d: any) => d.id === s.dosenId);
+                                  return (
+                                    <div
+                                      key={s.id}
+                                      onClick={() => {
+                                        setSwapModal({ ...swapModal, student2Id: s.id });
+                                        setSwapSearch(`${s.nim} - ${s.nama}`);
+                                        setIsSwapDropOpen(false);
+                                      }}
+                                      className="p-4 hover:bg-teal-50/50 cursor-pointer flex items-center justify-between border-b border-teal-50/50 last:border-none transition-colors"
+                                    >
+                                      <div>
+                                        <p className="text-sm font-bold text-teal-950">{s.nama}</p>
+                                        <p className="text-[10px] font-black text-teal-800/50 uppercase tracking-wider mt-0.5">
+                                          NIM: {s.nim} {s.angkatan ? `• Angkatan ${s.angkatan}` : ""}
+                                        </p>
+                                      </div>
+                                      <span className={`text-[8px] font-black uppercase px-2.5 py-1 rounded-full ${
+                                        currentDosen ? "bg-amber-500/10 text-amber-600 border border-amber-500/10" : "bg-emerald-500/10 text-emerald-600 border border-emerald-500/10"
+                                      }`}>
+                                        {currentDosen ? `Dosen: ${currentDosen.nama}` : "Belum Memilih"}
+                                      </span>
+                                    </div>
+                                  );
+                                })
+                            )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 md:p-8 border-t border-teal-50 bg-gray-50 flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={() => setSwapModal(null)}
+                    className="w-full sm:w-auto px-6 py-4 bg-white border border-teal-100 text-teal-800/60 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-50 hover:text-teal-950 transition-all"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleSwapStudents}
+                    disabled={!swapModal.student2Id || loading}
+                    className="w-full sm:flex-1 px-6 py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-600 transition-all shadow-lg shadow-teal-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {loading ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <ArrowLeftRight className="w-4 h-4" />}
+                    Tukar Pembimbing
                   </button>
                 </div>
               </motion.div>

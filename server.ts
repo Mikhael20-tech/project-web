@@ -683,7 +683,9 @@ app.post("/api/war/select", authenticate, rateLimitSelection, async (req: any, r
             ELSE "rencanaJudul"
           END,
           "statusBimbingan" = 'APPROVED', 
-          "periode" = ${config.periode || null}
+          "periode" = ${config.periode || null},
+          "updatedAt" = NOW(),
+          "selectedAt" = NOW()
       WHERE "id" = ${student.id}
         AND "dosenId" IS NULL
         AND (
@@ -818,7 +820,7 @@ app.post("/api/dosen/kick-student/:mahasiswaId", authenticate, isDosen, async (r
 
     await prisma.mahasiswa.update({
       where: { id: mahasiswaId },
-      data: { dosenId: null, statusBimbingan: "PENDING" },
+      data: { dosenId: null, statusBimbingan: "PENDING", selectedAt: null },
     });
 
     triggerQuotaUpdate();
@@ -834,6 +836,39 @@ const isAdmin = (req: any, res: any, next: any) => {
   if (req.user.role !== "ADMIN") return res.status(403).json({ error: "Access denied" });
   next();
 };
+
+// --- ACTIVITY HISTORY ENDPOINT ---
+app.get("/api/admin/activities", authenticate, isAdmin, async (req: any, res) => {
+  try {
+    const recentSelections = await prisma.mahasiswa.findMany({
+      where: { selectedAt: { not: null } },
+      select: {
+        id: true,
+        nama: true,
+        nim: true,
+        statusBimbingan: true,
+        selectedAt: true,
+        dosen: { select: { nama: true } },
+      },
+      orderBy: { selectedAt: "desc" },
+      take: 50,
+    });
+
+    const activities = recentSelections.map((m) => ({
+      id: m.id,
+      studentName: m.nama,
+      studentNim: m.nim,
+      lecturerName: m.dosen?.nama || "-",
+      status: m.statusBimbingan,
+      timestamp: m.selectedAt ? m.selectedAt.toISOString() : new Date().toISOString(),
+    }));
+
+    res.json(activities);
+  } catch (err: any) {
+    console.error("Fetch activities error:", err);
+    res.status(500).json({ error: "Gagal memuat aktivitas." });
+  }
+});
 
 app.get("/api/admin/reports", authenticate, isAdmin, async (req: any, res) => {
   try {
@@ -869,7 +904,8 @@ app.post("/api/admin/war/cancel", authenticate, isAdmin, async (req: any, res) =
       where: { id: mahasiswaId },
       data: { 
         dosenId: null,
-        statusBimbingan: "PENDING"
+        statusBimbingan: "PENDING",
+        selectedAt: null
       }
     });
 
@@ -894,7 +930,7 @@ app.post("/api/admin/war/assign", authenticate, isAdmin, async (req: any, res) =
     });
     
     if (!mhs) throw new Error("Mahasiswa tidak ditemukan.");
-    if (mhs.dosenId) throw new Error("Mahasiswa ini sudah memiliki dosen pembimbing.");
+    if (mhs.dosenId === dosenId) throw new Error("Mahasiswa ini sudah dibimbing oleh dosen tersebut.");
 
     // Check if lecturer exists and has quota
     const lecturer = await prisma.dosen.findUnique({
@@ -915,7 +951,8 @@ app.post("/api/admin/war/assign", authenticate, isAdmin, async (req: any, res) =
       data: {
         dosenId: dosenId,
         statusBimbingan: "APPROVED",
-        periode: config?.periode || null
+        periode: config?.periode || null,
+        selectedAt: new Date()
       }
     });
 
@@ -931,6 +968,83 @@ app.post("/api/admin/war/assign", authenticate, isAdmin, async (req: any, res) =
     });
 
     res.json({ message: `Berhasil menambahkan ${mhs.nama} ke bimbingan ${lecturer.nama}` });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Admin: Swap/Exchange Advisors between two students
+app.post("/api/admin/war/swap", authenticate, isAdmin, async (req: any, res) => {
+  const { studentId1, studentId2 } = req.body;
+  try {
+    if (!studentId1 || !studentId2) throw new Error("Kedua ID mahasiswa wajib ditentukan.");
+    if (studentId1 === studentId2) throw new Error("Tidak dapat menukar mahasiswa dengan dirinya sendiri.");
+
+    const [student1, student2] = await Promise.all([
+      prisma.mahasiswa.findUnique({ where: { id: studentId1 }, include: { dosen: true } }),
+      prisma.mahasiswa.findUnique({ where: { id: studentId2 }, include: { dosen: true } }),
+    ]);
+
+    if (!student1 || !student2) throw new Error("Salah satu atau kedua mahasiswa tidak ditemukan.");
+
+    const dosenId1 = student1.dosenId;
+    const dosenId2 = student2.dosenId;
+
+    if (!dosenId1 && !dosenId2) {
+      throw new Error("Kedua mahasiswa belum memiliki dosen pembimbing. Tidak ada yang bisa ditukar.");
+    }
+
+    // Atomic swap in a transaction
+    await prisma.$transaction([
+      prisma.mahasiswa.update({
+        where: { id: studentId1 },
+        data: {
+          dosenId: dosenId2,
+          selectedAt: dosenId2 ? new Date() : null,
+          statusBimbingan: dosenId2 ? "APPROVED" : "PENDING"
+        }
+      }),
+      prisma.mahasiswa.update({
+        where: { id: studentId2 },
+        data: {
+          dosenId: dosenId1,
+          selectedAt: dosenId1 ? new Date() : null,
+          statusBimbingan: dosenId1 ? "APPROVED" : "PENDING"
+        }
+      })
+    ]);
+
+    triggerQuotaUpdate();
+
+    // Broadcast live update for both
+    io.emit("student_update", { id: student1.id, userId: student1.userId, nim: student1.nim });
+    io.emit("student_update", { id: student2.id, userId: student2.userId, nim: student2.nim });
+
+    // Emit live feed selections if assigned
+    if (dosenId2) {
+      const newDosen2 = await prisma.dosen.findUnique({ where: { id: dosenId2 } });
+      if (newDosen2) {
+        io.emit("new_selection", {
+          studentName: student1.nama,
+          lecturerName: newDosen2.nama,
+          timestamp: new Date()
+        });
+      }
+    }
+    if (dosenId1) {
+      const newDosen1 = await prisma.dosen.findUnique({ where: { id: dosenId1 } });
+      if (newDosen1) {
+        io.emit("new_selection", {
+          studentName: student2.nama,
+          lecturerName: newDosen1.nama,
+          timestamp: new Date()
+        });
+      }
+    }
+
+    res.json({ 
+      message: `Berhasil menukar pembimbing antara ${student1.nama} dan ${student2.nama}.` 
+    });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }
@@ -1720,7 +1834,7 @@ app.post("/api/admin/reset-angkatan", authenticate, isAdmin, async (req, res) =>
   try {
     const result = await prisma.mahasiswa.updateMany({
       where: { angkatan: angkatan },
-      data: { dosenId: null, statusBimbingan: "PENDING" }
+      data: { dosenId: null, statusBimbingan: "PENDING", selectedAt: null }
     });
     
     io.emit("quota_update", await prisma.dosen.findMany({ include: { _count: { select: { mahasiswa: true } }, penelitian: true } }));
@@ -2455,6 +2569,24 @@ async function startServer() {
         data: { category: "SKRIPSI_ARTIKEL" }
       });
       console.log("✅ WarConfig category migration completed.");
+    }
+
+    // Backfill selectedAt for existing students who already have a dosenId
+    const unmigratedStudents = await prisma.mahasiswa.findMany({
+      where: {
+        dosenId: { not: null },
+        selectedAt: null
+      }
+    });
+    if (unmigratedStudents.length > 0) {
+      console.log(`🚀 Backfilling selectedAt for ${unmigratedStudents.length} students...`);
+      for (const s of unmigratedStudents) {
+        await prisma.mahasiswa.update({
+          where: { id: s.id },
+          data: { selectedAt: s.updatedAt }
+        });
+      }
+      console.log("✅ selectedAt backfill completed.");
     }
   } catch (mErr) {
     console.error("Migration error:", mErr);

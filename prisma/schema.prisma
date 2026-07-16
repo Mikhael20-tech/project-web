@@ -49,6 +49,8 @@ model Mahasiswa {
   plpLokasi       String?
   statusBimbingan String    @default("PENDING")
   periode         String?
+  updatedAt       DateTime  @default(now()) @updatedAt
+  selectedAt      DateTime?
 }
 
 model Dosen {
@@ -77,6 +79,12 @@ model Penelitian {
   dosenId     String
   dosen       Dosen    @relation(fields: [dosenId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
+}
+
+enum StatusBimbingan {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum WarCategory {
@@ -115,7 +123,7 @@ model AcademicDocument {
   driveUrl    String?          // URL Google Drive / external link
   fileType    String?          // e.g. "pdf", "docx", "link"
   fileSize    Int?             // Ukuran file dalam bytes
-  uploadedBy  String           // Username admin
+  uploadedBy  String           // Username/NIM admin yang upload
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 }

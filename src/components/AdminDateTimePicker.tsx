@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Calendar, DatePicker, TimeField } from "@heroui/react";
 import { parseDate, parseTime } from "@internationalized/date";
 import type { CalendarDate, Time } from "@internationalized/date";
-import { CalendarDays, Clock, X } from "lucide-react";
+import { CalendarDays, Clock, X, ChevronDown } from "lucide-react";
 
 interface AdminDateTimePickerProps {
   label: string;
@@ -107,7 +107,7 @@ export function AdminDateTimePicker({
                 {formattedDate}
               </span>
             </span>
-            <DatePicker.TriggerIndicator className="text-teal-400" />
+            <ChevronDown className="w-4 h-4 text-teal-400/70 group-hover:text-teal-500 transition-colors" />
           </DatePicker.Trigger>
 
           <DatePicker.Popover 
