@@ -8,7 +8,6 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -126,5 +125,16 @@ model AcademicDocument {
   uploadedBy  String           // Username/NIM admin yang upload
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
+}
+
+model ActivityLog {
+  id           String   @id @default(uuid())
+  actionType   String   // "SELECT", "ASSIGN", "CANCEL", "SWAP", "RESET"
+  studentName  String?
+  studentNim   String?
+  lecturerName String?
+  studentName2 String?
+  studentNim2  String?
+  timestamp    DateTime @default(now())
 }
 

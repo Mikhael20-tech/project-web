@@ -339,8 +339,15 @@ const AdminDashboard = ({
           studentName: data.studentName,
           lecturerName: data.lecturerName,
           status: "APPROVED",
+          actionType: "SELECT",
           timestamp: data.timestamp || new Date().toISOString(),
         },
+        ...prev,
+      ].slice(0, 50));
+    });
+    socket.on("new_activity", (data: any) => {
+      setActivities((prev) => [
+        data,
         ...prev,
       ].slice(0, 50));
     });
@@ -348,6 +355,7 @@ const AdminDashboard = ({
       socket.off("quota_update");
       socket.off("document_update");
       socket.off("new_selection");
+      socket.off("new_activity");
     };
   }, []);
 
@@ -2011,9 +2019,29 @@ const AdminDashboard = ({
                             >
                               <div className="flex items-center justify-between">
                                 <p className="text-[9px] font-bold text-teal-200/80 leading-relaxed">
-                                  <span className="text-teal-400">{act.studentName || t("dash_admin_activity_prefix")}</span>{act.studentNim ? ` (${act.studentNim})` : ""} {t("dash_admin_activity_suffix")} <span className="text-white">{act.lecturerName}</span>
+                                  {act.actionType === "SWAP" ? (
+                                    <span>
+                                      <span className="text-teal-400">{act.studentName}</span> ({act.lecturerName?.split(" ⇄ ")[0]}) {t("dash_admin_activity_swap")} <span className="text-teal-400">{act.studentName2}</span> ({act.lecturerName?.split(" ⇄ ")[1] || "-"})
+                                    </span>
+                                  ) : act.actionType === "CANCEL" ? (
+                                    <span>
+                                      <span className="text-teal-400">{act.studentName}</span> ({act.studentNim}): {t("dash_admin_activity_cancel")} ({act.lecturerName})
+                                    </span>
+                                  ) : act.actionType === "ASSIGN" ? (
+                                    <span>
+                                      <span className="text-teal-400">{act.studentName}</span> ({act.studentNim}) {t("dash_admin_activity_assign")} <span className="text-white">{act.lecturerName}</span>
+                                    </span>
+                                  ) : act.actionType === "RESET" ? (
+                                    <span>
+                                      Admin {t("dash_admin_activity_reset")} <span className="text-teal-400">{act.studentNim || "-"}</span>
+                                    </span>
+                                  ) : (
+                                    <>
+                                      <span className="text-teal-400">{act.studentName || t("dash_admin_activity_prefix")}</span>{act.studentNim ? ` (${act.studentNim})` : ""} {t("dash_admin_activity_suffix")} <span className="text-white">{act.lecturerName}</span>
+                                    </>
+                                  )}
                                 </p>
-                                {act.status && (
+                                {act.status && act.actionType !== "RESET" && act.actionType !== "CANCEL" && (
                                   <span className={`text-[7px] font-black uppercase px-2 py-0.5 rounded-full ${
                                     act.status === "APPROVED" ? "bg-emerald-500/20 text-emerald-400" :
                                     act.status === "REJECTED" ? "bg-red-500/20 text-red-400" :

@@ -112,6 +112,34 @@ const toTitleCase = (str: string): string => {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 };
+
+// Helper to log activities and broadcast them in real-time
+const logActivity = async (
+  actionType: string,
+  studentName: string | null = null,
+  studentNim: string | null = null,
+  lecturerName: string | null = null,
+  studentName2: string | null = null,
+  studentNim2: string | null = null
+) => {
+  try {
+    const activity = await prisma.activityLog.create({
+      data: {
+        actionType,
+        studentName,
+        studentNim,
+        lecturerName,
+        studentName2,
+        studentNim2,
+        timestamp: new Date()
+      }
+    });
+    io.emit("new_activity", activity);
+  } catch (err) {
+    console.error("❌ Failed to log activity:", err);
+  }
+};
+
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 // Multer Storage Configuration (Use memory storage for Supabase upload)
@@ -758,6 +786,14 @@ Silakan cek dashboard Anda untuk mendownload bukti pemilihan. Tetap semangat! �
       timestamp: new Date()
     });
 
+    // Save activity in DB
+    await logActivity(
+      "SELECT",
+      result.studentName,
+      student.nim,
+      result.lecturerName
+    );
+
     res.json(result);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -840,30 +876,11 @@ const isAdmin = (req: any, res: any, next: any) => {
 // --- ACTIVITY HISTORY ENDPOINT ---
 app.get("/api/admin/activities", authenticate, isAdmin, async (req: any, res) => {
   try {
-    const recentSelections = await prisma.mahasiswa.findMany({
-      where: { selectedAt: { not: null } },
-      select: {
-        id: true,
-        nama: true,
-        nim: true,
-        statusBimbingan: true,
-        selectedAt: true,
-        dosen: { select: { nama: true } },
-      },
-      orderBy: { selectedAt: "desc" },
+    const logs = await prisma.activityLog.findMany({
+      orderBy: { timestamp: "desc" },
       take: 50,
     });
-
-    const activities = recentSelections.map((m) => ({
-      id: m.id,
-      studentName: m.nama,
-      studentNim: m.nim,
-      lecturerName: m.dosen?.nama || "-",
-      status: m.statusBimbingan,
-      timestamp: m.selectedAt ? m.selectedAt.toISOString() : new Date().toISOString(),
-    }));
-
-    res.json(activities);
+    res.json(logs);
   } catch (err: any) {
     console.error("Fetch activities error:", err);
     res.status(500).json({ error: "Gagal memuat aktivitas." });
@@ -912,6 +929,14 @@ app.post("/api/admin/war/cancel", authenticate, isAdmin, async (req: any, res) =
     console.log(`Admin ${req.user.nim} membatalkan pilihan dosen untuk Mahasiswa ${mhs.nim}`);
     triggerQuotaUpdate();
     io.emit("student_update", { id: mhs.id, userId: mhs.userId, nim: mhs.nim });
+
+    await logActivity(
+      "CANCEL",
+      mhs.nama,
+      mhs.nim,
+      mhs.dosen?.nama || "-"
+    );
+
     res.json({ message: `Berhasil membatalkan pilihan dosen untuk ${mhs.nama}` });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -966,6 +991,14 @@ app.post("/api/admin/war/assign", authenticate, isAdmin, async (req: any, res) =
       lecturerName: lecturer.nama,
       timestamp: new Date()
     });
+
+    // Save activity in DB
+    await logActivity(
+      "ASSIGN",
+      mhs.nama,
+      mhs.nim,
+      lecturer.nama
+    );
 
     res.json({ message: `Berhasil menambahkan ${mhs.nama} ke bimbingan ${lecturer.nama}` });
   } catch (err: any) {
@@ -1041,6 +1074,16 @@ app.post("/api/admin/war/swap", authenticate, isAdmin, async (req: any, res) => 
         });
       }
     }
+
+    // Save swap activity in DB
+    await logActivity(
+      "SWAP",
+      student1.nama,
+      student1.nim,
+      `${student1.dosen?.nama || "-"} ⇄ ${student2.dosen?.nama || "-"}`,
+      student2.nama,
+      student2.nim
+    );
 
     res.json({ 
       message: `Berhasil menukar pembimbing antara ${student1.nama} dan ${student2.nama}.` 
@@ -1839,6 +1882,13 @@ app.post("/api/admin/reset-angkatan", authenticate, isAdmin, async (req, res) =>
     
     io.emit("quota_update", await prisma.dosen.findMany({ include: { _count: { select: { mahasiswa: true } }, penelitian: true } }));
     io.emit("student_update", { angkatan: angkatan });
+
+    await logActivity(
+      "RESET",
+      null,
+      angkatan
+    );
+
     res.json({ message: `Berhasil mereset ${result.count} data bimbingan mahasiswa angkatan ${angkatan}.` });
   } catch (err: any) {
     res.status(500).json({ error: "Gagal me-reset data angkatan." });
