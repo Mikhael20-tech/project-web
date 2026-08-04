@@ -124,12 +124,16 @@ export async function triggerN8nWebhook(event: string, payload: Record<string, a
       status: isSuccess ? "SUCCESS" : "FAILED",
       statusCode: response.status,
       payloadSummary: JSON.stringify(fullPayload).substring(0, 150) + "...",
+      errorMessage: isSuccess ? undefined : `Webhook n8n mengembalikan HTTP ${response.status} (${response.statusText || "Error"})`,
     };
 
     n8nExecutionLogs.unshift(logEntry);
     if (n8nExecutionLogs.length > 100) n8nExecutionLogs.pop();
 
-    return { success: isSuccess };
+    return {
+      success: isSuccess,
+      error: isSuccess ? undefined : `Target n8n mengembalikan HTTP ${response.status} (${response.statusText || "Not OK"}). Pastikan workflow di n8n sudah di-Publish & metode HTTP sesuai.`,
+    };
   } catch (err: any) {
     const logEntry: N8nLogEntry = {
       id: logId,
