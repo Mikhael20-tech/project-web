@@ -38,7 +38,7 @@
           "value": "C12345678",
           "mode": "id"
         },
-        "text": "=📊 *Laporan Ringkasan Mingguan War Dosen PTI UNESA*\n\n• *Total Mahasiswa Terdaftar:* {{ $json.body.totalStudents }}\n• *Mahasiswa Sudah Punya Dosen:* {{ $json.body.selectedStudents }} ({{ $json.body.selectionPercentage }}%)\n• *Total Dosen:* {{ $json.body.totalLecturers }}\n• *Total Kuota Terisi:* {{ $json.body.totalQuotaUsed }} / {{ $json.body.totalQuotaMax }}\n• *Dokumen Terunggah:* {{ $json.body.totalDocuments }}\n\nSistem berjalan normal 🚀",
+        "text": "=📊 *Laporan Ringkasan Mingguan War Dosen PTI UNESA*\n\n• *Total Mahasiswa Terdaftar:* {{ $json.body?.totalStudents || $json.totalStudents || 0 }}\n• *Mahasiswa Sudah Punya Dosen:* {{ $json.body?.selectedStudents || $json.selectedStudents || 0 }} ({{ $json.body?.selectionPercentage || $json.selectionPercentage || 0 }}%)\n• *Total Dosen:* {{ $json.body?.totalLecturers || $json.totalLecturers || 0 }}\n• *Total Kuota Terisi:* {{ $json.body?.totalQuotaUsed || $json.totalQuotaUsed || 0 }} / {{ $json.body?.totalQuotaMax || $json.totalQuotaMax || 0 }}\n• *Dokumen Terunggah:* {{ $json.body?.totalDocuments || $json.totalDocuments || 0 }}\n\nSistem berjalan normal 🚀",
         "otherOptions": {}
       },
       "name": "Send Slack/Email Digest",

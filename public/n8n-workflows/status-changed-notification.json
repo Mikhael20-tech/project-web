@@ -17,7 +17,7 @@
         "conditions": {
           "string": [
             {
-              "value1": "={{ $json.body.status }}",
+              "value1": "={{ $json.body?.status || $json.status || \"\" }}",
               "value2": "APPROVED"
             }
           ]
@@ -31,7 +31,7 @@
     {
       "parameters": {
         "chatId": "-1004300553391",
-        "text": "=✅ *UPDATE STATUS WAR DOSEN (APPROVED)*\n\nHalo *{{ $json.body.studentName }}*,\nBooking bimbingan Anda dengan *{{ $json.body.lecturerName }}* telah **DISETUJUI**!\n\nCatatan Dosen: {{ $json.body.catatanDosen || \"-\" }}\nSilakan cek jadwal di web War Dosen.",
+        "text": "=✅ *UPDATE STATUS WAR DOSEN (APPROVED)*\n\nHalo *{{ $json.body?.studentName || $json.studentName || \"-\" }}*,\nBooking bimbingan Anda dengan *{{ $json.body?.lecturerName || $json.lecturerName || \"-\" }}* telah **DISETUJUI**!\n\nCatatan Dosen: {{ $json.body?.catatanDosen || $json.catatanDosen || \"-\" }}\nSilakan cek jadwal di web War Dosen.",
         "additionalFields": {}
       },
       "name": "Send Approval Telegram",
@@ -42,7 +42,7 @@
     {
       "parameters": {
         "chatId": "-1004300553391",
-        "text": "=❌ *UPDATE STATUS WAR DOSEN (REJECTED/RESET)*\n\nHalo *{{ $json.body.studentName }}*,\nStatus bimbingan Anda dengan *{{ $json.body.lecturerName }}* mengalami perubahan (**{{ $json.body.status }}**).\n\nCatatan: {{ $json.body.catatanDosen || \"-\" }}\nSilakan login ke web War Dosen untuk info lebih lanjut.",
+        "text": "=❌ *UPDATE STATUS WAR DOSEN (REJECTED/RESET)*\n\nHalo *{{ $json.body?.studentName || $json.studentName || \"-\" }}*,\nStatus bimbingan Anda dengan *{{ $json.body?.lecturerName || $json.lecturerName || \"-\" }}* mengalami perubahan (**{{ $json.body?.status || $json.status || \"-\" }}**).\n\nCatatan: {{ $json.body?.catatanDosen || $json.catatanDosen || \"-\" }}\nSilakan login ke web War Dosen untuk info lebih lanjut.",
         "additionalFields": {}
       },
       "name": "Send Rejection/Reset Telegram",

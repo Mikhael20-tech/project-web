@@ -45,7 +45,7 @@
     {
       "parameters": {
         "chatId": "-100123456789",
-        "text": "=🔔 *Aktivitas War Dosen Terbaru*\n\nMahasiswa: *{{ $json.body.studentName }}* (NIM: {{ $json.body.studentNim }})\nDosen Tujuan: *{{ $json.body.lecturerName }}*\nWaktu: {{ $json.body.timestamp }}",
+        "text": "=🔔 *Aktivitas War Dosen Terbaru*\n\nMahasiswa: *{{ $json.body?.studentName || $json.studentName || \"-\" }}* (NIM: {{ $json.body?.studentNim || $json.studentNim || \"-\" }})\nDosen Tujuan: *{{ $json.body?.lecturerName || $json.lecturerName || \"-\" }}*\nWaktu: {{ $json.body?.timestamp || $json.timestamp || \"-\" }}",
         "additionalFields": {}
       },
       "name": "Telegram Channel Broadcast",
