@@ -2,7 +2,7 @@ import React from "react";
 import { cn } from "@/src/lib/utils";
 
 // Official uploaded logo URL from Supabase
-export const LOGO_URL = "https://qeyxuxyxmjjlwdifiurv.supabase.co/storage/v1/object/public/dosen-photos/system-logo-1779106573939.png";
+export const LOGO_URL = "/logo.png";
 
 export const LogoIcon: React.FC<{ className?: string }> = ({ className = "w-10 h-10" }) => {
   return (
