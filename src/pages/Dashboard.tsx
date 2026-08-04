@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -560,8 +560,7 @@ const Dashboard = ({
                 Dosen <span className="text-teal-500 italic">War</span>
               </h1>
               <p className="text-teal-800/60 text-sm font-medium pr-12">
-                Portal resmi perebutan kuota pembimbing Tugas Akhir. Pastikan profil
-                Anda sudah lengkap sebelum masa pemilihan dibuka.
+                {t("dash_student_hero_desc")}
               </p>
               <div className="flex items-center gap-2 mt-4 text-[9px] font-black text-teal-400 uppercase tracking-widest bg-teal-50/50 w-fit px-3 py-1.5 rounded-full border border-teal-100">
                 <Zap className="w-3 h-3 fill-teal-400" />
@@ -602,7 +601,7 @@ const Dashboard = ({
             </div>
             <div>
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-teal-200">
-                Panduan Cepat
+                {t("dash_student_quick_guide_title")}
               </h4>
               <div className="space-y-4">
                 <div className="flex gap-3">
@@ -610,7 +609,7 @@ const Dashboard = ({
                     1
                   </div>
                   <p className="text-xs font-bold leading-tight">
-                    Lengkapi profil Anda (Nama & Kontak) untuk membuka akses pemilihan.
+                    {t("dash_student_quick_step1")}
                   </p>
                 </div>
                 <div className="flex gap-3">
@@ -618,7 +617,7 @@ const Dashboard = ({
                     2
                   </div>
                   <p className="text-xs font-bold leading-tight">
-                    Pilih dosen saat status server berubah menjadi "LIVE".
+                    {t("dash_student_quick_step2")}
                   </p>
                 </div>
               </div>
@@ -627,13 +626,13 @@ const Dashboard = ({
               onClick={() => setIsProfileModalOpen(true)}
               className="w-full mt-6 py-3 bg-white text-teal-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all shadow-lg"
             >
-              Profile Settings
+              {t("nav_settings")}
             </button>
             <button
               onClick={() => navigate("/portfolio")}
               className="w-full mt-3 py-3 bg-teal-600 text-white border border-teal-400 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 hover:border-slate-900 transition-all shadow-lg"
             >
-              Portofolio Dosen
+              {t("nav_portfolio")}
             </button>
           </div>
         </div>

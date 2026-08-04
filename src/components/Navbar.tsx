@@ -83,13 +83,13 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
       name: t("nav_portfolio"),
       path: "/portfolio",
       icon: <Star className="w-4 h-4" />,
-      authOnly: true,
+      showAlways: true,
     },
     {
       name: t("nav_guide") || "Panduan",
       path: "/guide",
       icon: <HelpCircle className="w-4 h-4" />,
-      authOnly: true,
+      showAlways: true,
     },
     {
       name: t("nav_dashboard"),
@@ -115,7 +115,8 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
     (link) =>
       (!link.role || (user && user.role === link.role)) &&
       (!link.guestOnly || !user) &&
-      (!(link as any).authOnly || user)
+      (!(link as any).authOnly || user) &&
+      (!(link as any).showAlways || true)
   );
 
   const handleNavClick = (path: string) => {

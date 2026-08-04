@@ -1,0 +1,74 @@
+{
+  "name": "War Dosen - Weekly Analytics Digest",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                "1"
+              ],
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "name": "Schedule Every Monday 08:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://dosenkitapti.up.railway.app/api/n8n/stats",
+        "options": {}
+      },
+      "name": "Fetch Web App Statistics",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C12345678",
+          "mode": "id"
+        },
+        "text": "=📊 *Laporan Ringkasan Mingguan War Dosen PTI UNESA*\n\n• *Total Mahasiswa Terdaftar:* {{ $json.body.totalStudents }}\n• *Mahasiswa Sudah Punya Dosen:* {{ $json.body.selectedStudents }} ({{ $json.body.selectionPercentage }}%)\n• *Total Dosen:* {{ $json.body.totalLecturers }}\n• *Total Kuota Terisi:* {{ $json.body.totalQuotaUsed }} / {{ $json.body.totalQuotaMax }}\n• *Dokumen Terunggah:* {{ $json.body.totalDocuments }}\n\nSistem berjalan normal 🚀",
+        "otherOptions": {}
+      },
+      "name": "Send Slack/Email Digest",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [720, 300]
+    }
+  ],
+  "connections": {
+    "Schedule Every Monday 08:00": {
+      "main": [
+        [
+          {
+            "node": "Fetch Web App Statistics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Web App Statistics": {
+      "main": [
+        [
+          {
+            "node": "Send Slack/Email Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "name": "War Dosen - Google Calendar & Meet Sync",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "guidance-schedule-sync",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "calendar": "primary",
+        "start": "={{ $json.body.scheduledAt }}",
+        "end": "={{ $json.body.scheduledEndAt }}",
+        "summary": "=Bimbingan Skripsi: {{ $json.body.studentName }} & {{ $json.body.lecturerName }}",
+        "description": "=Agendakan Bimbingan Tugas Akhir/Skripsi.\nMahasiswa: {{ $json.body.studentName }} ({{ $json.body.studentNim }})\nTopik/Revisi: {{ $json.body.topic }}\nRuang/Tempat: {{ $json.body.location || 'Google Meet' }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ $json.body.studentEmail }}",
+            "={{ $json.body.lecturerEmail }}"
+          ],
+          "conferenceData": {
+            "createRequest": {
+              "requestId": "={{ $json.body.bookingId }}"
+            }
+          }
+        }
+      },
+      "name": "Create Google Calendar Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1,
+      "position": [500, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Create Google Calendar Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

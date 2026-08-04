@@ -117,28 +117,33 @@ const GuidePage = () => {
         </div>
 
         {/* Tab Selection */}
-        <div className="flex flex-wrap gap-2 p-1.5 bg-teal-950/5 border border-teal-950/10 rounded-3xl w-fit shrink-0">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={cn(
-                "px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2.5 relative",
-                activeTab === tab.id
-                  ? "bg-teal-950 text-white shadow-lg shadow-teal-950/20"
-                  : "text-teal-800/60 hover:text-teal-950 hover:bg-teal-50"
-              )}
-            >
-              {tab.icon}
-              {tab.label}
-              {activeTab === tab.id && (
-                <motion.div
-                  layoutId="guide-tab-glow"
-                  className="absolute inset-0 bg-white/10 rounded-2xl"
-                />
-              )}
-            </button>
-          ))}
+        <div className="relative w-full max-w-full overflow-hidden rounded-3xl bg-teal-950/5 border border-teal-950/10 p-1.5">
+          <div className="flex overflow-x-auto scrollbar-hide gap-2 items-center">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={cn(
+                  "shrink-0 px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2.5 relative",
+                  activeTab === tab.id
+                    ? "bg-teal-950 text-white shadow-lg shadow-teal-950/20"
+                    : "text-teal-800/60 hover:text-teal-950 hover:bg-teal-50"
+                )}
+              >
+                {tab.icon}
+                {tab.label}
+                {activeTab === tab.id && (
+                  <motion.div
+                    layoutId="guide-tab-glow"
+                    className="absolute inset-0 bg-white/10 rounded-2xl"
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+          {/* Scroll Fade Indicators */}
+          <div className="absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-teal-50/90 to-transparent pointer-events-none md:hidden"></div>
+          <div className="absolute top-0 left-0 bottom-0 w-8 bg-gradient-to-r from-teal-50/90 to-transparent pointer-events-none md:hidden"></div>
         </div>
 
         {/* Tab Content Box */}

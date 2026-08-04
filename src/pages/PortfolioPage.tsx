@@ -371,7 +371,7 @@ const PortfolioPage = () => {
                       className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 group cursor-pointer shadow-lg shadow-emerald-500/20 w-fit"
                     >
                       <Smartphone className="w-3.5 h-3.5 text-white group-hover:scale-110 transition-transform" />
-                      <span>{selectedDosen.kontak ? "Hubungi Dosen" : "Hubungi Dosen (Kontak Belum Ada)"}</span>
+                      <span>{selectedDosen.kontak ? t("port_contact_dosen") : t("port_contact_none")}</span>
                     </button>
                   </motion.div>
 

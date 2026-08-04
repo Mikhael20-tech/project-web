@@ -1,0 +1,81 @@
+{
+  "name": "War Dosen - Cek Slot & Rekap Bimbingan Dosen",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "cek-slot-dosen",
+        "options": {}
+      },
+      "name": "Webhook Trigger (GET)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/api/n8n/stats",
+        "options": {}
+      },
+      "name": "Fetch Dosen & Slot Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [470, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format rekap sisa slot dan daftar mahasiswa per dosen\nconst data = $input.first().json;\nconst listDosen = data.lecturerDetails || [];\n\nlet reportText = `📊 *REKAP SLOT DOSEN & DAFTAR MAHASISWA*\\n\\n`;\nreportText += `Total Dosen: ${data.totalLecturers}\\n`;\nreportText += `Kuota Digunakan: ${data.totalQuotaUsed} / ${data.totalQuotaMax} (${data.selectionPercentage}%)\\n\\n`;\nreportText += `--- *DAFTAR DOSEN & SISA SLOT* ---\\n\\n`;\n\nlistDosen.forEach((dosen, i) => {\n  const statusSlot = dosen.isFull ? \"🔴 FULL\" : `🟢 Sisa ${dosen.sisaSlot} Slot`;\n  reportText += `${i + 1}. *${dosen.nama}*\\n`;\n  reportText += `   Status: ${statusSlot} (${dosen.terisi}/${dosen.kuotaMax})\\n`;\n  if (dosen.daftarMahasiswa && dosen.daftarMahasiswa.length > 0) {\n    reportText += `   Mahasiswa:\\n`;\n    dosen.daftarMahasiswa.forEach((mhs) => {\n      reportText += `   • ${mhs.nama} (${mhs.nim}) - ${mhs.statusBimbingan}\\n`;\n    });\n  } else {\n    reportText += `   Mahasiswa: (Belum ada)\\n`;\n  }\n  reportText += `\\n`;\n});\n\nreturn [{ json: { reportText } }];"
+      },
+      "name": "Format Report String",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [690, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "-1004300553391",
+        "text": "={{ $json.reportText }}",
+        "additionalFields": {}
+      },
+      "name": "Send Rekap to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [910, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger (GET)": {
+      "main": [
+        [
+          {
+            "node": "Fetch Dosen & Slot Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Dosen & Slot Data": {
+      "main": [
+        [
+          {
+            "node": "Format Report String",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Report String": {
+      "main": [
+        [
+          {
+            "node": "Send Rekap to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

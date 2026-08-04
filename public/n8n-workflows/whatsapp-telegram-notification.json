@@ -1,0 +1,86 @@
+{
+  "name": "War Dosen - WhatsApp & Telegram Notifications",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "war-dosen-notification",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.event }}",
+              "value2": "WAR_BOOKED"
+            }
+          ]
+        }
+      },
+      "name": "Is War Booked?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [470, 300]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "https://api.fonnte.com/send",
+        "jsonParameters": true,
+        "options": {},
+        "headerParametersJson": "{\"Authorization\": \"YOUR_FONNTE_TOKEN\"}",
+        "bodyParametersJson": "={\n  \"target\": \"{{ $json.body.studentKontak }}\",\n  \"message\": \"📢 *KONFIRMASI WAR DOSEN BERHASIL*\\n\\nHalo *{{ $json.body.studentName }}* (NIM: {{ $json.body.studentNim }}),\\n\\nSelamat! Anda telah memilih Dosen Pembimbing:\\n👨‍🏫 *{{ $json.body.lecturerName }}*\\n\\nRencana Judul: {{ $json.body.rencanaJudul }}\\nPeriode: {{ $json.body.periode }}\\n\\nSilakan unduh bukti resmi bimbingan di dashboard web.\"\n}"
+      },
+      "name": "Send WhatsApp via Fonnte",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [700, 200]
+    },
+    {
+      "parameters": {
+        "chatId": "-100123456789",
+        "text": "=🔔 *Aktivitas War Dosen Terbaru*\n\nMahasiswa: *{{ $json.body.studentName }}* (NIM: {{ $json.body.studentNim }})\nDosen Tujuan: *{{ $json.body.lecturerName }}*\nWaktu: {{ $json.body.timestamp }}",
+        "additionalFields": {}
+      },
+      "name": "Telegram Channel Broadcast",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [700, 400]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Is War Booked?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is War Booked?": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp via Fonnte",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Telegram Channel Broadcast",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

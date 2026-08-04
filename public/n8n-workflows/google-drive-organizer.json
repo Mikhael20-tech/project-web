@@ -1,0 +1,43 @@
+{
+  "name": "War Dosen - Google Drive Document Organizer",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "organize-drive-document",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "fileContent": "={{ $json.body.fileBase64 }}",
+        "name": "=[{{ $json.body.category }}] {{ $json.body.studentNim }} - {{ $json.body.studentName }} - {{ $json.body.fileName }}",
+        "parents": [
+          "YOUR_GOOGLE_DRIVE_FOLDER_ID"
+        ]
+      },
+      "name": "Upload to Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 2,
+      "position": [500, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Upload to Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

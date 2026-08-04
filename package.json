@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx server.ts",
+    "dev": "tsx watch server.ts",
     "start": "tsx server.ts",
-    "start:dev": "tsx server.ts",
+    "start:dev": "tsx watch server.ts",
     "build": "vite build",
     "build:start": "npm run build && tsx server.ts",
     "preview": "vite preview",

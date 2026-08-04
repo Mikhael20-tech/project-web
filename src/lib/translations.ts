@@ -184,6 +184,8 @@ export const translations: any = {
     port_not_found_desc: 'Coba sesuaikan kata kunci pencarian Anda.',
     port_academic_pakar: 'Pakar Akademik',
     port_prof_profile: 'Profil Profesional',
+    port_contact_dosen: 'Hubungi Dosen',
+    port_contact_none: 'Hubungi Dosen (Kontak Belum Ada)',
     port_default_bio: 'Pakar Pendidikan Teknologi Informasi dengan fokus pada pengembangan sistem cerdas dan metodologi pembelajaran digital berbasis industri.',
     port_lecturer_projects: 'Projek Dosen (Penelitian)',
     port_no_projects: 'Belum ada projek penelitian yang aktif.',
@@ -393,7 +395,17 @@ export const translations: any = {
     guide_doc_uploaded: "Diunggah:",
     guide_doc_download: "Unduh File",
     guide_doc_open_link: "Buka Link Drive",
-    guide_doc_no_desc: "Tidak ada deskripsi singkat."
+    guide_doc_no_desc: "Tidak ada deskripsi singkat.",
+    dash_student_hero_desc: "Portal resmi perebutan kuota pembimbing Tugas Akhir. Pastikan profil Anda sudah lengkap sebelum masa pemilihan dibuka.",
+    dash_student_quick_guide_title: "Panduan Cepat",
+    dash_student_quick_step1: "Lengkapi profil Anda (Nama & Kontak) untuk membuka akses pemilihan.",
+    dash_student_quick_step2: "Pilih dosen saat status server berubah menjadi 'LIVE'.",
+    landing_online_users: "pengguna online",
+    landing_stat_dosen: "50+ Dosen",
+    landing_stat_mahasiswa: "500+ Mahasiswa",
+    landing_stat_uptime: "99.9% Uptime",
+    footer_contact: "Hubungi Kami",
+    footer_links: "Tautan"
   },
   en: {
     hero_title: "WarDosPem",
@@ -579,6 +591,8 @@ export const translations: any = {
     port_not_found_desc: 'Try adjusting your search keywords.',
     port_academic_pakar: 'Academic Expert',
     port_prof_profile: 'Professional Profile',
+    port_contact_dosen: 'Contact Lecturer',
+    port_contact_none: 'Contact Lecturer (No Contact)',
     port_default_bio: 'Information Technology Education Expert focusing on intelligent system development and industry-based digital learning methodologies.',
     port_lecturer_projects: 'Lecturer Projects (Research)',
     port_no_projects: 'No active research projects yet.',
@@ -788,7 +802,17 @@ export const translations: any = {
     guide_doc_uploaded: "Uploaded:",
     guide_doc_download: "Download File",
     guide_doc_open_link: "Open Drive Link",
-    guide_doc_no_desc: "No short description available."
+    guide_doc_no_desc: "No short description available.",
+    dash_student_hero_desc: "Official portal for thesis advisor quota selection. Ensure your profile is complete before selection opens.",
+    dash_student_quick_guide_title: "Quick Guide",
+    dash_student_quick_step1: "Complete your profile (Name & Contact) to unlock access.",
+    dash_student_quick_step2: "Select an advisor when the server status turns 'LIVE'.",
+    landing_online_users: "users online",
+    landing_stat_dosen: "50+ Advisors",
+    landing_stat_mahasiswa: "500+ Students",
+    landing_stat_uptime: "99.9% Uptime",
+    footer_contact: "Contact Us",
+    footer_links: "Links"
   },
   zh: {
     hero_title: "WarDosPem",
@@ -1183,7 +1207,17 @@ export const translations: any = {
     guide_doc_uploaded: "上传时间：",
     guide_doc_download: "下载文件",
     guide_doc_open_link: "打开云盘链接",
-    guide_doc_no_desc: "暂无简短描述。"
+    guide_doc_no_desc: "暂无简短描述。",
+    dash_student_hero_desc: "官方论文导师名额选择门户。请在选择开始前确保您的个人资料完整。",
+    dash_student_quick_guide_title: "快速指南",
+    dash_student_quick_step1: "完善您的个人资料（姓名和联系方式）以解锁访问权限。",
+    dash_student_quick_step2: "当服务器状态变为'LIVE'时选择导师。",
+    landing_online_users: "在线用户",
+    landing_stat_dosen: "50+ 导师",
+    landing_stat_mahasiswa: "500+ 学生",
+    landing_stat_uptime: "99.9% 正常运行",
+    footer_contact: "联系我们",
+    footer_links: "链接"
   },
   ja: {
     hero_title: "教員争奪戦",
@@ -1578,7 +1612,17 @@ export const translations: any = {
     guide_doc_uploaded: "アップロード日：",
     guide_doc_download: "ファイルをダウンロード",
     guide_doc_open_link: "ドライブリンクを開く",
-    guide_doc_no_desc: "簡単な説明はありません。"
+    guide_doc_no_desc: "簡単な説明はありません。",
+    dash_student_hero_desc: "公式の論文指導教員定員選択ポータル。選択が始まる前にプロフィールが完全であることを確認してください。",
+    dash_student_quick_guide_title: "クイックガイド",
+    dash_student_quick_step1: "アクセスをロック解除するには、プロフィール（名前と連絡先）を完成させてください。",
+    dash_student_quick_step2: "サーバーステータスが「LIVE」に変わったら、アドバイザーを選択します。",
+    landing_online_users: "オンラインユーザー",
+    landing_stat_dosen: "50+ アドバイザー",
+    landing_stat_mahasiswa: "500+ 学生",
+    landing_stat_uptime: "99.9% 稼働率",
+    footer_contact: "お問い合わせ",
+    footer_links: "リンク"
   },
   ko: {
     hero_title: "교수님 전쟁",
@@ -1762,6 +1806,8 @@ export const translations: any = {
     port_not_found_desc: '검색 키워드를 조정해 보십시오.',
     port_academic_pakar: '학술 전문가',
     port_prof_profile: '전문 프로필',
+    port_contact_dosen: '지도교수에게 연락하기',
+    port_contact_none: '지도교수에게 연락하기 (연락처 없음)',
     port_default_bio: '지능형 시스템 개발 및 산업 기반 디지털 학습 방법론에 중점을 둔 정보 기술 교육 전문가.',
     port_lecturer_projects: '강사 프로젝트 (연구)',
     port_no_projects: '아직 활성 연구 프로젝트가 없습니다.',
@@ -1973,6 +2019,16 @@ export const translations: any = {
     guide_doc_uploaded: "업로드 날짜:",
     guide_doc_download: "파일 다운로드",
     guide_doc_open_link: "드라이브 링크 열기",
-    guide_doc_no_desc: "간단한 설명이 없습니다."
+    guide_doc_no_desc: "간단한 설명이 없습니다.",
+    dash_student_hero_desc: "논문 지도교수 할당량 선택 공식 포털. 선택이 시작되기 전에 프로필이 완전한지 확인하십시오.",
+    dash_student_quick_guide_title: "빠른 가이드",
+    dash_student_quick_step1: "액세스 잠금을 해제하려면 프로필(이름 및 연락처)을 완료하십시오.",
+    dash_student_quick_step2: "서버 상태가 'LIVE'로 변경되면 지도교수를 선택합니다.",
+    landing_online_users: "온라인 사용자",
+    landing_stat_dosen: "50+ 지도교수",
+    landing_stat_mahasiswa: "500+ 학생",
+    landing_stat_uptime: "99.9% 가동 시간",
+    footer_contact: "문의하기",
+    footer_links: "링크"
   }
 };

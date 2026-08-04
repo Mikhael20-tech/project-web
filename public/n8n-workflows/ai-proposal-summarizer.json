@@ -1,0 +1,61 @@
+{
+  "name": "War Dosen - AI Title & Revision Summarizer",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-summarize-proposal",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {},
+        "prompt": "=Analisis judul skripsi dan catatan bimbingan berikut ini:\n\nNama Mahasiswa: {{ $json.body.studentName }}\nNIM: {{ $json.body.studentNim }}\nJudul Proposal: {{ $json.body.rencanaJudul }}\nCatatan Revisi Dosen: {{ $json.body.catatanDosen }}\n\nBerikan output berupa format JSON ringkas:\n1. Kesesuaian Judul dengan keahlian dosen (Skor 1-100 & Alasan)\n2. Ringkasan 3 poin utama revisi skripsi yang harus diperbaiki mahasiswa\n3. Rekomendasi kata kunci jurnal ilmiah yang relevan."
+      },
+      "name": "OpenAI / LLM Analysis",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "options": {},
+        "respondWith": "allIncomingItems"
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [750, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "OpenAI / LLM Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI / LLM Analysis": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

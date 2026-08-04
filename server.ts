@@ -15,6 +15,7 @@ import multer from "multer";
 import fs from "fs";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { triggerN8nWebhook, n8nEventConfigs, updateEventConfig, getExecutionLogs } from "./src/lib/n8nService.js";
 
 // Initialize Supabase Storage Client
 const supabaseUrl = (process.env.SUPABASE_URL || "").replace(/^["']|["']$/g, "").trim();
@@ -793,6 +794,17 @@ Silakan cek dashboard Anda untuk mendownload bukti pemilihan. Tetap semangat! ðŸ
       student.nim,
       result.lecturerName
     );
+
+    // Trigger n8n Webhook for WAR_BOOKED event
+    triggerN8nWebhook("WAR_BOOKED", {
+      studentName: result.studentName,
+      studentNim: student.nim,
+      studentKontak: result.studentKontak,
+      lecturerName: result.lecturerName,
+      dosenId,
+      rencanaJudul,
+      periode: config.periode,
+    }).catch(err => console.error("n8n WAR_BOOKED trigger error:", err));
 
     res.json(result);
   } catch (err: any) {
@@ -2593,6 +2605,147 @@ app.delete("/api/admin/documents/:id", authenticate, isAdmin, async (req, res) =
     console.error("Delete document error:", err);
     res.status(500).json({ error: "Gagal menghapus dokumen akademik." });
   }
+});
+
+// --- N8N AUTOMATION API ENDPOINTS ---
+// 1. GET /api/n8n/config (Fetch all n8n event webhook configurations)
+app.get("/api/n8n/config", authenticate, (req, res) => {
+  res.json({ configs: Object.values(n8nEventConfigs) });
+});
+
+// 2. POST /api/n8n/config (Update specific n8n event webhook URL or toggle status)
+app.post("/api/n8n/config", authenticate, (req, res) => {
+  const { eventId, webhookUrl, enabled } = req.body;
+  if (!eventId) return res.status(400).json({ error: "eventId wajib diisi." });
+
+  const updated = updateEventConfig(eventId, {
+    ...(webhookUrl !== undefined ? { webhookUrl } : {}),
+    ...(enabled !== undefined ? { enabled: Boolean(enabled) } : {}),
+  });
+
+  if (!updated) return res.status(404).json({ error: "Event ID tidak ditemukan." });
+  res.json({ success: true, config: updated });
+});
+
+// 3. POST /api/n8n/test (Test fire a sample payload to an n8n webhook)
+app.post("/api/n8n/test", authenticate, async (req, res) => {
+  const { eventId } = req.body;
+  if (!eventId) return res.status(400).json({ error: "eventId wajib diisi." });
+
+  const samplePayload = {
+    testMode: true,
+    message: "Test ping from WarDosPem n8n Automation Engine",
+    studentName: "Mahasiswa Uji Coba",
+    studentNim: "22050974001",
+    studentKontak: "6281234567890",
+    lecturerName: "Dosen Penguji, M.Kom.",
+    rencanaJudul: "Pengembangan Sistem E-Learning Berbasis Automation Framework",
+    periode: "Genap 2024/2025",
+    timestamp: new Date().toISOString(),
+  };
+
+  const result = await triggerN8nWebhook(eventId, samplePayload);
+  // Always return 200 â€” success:false is not a client error (e.g. URL not yet configured)
+  res.json({ success: result.success, message: result.success ? `Webhook '${eventId}' berhasil terkirim!` : (result.error || "Gagal mengirimkan webhook.") });
+});
+
+// 4. GET /api/n8n/logs (Get recent n8n webhook execution logs)
+app.get("/api/n8n/logs", authenticate, (req, res) => {
+  res.json({ logs: getExecutionLogs() });
+});
+
+// 5. GET /api/n8n/stats (Public/Authenticated statistics for n8n Weekly Digest workflow)
+app.get("/api/n8n/stats", async (req, res) => {
+  try {
+    const totalStudents = await prisma.mahasiswa.count();
+    const selectedStudents = await prisma.mahasiswa.count({ where: { dosenId: { not: null } } });
+    const totalLecturers = await prisma.dosen.count();
+    
+    // Fetch detailed lecturer slot availability & assigned student list
+    const lecturersWithStudents = await prisma.dosen.findMany({
+      select: {
+        id: true,
+        nama: true,
+        nip: true,
+        kuotaMax: true,
+        mahasiswa: {
+          select: {
+            nama: true,
+            nim: true,
+            statusBimbingan: true,
+            rencanaJudul: true,
+          },
+        },
+      },
+      orderBy: { nama: "asc" },
+    });
+
+    const totalQuotaMax = lecturersWithStudents.reduce((sum, d) => sum + (d.kuotaMax || 0), 0);
+    const totalDocuments = await prisma.academicDocument.count();
+
+    const lecturerDetails = lecturersWithStudents.map((d) => {
+      const terisi = d.mahasiswa.length;
+      const sisa = Math.max(0, (d.kuotaMax || 0) - terisi);
+      return {
+        nama: d.nama,
+        nip: d.nip,
+        kuotaMax: d.kuotaMax || 0,
+        terisi,
+        sisaSlot: sisa,
+        isFull: sisa === 0,
+        daftarMahasiswa: d.mahasiswa,
+      };
+    });
+
+    const selectionPercentage = totalStudents > 0 ? Math.round((selectedStudents / totalStudents) * 100) : 0;
+
+    res.json({
+      status: "SUCCESS",
+      timestamp: new Date().toISOString(),
+      totalStudents,
+      selectedStudents,
+      selectionPercentage,
+      totalLecturers,
+      totalQuotaMax,
+      totalQuotaUsed: selectedStudents,
+      totalDocuments,
+      lecturerDetails,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: "Gagal mengambil statistik n8n." });
+  }
+});
+
+// 6. POST /api/n8n/ai-summarize (Trigger n8n AI Proposal & Revision Summarizer)
+app.post("/api/n8n/ai-summarize", authenticate, async (req: any, res) => {
+  const { rencanaJudul, catatanDosen } = req.body;
+  const user = req.user;
+
+  const result = await triggerN8nWebhook("AI_SUMMARY_REQUEST", {
+    userId: user.id,
+    studentName: user.username,
+    rencanaJudul,
+    catatanDosen,
+  });
+
+  res.json({ success: result.success, message: result.success ? "Permintaan AI Summarizer terkirim ke n8n!" : result.error });
+});
+
+// 7. POST /api/n8n/calendar-sync (Trigger n8n Google Calendar Sync)
+app.post("/api/n8n/calendar-sync", authenticate, async (req, res) => {
+  const { scheduledAt, topic, location, studentEmail, lecturerEmail } = req.body;
+
+  const result = await triggerN8nWebhook("CALENDAR_SYNC", {
+    bookingId: "BKG-" + Date.now(),
+    scheduledAt,
+    scheduledEndAt: new Date(new Date(scheduledAt).getTime() + 60 * 60 * 1000).toISOString(),
+    topic,
+    location: location || "Google Meet",
+    studentEmail: studentEmail || "mahasiswa@mhs.unesa.ac.id",
+    lecturerEmail: lecturerEmail || "dosen@unesa.ac.id",
+  });
+
+  res.json({ success: result.success, message: result.success ? "Jadwal bimbingan disinkronkan ke n8n Google Calendar!" : result.error });
 });
 
 // --- VITE SETUP ---

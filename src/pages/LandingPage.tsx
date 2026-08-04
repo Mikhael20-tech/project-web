@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
@@ -94,10 +94,18 @@ const LandingPage = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-teal-50 rounded-full text-teal-700 mb-8 border border-teal-100"
+            className="inline-flex flex-wrap justify-center items-center gap-4 mb-8"
           >
-            <Zap className="w-4 h-4" />
-            <span className="text-[10px] font-black uppercase tracking-widest italic">{t("hero_tagline")}</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-50 rounded-full text-teal-700 border border-teal-100">
+              <Zap className="w-4 h-4" />
+              <span className="text-[10px] font-black uppercase tracking-widest italic">{t("hero_tagline")}</span>
+            </div>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-full text-emerald-700 border border-emerald-100">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-widest">
+                {onlineCount} {t("landing_online_users")}
+              </span>
+            </div>
           </motion.div>
           
           <motion.h1 
@@ -167,6 +175,61 @@ const LandingPage = () => {
             >
               {t("view_features")}
             </a>
+          </motion.div>
+          <motion.div 
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="mt-20 relative max-w-4xl mx-auto"
+          >
+            {/* UI Mockup */}
+            <div className="relative rounded-[2.5rem] bg-white/40 backdrop-blur-3xl border border-white/60 p-4 shadow-2xl shadow-teal-900/10 mb-20 overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-400 via-emerald-400 to-indigo-400"></div>
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-teal-950/5 mb-4">
+                <div className="w-3 h-3 rounded-full bg-rose-400"></div>
+                <div className="w-3 h-3 rounded-full bg-amber-400"></div>
+                <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
+                <div className="ml-4 w-48 h-4 bg-teal-950/5 rounded-full"></div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-2">
+                <div className="col-span-1 md:col-span-2 space-y-4">
+                  <div className="h-32 bg-white/60 rounded-3xl p-6 border border-white/50 flex flex-col justify-between">
+                    <div className="w-24 h-4 bg-teal-950/10 rounded-full"></div>
+                    <div className="w-full h-8 bg-teal-950/5 rounded-full"></div>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="h-24 flex-1 bg-white/60 rounded-3xl p-4 border border-white/50"></div>
+                    <div className="h-24 flex-1 bg-teal-500/10 rounded-3xl p-4 border border-teal-500/20"></div>
+                  </div>
+                </div>
+                <div className="col-span-1 space-y-4">
+                  <div className="h-24 bg-white/60 rounded-3xl p-4 border border-white/50 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-teal-950/10"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="w-full h-3 bg-teal-950/10 rounded-full"></div>
+                      <div className="w-1/2 h-3 bg-teal-950/5 rounded-full"></div>
+                    </div>
+                  </div>
+                  <div className="h-32 bg-emerald-500/10 rounded-3xl p-4 border border-emerald-500/20"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Stats Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center px-4">
+              <div className="space-y-2">
+                <div className="text-4xl font-black text-teal-950 tracking-tighter">50+</div>
+                <div className="text-[10px] uppercase tracking-widest font-bold text-teal-800/60">{t("landing_stat_dosen")}</div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-4xl font-black text-teal-950 tracking-tighter">500+</div>
+                <div className="text-[10px] uppercase tracking-widest font-bold text-teal-800/60">{t("landing_stat_mahasiswa")}</div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-4xl font-black text-teal-950 tracking-tighter">99.9%</div>
+                <div className="text-[10px] uppercase tracking-widest font-bold text-teal-800/60">{t("landing_stat_uptime")}</div>
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -282,11 +345,44 @@ const LandingPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-teal-50 px-6 text-center">
-        <Logo showText={true} className="justify-center mb-6" iconSize="w-8 h-8" />
-        <p className="text-[10px] font-black text-teal-800/30 uppercase tracking-[0.3em]">
-          &copy; 2024 PTI UNESA. All Rights Reserved. Crafted for Excellence.
-        </p>
+      <footer className="pt-20 pb-12 border-t border-teal-50 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center md:items-start gap-12 mb-16">
+          <div className="text-center md:text-left max-w-xs">
+            <Logo showText={true} className="mb-6 justify-center md:justify-start" iconSize="w-8 h-8" />
+            <p className="text-sm text-teal-800/60 font-medium">
+              Sistem pemilihan dosen pembimbing Tugas Akhir yang cepat dan transparan untuk mahasiswa PTI UNESA.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-12 sm:gap-24 text-center md:text-left">
+            <div>
+              <h4 className="text-[10px] font-black text-teal-950 uppercase tracking-widest mb-6">{t("footer_links")}</h4>
+              <ul className="space-y-4 text-sm font-bold text-teal-800/60">
+                <li><a href="/" className="hover:text-teal-600 transition-colors">{t("nav_home")}</a></li>
+                <li><a href="/guide" className="hover:text-teal-600 transition-colors">{t("nav_guide")}</a></li>
+                <li><a href="/portfolio" className="hover:text-teal-600 transition-colors">{t("nav_portfolio")}</a></li>
+                <li><a href="/#faq" className="hover:text-teal-600 transition-colors">{t("nav_faq")}</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-[10px] font-black text-teal-950 uppercase tracking-widest mb-6">{t("footer_contact")}</h4>
+              <ul className="space-y-4 text-sm font-bold text-teal-800/60">
+                <li><a href="mailto:admin.pti@unesa.ac.id" className="hover:text-teal-600 transition-colors">admin.pti@unesa.ac.id</a></li>
+                <li>Gedung A8, FT UNESA</li>
+                <li>Surabaya, Indonesia</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div className="max-w-6xl mx-auto pt-8 border-t border-teal-50/50 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-[10px] font-black text-teal-800/30 uppercase tracking-[0.3em] text-center md:text-left">
+            &copy; {new Date().getFullYear()} PTI UNESA. ALL RIGHTS RESERVED.
+          </p>
+          <div className="flex items-center justify-center gap-4 text-[10px] font-black text-teal-800/30 uppercase tracking-[0.2em]">
+            <span>Crafted for Excellence</span>
+            <span>•</span>
+            <span>v1.0.0</span>
+          </div>
+        </div>
       </footer>
 
     </div>

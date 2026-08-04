@@ -1,0 +1,85 @@
+{
+  "name": "War Dosen - Status Changed Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "status-changed-notification",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.status }}",
+              "value2": "APPROVED"
+            }
+          ]
+        }
+      },
+      "name": "Is Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [470, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "-1004300553391",
+        "text": "=✅ *UPDATE STATUS WAR DOSEN (APPROVED)*\n\nHalo *{{ $json.body.studentName }}*,\nBooking bimbingan Anda dengan *{{ $json.body.lecturerName }}* telah **DISETUJUI**!\n\nCatatan Dosen: {{ $json.body.catatanDosen || \"-\" }}\nSilakan cek jadwal di web War Dosen.",
+        "additionalFields": {}
+      },
+      "name": "Send Approval Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [700, 200]
+    },
+    {
+      "parameters": {
+        "chatId": "-1004300553391",
+        "text": "=❌ *UPDATE STATUS WAR DOSEN (REJECTED/RESET)*\n\nHalo *{{ $json.body.studentName }}*,\nStatus bimbingan Anda dengan *{{ $json.body.lecturerName }}* mengalami perubahan (**{{ $json.body.status }}**).\n\nCatatan: {{ $json.body.catatanDosen || \"-\" }}\nSilakan login ke web War Dosen untuk info lebih lanjut.",
+        "additionalFields": {}
+      },
+      "name": "Send Rejection/Reset Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [700, 400]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Is Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Approved?": {
+      "main": [
+        [
+          {
+            "node": "Send Approval Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Rejection/Reset Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

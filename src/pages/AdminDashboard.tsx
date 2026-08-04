@@ -27,6 +27,7 @@ import {
   Folder,
   FileText,
   ArrowLeftRight,
+  Bot,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useLanguage } from "@/src/lib/LanguageContext";
@@ -34,6 +35,7 @@ import { socket } from "@/src/lib/socket";
 import LoadingOverlay from "@/src/components/LoadingOverlay";
 import { AdminDateTimePicker } from "@/src/components/AdminDateTimePicker";
 import { BookingCalendar } from "@/src/components/BookingCalendar";
+import { N8nAutomationTab } from "@/src/components/N8nAutomationTab";
 import {
   BarChart,
   Bar,
@@ -103,7 +105,7 @@ const AdminDashboard = ({
 }) => {
   const { t, lang } = useLanguage();
   const [activeTab, setActiveTab] = useState<
-    "monitoring" | "dosen" | "students" | "settings" | "admin_profile" | "broadcast" | "documents"
+    "monitoring" | "dosen" | "students" | "settings" | "admin_profile" | "broadcast" | "documents" | "n8n_automation"
   >("monitoring");
   const [reports, setReports] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
@@ -1795,6 +1797,7 @@ const AdminDashboard = ({
               { id: "students", label: t("dash_admin_tab_students"), icon: UserPlus },
               { id: "broadcast", label: t("dash_admin_tab_broadcast"), icon: Zap },
               { id: "documents", label: t("dash_admin_tab_documents"), icon: Folder },
+              { id: "n8n_automation", label: "n8n Automation", icon: Bot },
               { id: "settings", label: t("dash_admin_tab_schedule"), icon: Calendar },
               { id: "admin_profile", label: t("dash_admin_tab_profile"), icon: Settings },
             ].map((tab) => (
@@ -3915,6 +3918,18 @@ const AdminDashboard = ({
                   </div>
                 </div>
               </div>
+            </motion.div>
+          )}
+
+          {activeTab === "n8n_automation" && (
+            <motion.div
+              key="n8n_automation"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              transition={{ type: "spring", stiffness: 200, damping: 25 }}
+            >
+              <N8nAutomationTab />
             </motion.div>
           )}
 

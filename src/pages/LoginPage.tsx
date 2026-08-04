@@ -315,7 +315,7 @@ const LoginPage = ({
                     ) : (
                       <>
                         <LogIn className="w-3 h-3 group-hover:rotate-12 transition-transform" />{" "}
-                        {isRegister ? "Daftar Akun" : t("login_btn_enter")}
+                        {isRegister ? t("login_btn_register") : t("login_btn_enter")}
                       </>
                     )}
                   </Button>
@@ -327,7 +327,7 @@ const LoginPage = ({
                     <div className="w-full border-t border-teal-100/30" />
                   </div>
                   <span className="relative px-2 bg-white/80 backdrop-blur-md rounded-full text-[7px] font-black text-teal-800/30 uppercase tracking-[0.4em]">
-                    ATAU
+                    {t("login_or_sso").split(" ")[0].toUpperCase()}
                   </span>
                 </div>
 
@@ -454,7 +454,7 @@ const LoginPage = ({
                     ) : (
                       <>
                         <LogIn className="w-3 h-3 group-hover:rotate-12 transition-transform" />{" "}
-                        {isRegister ? "Daftar Akun Dosen" : t("login_btn_enter")}
+                        {isRegister ? t("login_btn_register") : t("login_btn_enter")}
                       </>
                     )}
                   </Button>
