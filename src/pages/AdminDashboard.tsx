@@ -30,6 +30,7 @@ import {
   FileText,
   ArrowLeftRight,
   Bot,
+  Filter,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { socket } from "@/src/lib/socket";
