@@ -236,7 +236,7 @@ const LoginPage = ({
                   <div className="space-y-1 relative">
                     <div className="flex justify-between items-center px-1">
                       <label className="text-[9px] font-black text-teal-800/60 uppercase tracking-widest">
-                        NIM / Email Unesa
+                        {t("login_nim_email_label")}
                       </label>
                       <span className="text-[7px] text-teal-800/50 font-mono tracking-tighter bg-teal-50/50 px-1 py-0.5 rounded border border-teal-100/30">
                         24050974086
@@ -246,7 +246,7 @@ const LoginPage = ({
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      placeholder="NIM atau Email UNESA"
+                      placeholder={t("login_nim_email_placeholder")}
                       required
                       variant="primary"
                       className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-lg h-10 px-3 shadow-inner transition-all font-bold text-xs text-teal-950"
@@ -262,14 +262,14 @@ const LoginPage = ({
                     >
                       <div className="flex justify-between items-center px-1">
                         <label className="text-[9px] font-black text-teal-800/60 uppercase tracking-widest">
-                          Nama Lengkap
+                          {t("login_fullname")}
                         </label>
                       </div>
                       <Input
                         type="text"
                         value={nama}
                         onChange={(e) => setNama(e.target.value)}
-                        placeholder="Masukkan nama lengkap"
+                        placeholder={t("login_fullname_placeholder")}
                         required={isRegister}
                         variant="primary"
                         className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-lg h-10 px-3 shadow-inner transition-all font-bold text-xs text-teal-950"
@@ -288,7 +288,7 @@ const LoginPage = ({
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Ketuk sandi rahasia"
+                      placeholder={t("login_password_placeholder")}
                       required
                       variant="primary"
                       className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-lg h-10 px-3 shadow-inner transition-all font-bold text-xs text-teal-950"
@@ -401,14 +401,14 @@ const LoginPage = ({
                     >
                       <div className="flex justify-between items-center px-1">
                         <label className="text-[9px] font-black text-teal-800/60 uppercase tracking-widest">
-                          Nama Lengkap
+                          {t("login_fullname")}
                         </label>
                       </div>
                       <Input
                         type="text"
                         value={nama}
                         onChange={(e) => setNama(e.target.value)}
-                        placeholder="Masukkan nama lengkap"
+                        placeholder={t("login_fullname_placeholder")}
                         required={isRegister}
                         variant="primary"
                         className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-lg h-10 px-3 shadow-inner transition-all font-bold text-xs text-teal-950"
@@ -427,7 +427,7 @@ const LoginPage = ({
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Ketuk sandi rahasia"
+                      placeholder={t("login_password_placeholder")}
                       required
                       variant="primary"
                       className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-lg h-10 px-3 shadow-inner transition-all font-bold text-xs text-teal-950"

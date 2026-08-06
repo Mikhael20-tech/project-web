@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useLanguage } from "@/src/lib/LanguageContext";
+import DynamicText from "@/src/components/DynamicText";
 
 const categoryColors: Record<string, string> = {
   MOA: "bg-blue-50 text-blue-700 border-blue-100",
@@ -70,7 +71,7 @@ const GuidePage = () => {
   }, []);
 
   const tabs = [
-    { id: "tutorial", label: "Video Tutorial", icon: <PlayCircle className="w-4 h-4" /> },
+    { id: "tutorial", label: t("guide_tab_video"), icon: <PlayCircle className="w-4 h-4" /> },
     { id: "mahasiswa", label: t("type_student"), icon: <Users className="w-4 h-4" /> },
     { id: "dosen", label: t("type_dosen"), icon: <GraduationCap className="w-4 h-4" /> },
     { id: "admin", label: t("nav_admin"), icon: <Settings className="w-4 h-4" /> },
@@ -161,8 +162,8 @@ const GuidePage = () => {
               {activeTab === "tutorial" && (
                 <div className="space-y-8">
                   <div className="space-y-2">
-                    <h2 className="text-2xl font-black text-teal-950 tracking-tight">Video Tutorial</h2>
-                    <p className="text-sm text-teal-800/60 font-medium">Panduan visual penggunaan portal untuk Mahasiswa dan Dosen.</p>
+                    <h2 className="text-2xl font-black text-teal-950 tracking-tight">{t("guide_tab_video")}</h2>
+                    <p className="text-sm text-teal-800/60 font-medium">{t("guide_video_subtitle")}</p>
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4">
@@ -172,7 +173,7 @@ const GuidePage = () => {
                         <div className="w-10 h-10 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center">
                           <Users className="w-5 h-5" />
                         </div>
-                        <h3 className="text-lg font-black text-teal-950">Tutorial Mahasiswa</h3>
+                        <h3 className="text-lg font-black text-teal-950">{t("guide_video_mhs")}</h3>
                       </div>
                       <div className="relative w-full rounded-2xl overflow-hidden bg-black aspect-video shadow-inner">
                         <video 
@@ -192,7 +193,7 @@ const GuidePage = () => {
                         <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
                           <GraduationCap className="w-5 h-5" />
                         </div>
-                        <h3 className="text-lg font-black text-teal-950">Tutorial Dosen</h3>
+                        <h3 className="text-lg font-black text-teal-950">{t("guide_video_dosen")}</h3>
                       </div>
                       <div className="relative w-full rounded-2xl overflow-hidden bg-black aspect-video shadow-inner">
                         <video 
@@ -519,10 +520,14 @@ const GuidePage = () => {
 
                               <div className="space-y-2">
                                 <h3 className="text-lg font-black text-teal-950 tracking-tight leading-snug">
-                                  {doc.title}
+                                  <DynamicText text={doc.title} />
                                 </h3>
                                 <p className="text-xs text-teal-800/70 font-semibold leading-relaxed">
-                                  {doc.description || t("guide_doc_no_desc")}
+                                  {doc.description ? (
+                                    <DynamicText text={doc.description} />
+                                  ) : (
+                                    t("guide_doc_no_desc")
+                                  )}
                                 </p>
                               </div>
                             </div>

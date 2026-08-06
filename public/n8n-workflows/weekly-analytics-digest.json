@@ -22,7 +22,7 @@
     },
     {
       "parameters": {
-        "url": "https://dosenkitapti.up.railway.app/api/n8n/stats",
+        "url": "https://wardospem.com/api/n8n/stats",
         "options": {}
       },
       "name": "Fetch Web App Statistics",

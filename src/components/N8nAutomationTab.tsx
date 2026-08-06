@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import DynamicText from "@/src/components/DynamicText";
+import { useLanguage } from "@/src/lib/LanguageContext";
 import {
   Zap,
   CheckCircle,
@@ -36,6 +38,7 @@ interface N8nLog {
 }
 
 export const N8nAutomationTab: React.FC = () => {
+  const { t } = useLanguage();
   const [configs, setConfigs] = useState<N8nConfig[]>([]);
   const [logs, setLogs] = useState<N8nLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -159,53 +162,53 @@ export const N8nAutomationTab: React.FC = () => {
 
   const workflowTemplates = [
     {
-      title: "WhatsApp & Telegram Notification",
+      title: "Notifikasi WhatsApp & Telegram",
       desc: "Kirim pesan WA konfirmasi ke mahasiswa dan alert ke Telegram Channel saat War Dosen.",
       file: "/n8n-workflows/whatsapp-telegram-notification.json",
       tag: "Notifikasi Instant",
       color: "from-amber-500/20 to-orange-500/10 border-amber-500/30",
     },
     {
-      title: "Google Calendar & Meet Sync",
+      title: "Sinkronisasi Google Calendar & Meet",
       desc: "Otomatis buat event kalender & link Meet saat jadwal bimbingan disepakati.",
       file: "/n8n-workflows/google-calendar-sync.json",
       tag: "Jadwal & Meet",
       color: "from-blue-500/20 to-indigo-500/10 border-blue-500/30",
     },
     {
-      title: "AI Proposal & Revision Summarizer",
+      title: "Ringkasan Proposal & Revisi AI",
       desc: "Ekstrak poin revisi dan kesesuaian judul skripsi memakai LLM node n8n.",
       file: "/n8n-workflows/ai-proposal-summarizer.json",
       tag: "AI Node",
       color: "from-purple-500/20 to-pink-500/10 border-purple-500/30",
     },
     {
-      title: "Google Drive Document Organizer",
+      title: "Pengorganisir Dokumen Google Drive",
       desc: "Simpan & rapikan file proposal/draft skripsi mahasiswa ke Google Drive prodi.",
       file: "/n8n-workflows/google-drive-organizer.json",
       tag: "Drive Storage",
       color: "from-cyan-500/20 to-teal-500/10 border-cyan-500/30",
     },
     {
-      title: "Weekly Analytics Digest",
+      title: "Rangkuman Analisis Mingguan",
       desc: "Tarik statistik mingguan War Dosen dan kirim rangkuman ke Slack/Email Kaprodi.",
       file: "/n8n-workflows/weekly-analytics-digest.json",
       tag: "Cron Digest",
       color: "from-emerald-500/20 to-green-500/10 border-emerald-500/30",
     },
     {
-      title: "Status Changed Notification",
+      title: "Notifikasi Perubahan Status",
       desc: "Notifikasi otomatis ke Telegram saat status bimbingan disetujui, ditolak, atau di-reset.",
       file: "/n8n-workflows/status-changed-notification.json",
       tag: "Status Update",
       color: "from-rose-500/20 to-orange-500/10 border-rose-500/30",
     },
     {
-      title: "Cek Slot Dosen & Rekap Mahasiswa",
-      desc: "Rekap sisa kuota slot per dosen beserta daftar mahasiswa bimbingan langsung ke Telegram.",
-      file: "/n8n-workflows/cek-slot-dosen-recap.json",
-      tag: "Rekap Slot & Mhs",
-      color: "from-amber-500/20 to-yellow-500/10 border-amber-500/30",
+      title: "Super Chatbot Telegram (9 Fitur Lengkap)",
+      desc: "Chatbot Telegram interaktif 9-in-1: Pengecekan Slot, Rekomendasi Topik, Personal NIM Check, Alarm Slot Dosen, Download Template, Voice Note Query, & Fitur Teman Seperjuangan.",
+      file: "/n8n-workflows/telegram-super-chatbot.json",
+      tag: "Super Chatbot 9-in-1",
+      color: "from-sky-500/20 to-blue-500/10 border-sky-500/30",
     },
   ];
 
@@ -245,10 +248,10 @@ export const N8nAutomationTab: React.FC = () => {
               <Zap className="w-3.5 h-3.5" /> n8n Workflow Integration
             </div>
             <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
-              n8n Automation Hub
+              <DynamicText text="n8n Automation Hub" />
             </h2>
             <p className="text-slate-400 text-sm mt-1 max-w-2xl">
-              Hubungkan aplikasi War Dosen dengan instance <strong>n8n Workflow Automation</strong> milikmu. Otomatiskan notifikasi WhatsApp, Google Calendar, AI Summarizer, hingga Google Drive tanpa baris kode tambahan.
+              <DynamicText text="Hubungkan aplikasi War Dosen dengan instance n8n Workflow Automation milikmu. Otomatiskan notifikasi WhatsApp, Google Calendar, AI Summarizer, hingga Google Drive tanpa baris kode tambahan." />
             </p>
           </div>
 
@@ -258,7 +261,7 @@ export const N8nAutomationTab: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-medium transition-all shadow-md active:scale-95 disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-            Refresh Status
+            {t("btn_refresh_status")}
           </button>
         </div>
 
@@ -269,7 +272,9 @@ export const N8nAutomationTab: React.FC = () => {
               <Zap className="w-6 h-6" />
             </div>
             <div>
-              <div className="text-xs text-slate-400 font-medium">Webhook Aktif</div>
+              <div className="text-xs text-slate-400 font-medium">
+                <DynamicText text="Webhook Aktif" />
+              </div>
               <div className="text-xl font-bold text-white">
                 {activeWebhooksCount} / {configs.length} Event
               </div>
@@ -281,7 +286,9 @@ export const N8nAutomationTab: React.FC = () => {
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
-              <div className="text-xs text-slate-400 font-medium">Eksekusi Sukses</div>
+              <div className="text-xs text-slate-400 font-medium">
+                <DynamicText text="Eksekusi Sukses" />
+              </div>
               <div className="text-xl font-bold text-emerald-400">
                 {successLogsCount} Triggers
               </div>
@@ -293,9 +300,11 @@ export const N8nAutomationTab: React.FC = () => {
               <Activity className="w-6 h-6" />
             </div>
             <div>
-              <div className="text-xs text-slate-400 font-medium">Total Webhook Logs</div>
+              <div className="text-xs text-slate-400 font-medium">
+                <DynamicText text="Total Webhook Logs" />
+              </div>
               <div className="text-xl font-bold text-white">
-                {logs.length} Log Disimpan
+                {logs.length} <DynamicText text="Log Disimpan" />
               </div>
             </div>
           </div>
@@ -347,7 +356,9 @@ export const N8nAutomationTab: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-400 mt-1">{item.description}</p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        <DynamicText text={item.description} />
+                      </p>
                     </div>
                   </div>
 
@@ -388,7 +399,7 @@ export const N8nAutomationTab: React.FC = () => {
                       className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition-all shadow-sm active:scale-95 disabled:opacity-50"
                     >
                       <Save className="w-3.5 h-3.5" />
-                      {savingId === item.id ? "Saving..." : "Simpan URL"}
+                      {savingId === item.id ? t("btn_saving") : t("btn_save_url")}
                     </button>
 
                     <button
@@ -398,7 +409,7 @@ export const N8nAutomationTab: React.FC = () => {
                       className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 text-xs font-semibold rounded-lg transition-all shadow-sm active:scale-95 disabled:opacity-40"
                     >
                       <Play className={`w-3.5 h-3.5 ${testingId === item.id ? "animate-pulse" : ""}`} />
-                      {testingId === item.id ? "Testing..." : "Test Webhook"}
+                      {testingId === item.id ? t("btn_testing") : t("btn_test_webhook")}
                     </button>
                   </div>
                 </div>
@@ -439,7 +450,7 @@ export const N8nAutomationTab: React.FC = () => {
                 className="mt-5 flex items-center justify-center gap-2 py-2 px-3 bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-semibold rounded-lg transition-all"
               >
                 <Download className="w-3.5 h-3.5 text-emerald-400" />
-                Download JSON Workflow
+                {t("btn_download_json")}
               </a>
             </div>
           ))}

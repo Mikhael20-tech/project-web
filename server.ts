@@ -559,6 +559,19 @@ app.get("/api/auth/google/callback", async (req, res) => {
   }
 });
 
+// --- PUBLIC STATS FOR LANDING PAGE ---
+app.get("/api/public-stats", async (req, res) => {
+  try {
+    const [dosenCount, mahasiswaCount] = await Promise.all([
+      prisma.dosen.count(),
+      prisma.mahasiswa.count()
+    ]);
+    res.json({ dosenCount, mahasiswaCount });
+  } catch (err) {
+    res.status(500).json({ error: "Gagal memuat statistik publik." });
+  }
+});
+
 // --- STUDENT PROFILE ---
 app.get("/api/me", authenticate, async (req: any, res) => {
   try {
@@ -2746,6 +2759,92 @@ app.post("/api/n8n/calendar-sync", authenticate, async (req, res) => {
   });
 
   res.json({ success: result.success, message: result.success ? "Jadwal bimbingan disinkronkan ke n8n Google Calendar!" : result.error });
+});
+
+// 8. GET /api/n8n/student-status (Public lookup by NIM/Nama for Telegram Chatbot)
+app.get("/api/n8n/student-status", async (req, res) => {
+  try {
+    const nim = (req.query.nim as string || "").trim();
+    if (!nim) return res.status(400).json({ error: "NIM wajib disertakan." });
+
+    const student = await prisma.mahasiswa.findFirst({
+      where: { OR: [{ nim }, { nama: { contains: nim, mode: "insensitive" } }] },
+      include: { dosen: true }
+    });
+
+    if (!student) {
+      return res.status(404).json({ found: false, message: "Mahasiswa dengan NIM/Nama tersebut tidak ditemukan." });
+    }
+
+    res.json({
+      found: true,
+      nim: student.nim,
+      nama: student.nama,
+      angkatan: student.angkatan || "-",
+      statusBimbingan: student.statusBimbingan || "BELUM_MEMILIH",
+      rencanaJudul: student.rencanaJudul || "-",
+      dosen: student.dosen ? {
+        nama: student.dosen.nama,
+        nip: student.dosen.nip,
+        kontak: student.dosen.kontak || "-"
+      } : null
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Gagal memuat status mahasiswa." });
+  }
+});
+
+// 9. GET /api/n8n/war-schedule (Public lookup for War Schedule & Info)
+app.get("/api/n8n/war-schedule", async (req, res) => {
+  try {
+    const config = await prisma.warConfig.findUnique({ where: { id: "global_config" } });
+    if (!config) {
+      return res.json({ configured: false, message: "Jadwal War Dosen belum dikonfigurasi." });
+    }
+
+    const now = new Date();
+    const isWarStarted = now >= config.startTime;
+    const isWarEnded = now > config.endTime;
+
+    res.json({
+      configured: true,
+      startTime: config.startTime,
+      endTime: config.endTime,
+      category: config.category || "SKRIPSI_ARTIKEL",
+      targetAngkatan: config.targetAngkatan || "Semua Angkatan",
+      isForcedClosed: config.isForcedClosed,
+      isWarStarted,
+      isWarEnded,
+      statusMessage: config.isForcedClosed 
+        ? "🔴 Ditutup sementara oleh Admin (Emergency Stop)" 
+        : isWarEnded 
+        ? "🔴 Masa War Dosen Telah Berakhir" 
+        : isWarStarted 
+        ? "🟢 War Dosen SEDANG BERLANGSUNG!" 
+        : "⏳ War Dosen BELUM dibuka (Hitung mundur berjalan)"
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Gagal memuat jadwal war." });
+  }
+});
+
+// 10. POST /api/n8n/support-ticket (Create support ticket from Telegram Chatbot)
+app.post("/api/n8n/support-ticket", async (req, res) => {
+  try {
+    const { nim, studentName, issueType, message, telegramChatId } = req.body;
+    if (!message) return res.status(400).json({ error: "Pesan keluhan wajib diisi." });
+
+    await logActivity(
+      "SUPPORT_TICKET",
+      studentName || "Mahasiswa",
+      nim || "N/A",
+      `Ticket: ${issueType || "Bantuan"} - ${message.substring(0, 50)}...`
+    );
+
+    res.json({ success: true, message: "Tiket bantuan berhasil dicatat dan diteruskan ke Admin PTI!" });
+  } catch (err) {
+    res.status(500).json({ error: "Gagal membuat tiket bantuan." });
+  }
 });
 
 // --- VITE SETUP ---

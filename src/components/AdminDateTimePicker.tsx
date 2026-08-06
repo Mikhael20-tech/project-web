@@ -3,6 +3,7 @@ import { Calendar, DatePicker, TimeField } from "@heroui/react";
 import { parseDate, parseTime } from "@internationalized/date";
 import type { CalendarDate, Time } from "@internationalized/date";
 import { CalendarDays, Clock, X, ChevronDown } from "lucide-react";
+import { useLanguage } from "@/src/lib/LanguageContext";
 
 interface AdminDateTimePickerProps {
   label: string;
@@ -51,6 +52,7 @@ export function AdminDateTimePicker({
   onChange,
   required,
 }: AdminDateTimePickerProps) {
+  const { t } = useLanguage();
   const parsed = parseDateTimeStr(value);
   const [dateValue, setDateValue] = useState<CalendarDate | null>(
     parsed.date
@@ -77,7 +79,7 @@ export function AdminDateTimePicker({
 
   const formattedDate = dateValue
     ? `${String(dateValue.day).padStart(2, "0")}/${String(dateValue.month).padStart(2, "0")}/${dateValue.year}`
-    : "Pilih tanggal...";
+    : t("select_date");
 
   return (
     <div className="space-y-2">

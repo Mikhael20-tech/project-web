@@ -433,7 +433,7 @@ const DosenDashboard = ({
 
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
               <div className="px-5 py-3 bg-white border border-teal-50 rounded-2xl text-xs font-black text-teal-800 shadow-sm flex items-center gap-3">
-                <Users className="w-4 h-4 text-teal-500" /> NIP. {dosenData.nip}
+                <Users className="w-4 h-4 text-teal-500" /> {t("label_nip")}: {dosenData.nip}
               </div>
               <div className="px-5 py-3 bg-white border border-teal-50 rounded-2xl text-xs font-black text-teal-800 shadow-sm flex items-center gap-3">
                 <GraduationCap className="w-4 h-4 text-teal-500" /> {t("dash_dosen_quota")}{" "}
@@ -545,19 +545,22 @@ const DosenDashboard = ({
 
         <AnimatePresence>
           {confirmModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-[#F0FAF8]/30 backdrop-blur-md"
-            >
+            <div className="fixed inset-0 z-[9999] overflow-y-auto">
               <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                transition={{ type: "spring", duration: 0.5, bounce: 0.2 }}
-                className="bg-white/75 backdrop-blur-2xl border border-white border-opacity-40 rounded-[2.5rem] p-8 max-w-md w-full shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] relative overflow-hidden"
-              >
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setConfirmModal(null)}
+                className="fixed inset-0 bg-teal-950/60 backdrop-blur-md"
+              />
+              <div className="min-h-full flex items-center justify-center p-4 sm:p-6 pt-24 pb-12 sm:pt-28 relative z-10 pointer-events-none">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  transition={{ type: "spring", duration: 0.5, bounce: 0.2 }}
+                  className="pointer-events-auto bg-white/75 backdrop-blur-2xl border border-white border-opacity-40 rounded-[2.5rem] p-8 max-w-md w-full shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] relative overflow-hidden"
+                >
                 {/* Decorative gradients */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-2xl pointer-events-none" />
                 <div className="absolute bottom-0 left-0 w-32 h-32 bg-teal-500/5 rounded-full blur-2xl pointer-events-none" />
@@ -601,8 +604,9 @@ const DosenDashboard = ({
                   </div>
                 </div>
               </motion.div>
-            </motion.div>
-          )}
+            </div>
+          </div>
+        )}
         </AnimatePresence>
 
         <AnimatePresence mode="wait">
@@ -935,7 +939,7 @@ const DosenDashboard = ({
                     ) : (
                       <Save className="w-4 h-4" />
                     )}
-                    {submittingProfile ? "MENYIMPAN..." : t("dash_dosen_save_profile")}
+                    {submittingProfile ? t("dash_student_saving") : t("dash_dosen_save_profile")}
                   </button>
                 </form>
               </div>
@@ -1014,7 +1018,7 @@ const DosenDashboard = ({
                     className="w-full py-5 bg-teal-950 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-teal-800 transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     <RefreshCcw className={cn("w-4 h-4", submittingPassword && "animate-spin")} />
-                    {submittingPassword ? "MEMPROSES..." : t("dash_dosen_update_password")}
+                    {submittingPassword ? t("btn_processing") : t("dash_dosen_update_password")}
                   </button>
                 </form>
               </div>

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useLanguage } from "@/src/lib/LanguageContext";
+import DynamicText from "@/src/components/DynamicText";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Settings,
@@ -30,7 +32,6 @@ import {
   Bot,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
-import { useLanguage } from "@/src/lib/LanguageContext";
 import { socket } from "@/src/lib/socket";
 import LoadingOverlay from "@/src/components/LoadingOverlay";
 import { AdminDateTimePicker } from "@/src/components/AdminDateTimePicker";
@@ -254,7 +255,7 @@ const AdminDashboard = ({
   }, []);
 
   useEffect(() => {
-    if (deleteData || aiImportOpen || confirmModal) {
+    if (deleteData || aiImportOpen || confirmModal || resetModalOpen || assignModal || swapModal) {
       document.body.style.overflow = "hidden";
       document.body.classList.add("modal-open");
     } else {
@@ -265,7 +266,7 @@ const AdminDashboard = ({
       document.body.style.overflow = "";
       document.body.classList.remove("modal-open");
     };
-  }, [deleteData, aiImportOpen, confirmModal]);
+  }, [deleteData, aiImportOpen, confirmModal, resetModalOpen, assignModal, swapModal]);
 
   const fetchData = async () => {
     try {
@@ -1893,8 +1894,9 @@ const AdminDashboard = ({
                               cursor={{ fill: '#F8FDF9' }}
                               contentStyle={{ borderRadius: "1.5rem", border: "none", boxShadow: "0 10px 30px rgba(0,0,0,0.1)", padding: "1rem" }}
                               itemStyle={{ fontSize: "11px", fontWeight: "bold" }}
+                              formatter={(value: any) => [value, t("label_filled")]}
                             />
-                            <Bar dataKey="terisi" radius={[8, 8, 0, 0]} animationDuration={1500}>
+                            <Bar dataKey="terisi" name={t("label_filled")} radius={[8, 8, 0, 0]} animationDuration={1500}>
                               {reports.slice(0, 10).map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.mahasiswa.length >= entry.kuotaMax ? "url(#fullGradient)" : "url(#barGradient)"} />
                               ))}
@@ -1945,8 +1947,8 @@ const AdminDashboard = ({
                                   </defs>
                                   <Pie
                                     data={[
-                                      { name: t("dash_admin_filled"), value: totalFilled },
-                                      { name: "Empty", value: Math.max(0, totalQuota - totalFilled) }
+                                      { name: t("label_filled"), value: totalFilled },
+                                      { name: t("label_empty"), value: Math.max(0, totalQuota - totalFilled) }
                                     ]}
                                     innerRadius={70}
                                     outerRadius={90}
@@ -2077,7 +2079,7 @@ const AdminDashboard = ({
                         <div className="flex items-center gap-3">
                           <span className="text-[10px] font-black uppercase text-teal-800/40 tracking-widest">{t("dash_admin_filter")}</span>
                           <span className="text-xs font-black text-teal-950">
-                            {filterAngkatan === "All" ? t("dash_admin_all_batch") : `Angkatan ${filterAngkatan}`}
+                            {filterAngkatan === "All" ? t("dash_admin_all_batch") : `${t("dash_student_angkatan")} ${filterAngkatan}`}
                           </span>
                         </div>
                         <ChevronDown className={cn("w-4 h-4 text-teal-400 transition-transform duration-300", isFilterDropdownOpen && "rotate-180")} />
@@ -2119,7 +2121,7 @@ const AdminDashboard = ({
                                     filterAngkatan === a ? "bg-teal-50 text-teal-950" : "hover:bg-slate-50 text-teal-800/60"
                                   )}
                                 >
-                                  <span className="text-[10px] font-black uppercase tracking-widest">Angkatan {a}</span>
+                                  <span className="text-[10px] font-black uppercase tracking-widest">{t("dash_student_angkatan")} {a}</span>
                                   {filterAngkatan === a && <CheckCircle2 className="w-3 h-3 text-teal-500" />}
                                 </button>
                               ))}
@@ -2137,7 +2139,7 @@ const AdminDashboard = ({
                         type="text"
                         value={searchMonitoring}
                         onChange={(e) => setSearchMonitoring(e.target.value)}
-                        placeholder="Cari dosen atau mahasiswa..."
+                        placeholder={t("dash_admin_search_monitoring")}
                         className="w-full pl-11 pr-4 py-2.5 bg-white border border-teal-100 rounded-2xl text-sm font-bold text-teal-950 placeholder:text-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
                       />
                       {searchMonitoring && (
@@ -2149,9 +2151,9 @@ const AdminDashboard = ({
                   </div>
                   {/* Header (Hidden on Mobile) */}
                   <div className="hidden lg:grid lg:grid-cols-12 gap-6 bg-[#f8fdfc] border-b border-teal-50 px-6 py-6 md:px-10 text-[10px] font-black uppercase text-teal-800/40 tracking-widest">
-                    <div className="col-span-4">Dosen</div>
+                    <div className="col-span-4">{t("type_dosen")}</div>
                     <div className="col-span-2 text-center">{t("dash_admin_occupancy")}</div>
-                    <div className="col-span-6">Mahasiswa</div>
+                    <div className="col-span-6">{t("type_student")}</div>
                   </div>
                   
                   {/* Body */}
@@ -2223,7 +2225,7 @@ const AdminDashboard = ({
                                 }}
                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 text-teal-600 hover:bg-teal-100 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ml-auto lg:absolute lg:-top-8 lg:right-0 shadow-sm"
                               >
-                                <Plus className="w-3.5 h-3.5" /> Tambah Mahasiswa
+                                <Plus className="w-3.5 h-3.5" /> {t("btn_add_student")}
                               </button>
                             </div>
                             <div className="flex flex-wrap gap-2">
@@ -2236,7 +2238,7 @@ const AdminDashboard = ({
                                     <div className="flex items-center justify-between gap-3">
                                       <div className="flex flex-col">
                                         <span className="text-[10px] font-black text-teal-800/40 uppercase tracking-widest mb-0.5">
-                                          NIM:{" "}
+                                          {t("label_nim")}:{" "}
                                           <span className="text-teal-800 text-xs">
                                             {m.nim}
                                           </span>
@@ -2262,7 +2264,7 @@ const AdminDashboard = ({
                                             setIsSwapDropOpen(false);
                                           }}
                                           className="p-1.5 hover:bg-teal-50 text-teal-300 hover:text-teal-600 rounded-lg transition-colors group/btn"
-                                          title="Tukar/Exchange Dosen Pembimbing"
+                                          title={t("btn_swap_advisor")}
                                         >
                                           <ArrowLeftRight className="w-3.5 h-3.5" />
                                         </button>
@@ -2316,12 +2318,12 @@ const AdminDashboard = ({
                         <Plus className="w-5 h-5" />
                       )}
                     </div>
-                    {dosenForm.id ? "Edit Dosen" : "Tambah Dosen"}
+                    {dosenForm.id ? t("dash_admin_edit") + " Dosen" : t("dash_admin_add_lecturer")}
                   </h3>
                   <form onSubmit={handleDosenSubmit} className="space-y-5">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                        Nama Lengkap
+                        {t("dash_admin_full_name")}
                       </label>
                       <input
                         value={dosenForm.nama}
@@ -2334,7 +2336,7 @@ const AdminDashboard = ({
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                        NIP Dosen
+                        <DynamicText text="NIP Dosen" />
                       </label>
                       <input
                         value={dosenForm.nip}
@@ -2347,7 +2349,7 @@ const AdminDashboard = ({
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                        Kapasitas (Kuota)
+                        <DynamicText text="Kapasitas (Kuota)" />
                       </label>
                       <input
                         type="number"
@@ -2364,7 +2366,7 @@ const AdminDashboard = ({
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                        Foto Profil
+                        <DynamicText text="Foto Profil" />
                       </label>
                       <div className="flex flex-col gap-4">
                         {dosenForm.foto && (
@@ -2382,7 +2384,7 @@ const AdminDashboard = ({
                             >
                               <Trash2 className="w-5 h-5" />
                               <span className="text-[8px] font-black tracking-widest uppercase">
-                                Hapus
+                                <DynamicText text="Hapus" />
                               </span>
                             </button>
                           </div>
@@ -2406,13 +2408,13 @@ const AdminDashboard = ({
                             )}
                           >
                             {uploadLoading ? (
-                              "MENGUPLOAD..."
+                              <DynamicText text="MENGUPLOAD..." />
                             ) : (
                               <>
                                 <Camera className="w-4 h-4" />{" "}
                                 {dosenForm.foto
-                                  ? "Ganti Foto"
-                                  : "Pilih dari Perangkat"}
+                                  ? <DynamicText text="Ganti Foto" />
+                                  : <DynamicText text="Pilih dari Perangkat" />}
                               </>
                             )}
                           </label>
@@ -2420,7 +2422,7 @@ const AdminDashboard = ({
                         <div className="flex items-center gap-3 px-2">
                           <div className="h-px flex-1 bg-teal-100" />
                           <span className="text-[9px] font-black text-teal-800/40 uppercase tracking-widest">
-                            Atau URL
+                            <DynamicText text="Atau URL" />
                           </span>
                           <div className="h-px flex-1 bg-teal-100" />
                         </div>
@@ -2436,7 +2438,7 @@ const AdminDashboard = ({
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                        Keahlian Utama
+                        <DynamicText text="Keahlian Utama" />
                       </label>
                       <input
                         value={dosenForm.keahlian || ""}
@@ -2447,12 +2449,12 @@ const AdminDashboard = ({
                           })
                         }
                         className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
-                        placeholder="Misal: Kecerdasan Buatan"
+                        placeholder={t("placeholder_keahlian")}
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                        Bio Singkat
+                        <DynamicText text="Bio Singkat" />
                       </label>
                       <textarea
                         value={dosenForm.bio || ""}
@@ -2460,12 +2462,12 @@ const AdminDashboard = ({
                           setDosenForm({ ...dosenForm, bio: e.target.value })
                         }
                         className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner min-h-[80px]"
-                        placeholder="Deskripsi singkat..."
+                        placeholder={t("placeholder_bio")}
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                        Nomor HP / Kontak
+                        {t("dash_admin_contact")}
                       </label>
                       <input
                         value={dosenForm.kontak || ""}
@@ -2473,12 +2475,12 @@ const AdminDashboard = ({
                           setDosenForm({ ...dosenForm, kontak: e.target.value })
                         }
                         className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
-                        placeholder="08123xxxx (Dapat diakses mahasiswa setelah war)"
+                        placeholder="08123xxxx"
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                        Password {dosenForm.id && "(Kosongi jika tidak diubah)"}
+                        {t("dash_admin_password")} {dosenForm.id && "(Kosongi jika tidak diubah)"}
                       </label>
                       <input
                         type="password"
@@ -2543,9 +2545,9 @@ const AdminDashboard = ({
                         }}
                         title="Pilih Semua Dosen"
                       />
-                      <Users className="w-4 h-4 text-teal-500" /> Daftar Dosen
+                      <Users className="w-4 h-4 text-teal-500" /> {t("label_dosen_list")}
                     </h3>
-                    <p className="text-[10px] font-bold text-teal-800/40 uppercase tracking-wider mt-0.5">{reports.length} dosen terdaftar</p>
+                    <p className="text-[10px] font-bold text-teal-800/40 uppercase tracking-wider mt-0.5">{t("label_n_dosen").replace("{n}", String(reports.length))}</p>
                   </div>
                   <button
                     type="button"
@@ -2556,7 +2558,7 @@ const AdminDashboard = ({
                     className="flex items-center gap-2 px-5 py-3 bg-teal-950 text-teal-400 border border-teal-900 hover:bg-teal-900 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg cursor-pointer group"
                   >
                     <Zap className="w-4 h-4 text-teal-400 group-hover:scale-110 transition-transform" />
-                    ✨ Impor Massal AI
+                    ✨ {t("btn_ai_import")}
                   </button>
                 </div>
 
@@ -2567,7 +2569,7 @@ const AdminDashboard = ({
                     onClick={() => handleDeleteAll("dosen")}
                     className="flex items-center gap-2 px-5 py-2.5 bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border border-rose-100"
                   >
-                    <Trash2 className="w-4 h-4" /> Hapus Semua Dosen
+                    <Trash2 className="w-4 h-4" /> {t("btn_delete_all_dosen")}
                   </button>
                   {selectedDosen.length > 0 && (
                     <button
@@ -2575,7 +2577,7 @@ const AdminDashboard = ({
                       onClick={() => handleBulkDelete("dosen", selectedDosen)}
                       className="flex items-center gap-2 px-5 py-2.5 bg-rose-600 text-white hover:bg-rose-700 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md"
                     >
-                      <Trash2 className="w-4 h-4 text-white/70" /> Hapus {selectedDosen.length} Terpilih
+                      <Trash2 className="w-4 h-4 text-white/70" /> {t("btn_delete_selected").replace("{n}", String(selectedDosen.length))}
                     </button>
                   )}
                 </div>
@@ -2621,7 +2623,7 @@ const AdminDashboard = ({
                             {dosen.nama}
                           </p>
                           <span className="text-[9px] font-black uppercase text-teal-800/50 tracking-widest bg-teal-50/50 px-2 py-0.5 rounded-md">
-                            NIP. {dosen.nip}
+                            {t("label_nip")}: {dosen.nip}
                           </span>
                         </div>
                       </div>
@@ -2677,8 +2679,8 @@ const AdminDashboard = ({
                     </h3>
                     <p className="text-sm text-teal-800/60 font-medium">
                       {studentForm.id
-                        ? "Perbarui informasi mahasiswa."
-                        : "Buat akun untuk mahasiswa sebelum mereka bisa login."}
+                        ? t("label_update_student")
+                        : t("label_create_account")}
                     </p>
                   </div>
                 </div>
@@ -2702,7 +2704,7 @@ const AdminDashboard = ({
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                      Nama Lengkap
+                      {t("label_nama_lengkap")}
                     </label>
                     <input
                       value={studentForm.nama}
@@ -2716,7 +2718,7 @@ const AdminDashboard = ({
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                      No. HP Aktif
+                      {t("label_no_hp")}
                     </label>
                     <input
                       value={studentForm.kontak}
@@ -2733,7 +2735,7 @@ const AdminDashboard = ({
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                      Password
+                      {t("login_password")}
                     </label>
                     <input
                       type="password"
@@ -2779,7 +2781,7 @@ const AdminDashboard = ({
                         }
                         className="px-8 py-4 bg-teal-50 text-teal-600 rounded-[1.25rem] font-black text-xs uppercase tracking-widest hover:bg-teal-100 transition-all"
                       >
-                        Batal
+                        {t("btn_cancel")}
                       </button>
                     )}
                     <button
@@ -2788,8 +2790,8 @@ const AdminDashboard = ({
                     >
                       <Save className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />{" "}
                       {studentForm.id
-                        ? "Simpan Perubahan"
-                        : "Daftarkan Mahasiswa"}
+                        ? t("btn_save_changes")
+                        : t("btn_register_student")}
                     </button>
                   </div>
                 </form>
@@ -2826,14 +2828,14 @@ const AdminDashboard = ({
                       className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white border-2 border-teal-100 rounded-2xl text-[10px] font-black text-teal-700 hover:bg-teal-50 hover:border-teal-300 transition-all uppercase tracking-widest shadow-sm group"
                     >
                       <Download className="w-4 h-4 group-hover:-translate-y-1 transition-transform text-teal-500" />
-                      Template Excel
+                      {t("btn_template_excel")}
                     </button>
                     <label
                       htmlFor="import-csv-input"
                       className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-teal-50 to-teal-100/50 border-2 border-teal-200 rounded-2xl text-[10px] font-black text-teal-800 hover:bg-teal-100 hover:border-teal-300 transition-all uppercase tracking-widest shadow-sm cursor-pointer group"
                     >
                       <Upload className="w-4 h-4 group-hover:-translate-y-1 transition-transform text-teal-600" />
-                      Impor CSV / Excel
+                      {t("btn_import_csv")}
                     </label>
                     <button
                       type="button"
@@ -2844,7 +2846,7 @@ const AdminDashboard = ({
                       className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-teal-950 text-teal-400 border-2 border-teal-900 hover:bg-teal-900 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-teal-950/20 cursor-pointer group transition-all"
                     >
                       <Zap className="w-4 h-4 text-orange-400 group-hover:scale-125 transition-transform animate-pulse group-hover:animate-none" />
-                      ✨ Impor Massal AI
+                      ✨ {t("btn_ai_import")}
                     </button>
                     <span className="px-4 py-3 bg-teal-950 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg">
                       {students.length} {t("dash_admin_registered")}
@@ -2859,7 +2861,7 @@ const AdminDashboard = ({
                     onClick={() => handleDeleteAll("mahasiswa")}
                     className="flex items-center gap-2 px-5 py-2.5 bg-rose-100 text-rose-700 hover:bg-rose-600 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
                   >
-                    <Trash2 className="w-4 h-4" /> Hapus Semua Data
+                    <Trash2 className="w-4 h-4" /> {t("btn_delete_all_data")}
                   </button>
                   {selectedStudents.length > 0 && (
                     <button
@@ -2891,7 +2893,7 @@ const AdminDashboard = ({
                       <div className="flex items-center gap-3">
                         <span className="text-[10px] font-black uppercase text-teal-800/40 tracking-widest">{t("dash_admin_filter")}</span>
                         <span className="text-xs font-black text-teal-950">
-                          {filterStudentAngkatan === "All" ? t("dash_admin_all_batch") : `Angkatan ${filterStudentAngkatan}`}
+                          {filterStudentAngkatan === "All" ? t("dash_admin_all_batch") : `${t("dash_student_angkatan")} ${filterStudentAngkatan}`}
                         </span>
                       </div>
                       <ChevronDown className={cn("w-4 h-4 text-teal-400 transition-transform duration-300", isStudentFilterDropdownOpen && "rotate-180")} />
@@ -2933,7 +2935,7 @@ const AdminDashboard = ({
                                   filterStudentAngkatan === a ? "bg-teal-50 text-teal-950" : "hover:bg-slate-50 text-teal-800/60"
                                 )}
                               >
-                                <span className="text-[10px] font-black uppercase tracking-widest">Angkatan {a}</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest">{t("dash_student_angkatan")} {a}</span>
                                 {filterStudentAngkatan === a && <CheckCircle2 className="w-3 h-3 text-teal-500" />}
                               </button>
                             ))}
@@ -3133,7 +3135,7 @@ const AdminDashboard = ({
                     {/* ── HeroUI Booking Calendar Preview ── */}
                     <div className="bg-teal-50/40 border border-teal-100 rounded-[2rem] p-8 text-left">
                       <p className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 mb-6 flex items-center gap-2">
-                        <Calendar className="w-3 h-3" /> Preview Kalender Jadwal
+                        <Calendar className="w-3 h-3" /> <DynamicText text="Preview Kalender Jadwal" />
                       </p>
                       <div className="flex justify-center">
                         <BookingCalendar />
@@ -3210,7 +3212,9 @@ const AdminDashboard = ({
                             })}
                         </div>
                         <p className="text-[10px] font-medium text-teal-800/40 ml-1 italic">
-                          * {(configForm as any).targetAngkatan === "All" ? "Semua angkatan dapat mengakses portal." : `Hanya angkatan ${(configForm as any).targetAngkatan} yang dapat mengakses.`}
+                          * {(configForm as any).targetAngkatan === "All"
+                            ? t("label_access_all_batches")
+                            : t("label_access_only_batches").replace("{n}", (configForm as any).targetAngkatan)}
                         </p>
                       </div>
 
@@ -3262,7 +3266,7 @@ const AdminDashboard = ({
                       className="w-full py-6 bg-teal-500 text-white rounded-[2rem] shadow-2xl shadow-teal-500/20 font-black text-sm uppercase tracking-[0.2em] hover:bg-teal-950 hover:-translate-y-1 transition-all group flex items-center gap-3 justify-center"
                     >
                       <Calendar className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />{" "}
-                      SIMPAN KONFIGURASI
+                      {t("btn_save_configuration")}
                     </button>
                   {/* Reset Angkatan Section */}
                   <div className="mt-12 pt-12 border-t border-teal-50">
@@ -3334,7 +3338,7 @@ const AdminDashboard = ({
                         AI Broadcast Center
                       </h3>
                       <p className="text-sm text-teal-800/60 font-medium mt-1">
-                        Gunakan kecerdasan buatan untuk menyusun pengumuman WhatsApp yang profesional.
+                        <DynamicText text="Gunakan kecerdasan buatan untuk menyusun pengumuman WhatsApp yang profesional." />
                       </p>
                     </div>
                   </div>
@@ -3349,7 +3353,7 @@ const AdminDashboard = ({
                         <textarea
                           value={broadcastForm.prompt}
                           onChange={(e) => setBroadcastForm({ ...broadcastForm, prompt: e.target.value })}
-                          placeholder="Contoh: Beritahu angkatan 2021 kalau war dospem dibuka besok jam 8 pagi."
+                          placeholder={t("placeholder_broadcast_prompt")}
                           rows={4}
                           className="w-full p-6 bg-teal-50/50 border border-teal-100 rounded-[2rem] text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner resize-none"
                         />
@@ -3377,7 +3381,7 @@ const AdminDashboard = ({
                         <textarea
                           value={broadcastForm.message}
                           onChange={(e) => setBroadcastForm({ ...broadcastForm, message: e.target.value })}
-                          placeholder="Hasil AI akan muncul di sini dan bisa Anda edit..."
+                          placeholder={t("placeholder_broadcast_result")}
                           rows={8}
                           className="w-full p-6 bg-white border border-teal-100 rounded-[2rem] text-teal-950 text-xs font-medium leading-relaxed focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-sm resize-none"
                         />
@@ -3385,15 +3389,17 @@ const AdminDashboard = ({
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/40 ml-1">Kirim Ke:</label>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/40 ml-1">
+                            <DynamicText text="KIRIM KE:" />
+                          </label>
                           <select 
                             value={broadcastForm.targetAngkatan}
                             onChange={(e) => setBroadcastForm({ ...broadcastForm, targetAngkatan: e.target.value })}
                             className="w-full p-4 bg-teal-50 border border-teal-100 rounded-xl text-xs font-bold text-teal-950 focus:outline-none focus:border-teal-400 transition-all"
                           >
-                            <option value="All">Semua Mahasiswa</option>
+                            <option value="All">{t("dash_admin_all_students")}</option>
                             {[...new Set(students.map(s => s.angkatan))].filter(Boolean).sort().map(a => (
-                              <option key={a} value={a}>Angkatan {a}</option>
+                              <option key={a} value={a}>{t("dash_student_angkatan")} {a}</option>
                             ))}
                           </select>
                         </div>
@@ -3416,13 +3422,15 @@ const AdminDashboard = ({
                   <div className="mt-12 p-6 bg-teal-50/50 rounded-[2rem] border border-dashed border-teal-100 flex items-start gap-4">
                     <Info className="w-5 h-5 text-teal-500 shrink-0 mt-0.5" />
                     <div className="space-y-1">
-                      <p className="text-[11px] font-bold text-teal-900 leading-relaxed uppercase tracking-wide">Panduan Cepat</p>
-                      <p className="text-[10px] text-teal-800/60 font-medium leading-relaxed">
-                        1. Masukkan instruksi singkat (misal: "Ingatkan war besok pagi") <br/>
-                        2. Klik tombol AI untuk mendapatkan draf pesan WhatsApp yang profesional <br/>
-                        3. Periksa dan edit pesan jika perlu di kotak preview <br/>
-                        4. Pilih target angkatan dan klik BLAST untuk mengirim ke seluruh mahasiswa.
+                      <p className="text-[11px] font-bold text-teal-900 leading-relaxed uppercase tracking-wide">
+                        <DynamicText text="Panduan Cepat" />
                       </p>
+                      <div className="text-[10px] text-teal-800/60 font-medium leading-relaxed space-y-1">
+                        <p><DynamicText text="1. Masukkan instruksi singkat (misal: 'Ingatkan war besok pagi')" /></p>
+                        <p><DynamicText text="2. Klik tombol AI untuk mendapatkan draf pesan WhatsApp yang profesional" /></p>
+                        <p><DynamicText text="3. Periksa dan edit pesan jika perlu di kotak preview" /></p>
+                        <p><DynamicText text="4. Pilih target angkatan dan klik BLAST untuk mengirim ke seluruh mahasiswa." /></p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -3481,10 +3489,10 @@ const AdminDashboard = ({
                     </div>
                     <div>
                       <h3 className="text-3xl font-black text-teal-950 tracking-tight leading-tight">
-                        Pengaturan Profil
+                        <DynamicText text="Pengaturan Profil" />
                       </h3>
                       <p className="text-sm text-teal-800/60 font-medium mt-1">
-                        Kelola foto pofil dan kata sandi administrator Anda.
+                        <DynamicText text="Kelola foto pofil dan kata sandi administrator Anda." />
                       </p>
                     </div>
                   </div>
@@ -3492,7 +3500,7 @@ const AdminDashboard = ({
                     <div className="space-y-6 text-left">
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                          Password Baru
+                          <DynamicText text="Password Baru" />
                         </label>
                         <input
                           type="password"
@@ -3505,12 +3513,12 @@ const AdminDashboard = ({
                           }
                           className="w-full p-4 bg-teal-50 border border-teal-100 rounded-[1.25rem] text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
                           required
-                          placeholder="Minimal 6 karakter"
+                          placeholder={t("placeholder_min_password")}
                         />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                          Konfirmasi Password
+                          <DynamicText text="Konfirmasi Password" />
                         </label>
                         <input
                           type="password"
@@ -3523,7 +3531,7 @@ const AdminDashboard = ({
                           }
                           className="w-full p-4 bg-teal-50 border border-teal-100 rounded-[1.25rem] text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
                           required
-                          placeholder="Ulangi password baru"
+                          placeholder={t("placeholder_repeat_password")}
                         />
                       </div>
                     </div>
@@ -3533,7 +3541,7 @@ const AdminDashboard = ({
                       className="w-full py-6 bg-teal-600 text-white rounded-[2rem] shadow-2xl shadow-teal-500/20 font-black text-sm uppercase tracking-[0.2em] hover:bg-teal-950 hover:-translate-y-1 transition-all group flex items-center gap-3 justify-center"
                     >
                       <Save className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />{" "}
-                      SIMPAN PASSWORD
+                      {t("dash_dosen_update_password")}
                     </button>
                   </form>
                 </div>
@@ -3831,8 +3839,16 @@ const AdminDashboard = ({
                           .map((doc) => (
                             <tr key={doc.id} className="hover:bg-teal-50/20 transition-colors">
                               <td className="px-6 py-4 max-w-xs sm:max-w-sm">
-                                <span className="font-extrabold text-teal-950 block mb-1 text-sm">{doc.title}</span>
-                                <span className="text-[10px] text-teal-800/60 font-medium block leading-relaxed">{doc.description || t("doc_no_desc")}</span>
+                                <span className="font-extrabold text-teal-950 block mb-1 text-sm">
+                                  <DynamicText text={doc.title} />
+                                </span>
+                                <span className="text-[10px] text-teal-800/60 font-medium block leading-relaxed">
+                                  {doc.description ? (
+                                    <DynamicText text={doc.description} />
+                                  ) : (
+                                    t("doc_no_desc")
+                                  )}
+                                </span>
                               </td>
                               <td className="px-6 py-4">
                                 <span className={cn(
@@ -3934,20 +3950,21 @@ const AdminDashboard = ({
           )}
 
           {deleteData && (
-            <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+            <div className="fixed inset-0 z-[9999] overflow-y-auto">
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setDeleteData(null)}
-                className="absolute inset-0 bg-teal-950/40 backdrop-blur-sm"
+                className="fixed inset-0 bg-teal-950/60 backdrop-blur-md"
               />
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="relative w-full max-w-md bg-white rounded-[2.5rem] p-10 shadow-2xl space-y-8"
-              >
+              <div className="min-h-full flex items-center justify-center p-4 sm:p-6 pt-24 pb-12 sm:pt-28 relative z-10 pointer-events-none">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                  className="pointer-events-auto relative w-full max-w-md bg-white rounded-[2.5rem] p-10 shadow-2xl space-y-8"
+                >
                 <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500">
                   <Trash2 className="w-8 h-8" />
                 </div>
@@ -3973,7 +3990,7 @@ const AdminDashboard = ({
                     disabled={loading}
                     className="w-full py-4 bg-rose-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-rose-100 hover:bg-rose-600 transition-all disabled:opacity-50"
                   >
-                    {loading ? "MENGHAPUS..." : "YA, HAPUS PERMANEN"}
+                    {loading ? t("btn_deleting") : t("btn_yes_delete_permanently")}
                   </button>
                   <button
                     type="button"
@@ -3984,28 +4001,30 @@ const AdminDashboard = ({
                     disabled={loading}
                     className="w-full py-4 bg-teal-50 text-teal-800/40 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-100 transition-all"
                   >
-                    BATALKAN
+                    {t("dash_student_cancel")}
                   </button>
                 </div>
               </motion.div>
             </div>
-          )}
+          </div>
+        )}
 
           {resetModalOpen && (
-            <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+            <div className="fixed inset-0 z-[9999] overflow-y-auto">
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setResetModalOpen(false)}
-                className="absolute inset-0 bg-teal-950/60 backdrop-blur-md"
+                className="fixed inset-0 bg-teal-950/60 backdrop-blur-md"
               />
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="relative w-full max-w-lg bg-white rounded-[3rem] p-12 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] space-y-8"
-              >
+              <div className="min-h-full flex items-center justify-center p-4 sm:p-6 pt-24 pb-12 sm:pt-28 relative z-10 pointer-events-none">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                  className="pointer-events-auto relative w-full max-w-lg bg-white rounded-[3rem] p-12 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] space-y-8"
+                >
                 <div className="flex items-center gap-6">
                   <div className="w-20 h-20 bg-rose-50 rounded-[1.75rem] flex items-center justify-center text-rose-500 shadow-inner">
                     <AlertCircle className="w-10 h-10" />
@@ -4038,37 +4057,39 @@ const AdminDashboard = ({
                     ) : (
                         <Trash2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
                     )}
-                    {loading ? "PROSES RESET..." : "IYA, RESET SEKARANG"}
+                    {loading ? t("btn_resetting") : t("btn_yes_reset_now")}
                   </button>
                   <button
                     onClick={() => setResetModalOpen(false)}
                     disabled={loading}
                     className="w-full py-6 bg-teal-50 text-teal-800/40 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-teal-100 transition-all"
                   >
-                    TIDAK, BATALKAN
+                    {t("btn_no_cancel")}
                   </button>
                 </div>
               </motion.div>
             </div>
-          )}
+          </div>
+        )}
 
           {/* Premium Glassmorphic Confirmation Modal */}
           {confirmModal && confirmModal.isOpen && (
-            <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+            <div className="fixed inset-0 z-[9999] overflow-y-auto">
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setConfirmModal(null)}
-                className="absolute inset-0 bg-teal-950/40 backdrop-blur-sm"
+                className="fixed inset-0 bg-teal-950/60 backdrop-blur-md"
               />
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                className="relative w-full max-w-md bg-white/70 backdrop-blur-xl border border-white/40 rounded-[3rem] p-10 shadow-2xl shadow-teal-950/10 space-y-8"
-              >
+              <div className="min-h-full flex items-center justify-center p-4 sm:p-6 pt-24 pb-12 sm:pt-28 relative z-10 pointer-events-none">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  className="pointer-events-auto relative w-full max-w-md bg-white/70 backdrop-blur-xl border border-white/40 rounded-[3rem] p-10 shadow-2xl shadow-teal-950/10 space-y-8"
+                >
                 <div className={cn(
                   "w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner",
                   confirmModal.type === "danger" 
@@ -4120,23 +4141,24 @@ const AdminDashboard = ({
                         : "bg-teal-600 hover:bg-teal-700 shadow-teal-200"
                     )}
                   >
-                    {confirmModal.confirmText || "KONFIRMASI"}
+                    {confirmModal.confirmText || t("btn_confirm")}
                   </button>
                   <button
                     onClick={() => setConfirmModal(null)}
                     disabled={loading}
                     className="w-full py-4 bg-teal-50/50 text-teal-900/60 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-100/50 transition-all"
                   >
-                    {confirmModal.cancelText || "BATAL"}
+                    {confirmModal.cancelText || t("dash_student_cancel")}
                   </button>
                 </div>
               </motion.div>
             </div>
-          )}
+          </div>
+        )}
 
           {/* ✨ Asisten Impor AI Modal */}
           {aiImportOpen && (
-            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+            <div className="fixed inset-0 z-[9999] overflow-y-auto">
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -4151,15 +4173,16 @@ const AdminDashboard = ({
                     setAiMessage(null);
                   }
                 }}
-                className="absolute inset-0 bg-teal-950/60 backdrop-blur-md"
+                className="fixed inset-0 bg-teal-950/60 backdrop-blur-md"
               />
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                className="relative w-full max-w-5xl bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
-              >
+              <div className="min-h-full flex items-center justify-center p-4 sm:p-6 pt-24 pb-12 sm:pt-28 relative z-10 pointer-events-none">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  className="pointer-events-auto relative w-full max-w-5xl bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
+                >
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-teal-50 pb-6 shrink-0">
                   <div className="flex items-center gap-4">
@@ -4223,7 +4246,7 @@ const AdminDashboard = ({
                               : "text-teal-800 hover:bg-teal-100/50"
                           )}
                         >
-                          Teks Bebas / Salinan Chat
+                          {t("btn_ai_free_text")}
                         </button>
                         <button
                           type="button"
@@ -4238,7 +4261,7 @@ const AdminDashboard = ({
                               : "text-teal-800 hover:bg-teal-100/50"
                           )}
                         >
-                          Unggah CSV / Excel
+                          {t("btn_ai_upload_csv")}
                         </button>
                       </div>
 
@@ -4301,7 +4324,7 @@ const AdminDashboard = ({
                         ) : (
                           <Zap className="w-5 h-5" />
                         )}
-                        {aiLoading ? "MENGANALISIS DATA DENGAN AI..." : "MULAI ANALISIS DENGAN AI"}
+                        {aiLoading ? t("btn_ai_analyzing") : t("btn_ai_start_analysis")}
                       </button>
                     </div>
                   )}
@@ -4501,7 +4524,7 @@ const AdminDashboard = ({
                           }}
                           className="w-full sm:w-auto px-6 py-4 bg-teal-50 text-teal-800/60 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-100 transition-all"
                         >
-                          Ulangi / Bersihkan
+                          {t("btn_ai_reset_clean")}
                         </button>
                         <div className="flex-1" />
                         <button
@@ -4511,7 +4534,7 @@ const AdminDashboard = ({
                           className="w-full sm:w-auto px-8 py-4 bg-teal-950 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-900 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                         >
                           {aiLoading && <RefreshCcw className="w-4 h-4 animate-spin" />}
-                          Re-Analisis AI
+                          {t("btn_ai_reanalyze")}
                         </button>
                         <button
                           type="button"
@@ -4520,7 +4543,7 @@ const AdminDashboard = ({
                           className="w-full sm:w-auto px-10 py-4 bg-emerald-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 disabled:opacity-50"
                         >
                           {aiSaveLoading && <RefreshCcw className="w-4 h-4 animate-spin" />}
-                          IMPOR DATA VALID ({aiParsedItems.filter(item => item.status === "OK").length})
+                          {t("btn_ai_import_valid").replace("{n}", String(aiParsedItems.filter(item => item.status === "OK").length))}
                         </button>
                       </div>
                     </div>
@@ -4528,41 +4551,43 @@ const AdminDashboard = ({
                 </div>
               </motion.div>
             </div>
-          )}
+          </div>
+        )}
 
           {/* Assign Student Modal */}
           {assignModal?.isOpen && (
-            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6">
+            <div className="fixed inset-0 z-[9999] overflow-y-auto">
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-teal-950/40 backdrop-blur-sm"
+                className="fixed inset-0 bg-teal-950/60 backdrop-blur-md"
                 onClick={() => setAssignModal(null)}
               />
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg relative z-10 overflow-hidden flex flex-col max-h-[90vh]"
-              >
+              <div className="min-h-full flex items-center justify-center p-4 sm:p-6 pt-24 pb-12 sm:pt-28 relative z-10 pointer-events-none">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  className="pointer-events-auto bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg relative z-10 overflow-hidden flex flex-col max-h-[90vh]"
+                >
                 <div className="p-6 md:p-8 border-b border-teal-50 bg-[#f8fdfc] flex items-center gap-4">
                   <div className="w-12 h-12 bg-teal-50 text-teal-500 rounded-2xl flex items-center justify-center shrink-0">
                     <UserPlus className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-teal-950">Tambah Mahasiswa</h3>
-                    <p className="text-xs font-bold text-teal-800/60 uppercase tracking-widest mt-1">ke {assignModal.dosenName}</p>
+                    <h3 className="text-xl font-black text-teal-950">{t("btn_add_student")}</h3>
+                    <p className="text-xs font-bold text-teal-800/60 uppercase tracking-widest mt-1">→ {assignModal.dosenName}</p>
                   </div>
                 </div>
                 
                 <div className="p-6 md:p-8 flex-1 overflow-y-auto min-h-[300px]">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 mb-2 block ml-1">Pilih Mahasiswa</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 mb-2 block ml-1"><DynamicText text="Pilih Mahasiswa" /></label>
                   <div className="relative">
                     <div className="relative">
                       <input
                         type="text"
-                        placeholder="Cari nama atau NIM mahasiswa..."
+                        placeholder={t("label_search_nim")}
                         value={assignSearch}
                         onChange={(e) => {
                           setAssignSearch(e.target.value);
@@ -4580,7 +4605,7 @@ const AdminDashboard = ({
                           }}
                           className="absolute right-4 top-1/2 -translate-y-1/2 text-rose-500 text-xs font-bold uppercase tracking-wider"
                         >
-                          Clear
+                          {t("btn_clear")}
                         </button>
                       )}
                     </div>
@@ -4594,7 +4619,7 @@ const AdminDashboard = ({
                           })
                           .length === 0 ? (
                             <div className="p-4 text-center text-xs text-teal-800/40 font-bold uppercase tracking-widest">
-                              Mahasiswa tidak ditemukan
+                              {t("label_student_not_found")}
                             </div>
                           ) : (
                             students
@@ -4618,13 +4643,13 @@ const AdminDashboard = ({
                                     <div>
                                       <p className="text-sm font-bold text-teal-950">{s.nama}</p>
                                       <p className="text-[10px] font-black text-teal-800/50 uppercase tracking-wider mt-0.5">
-                                        NIM: {s.nim} {s.angkatan ? `• Angkatan ${s.angkatan}` : ""}
+                                        {t("label_nim")}: {s.nim} {s.angkatan ? `• ${t("dash_student_angkatan")} ${s.angkatan}` : ""}
                                       </p>
                                     </div>
                                     <span className={`text-[8px] font-black uppercase px-2.5 py-1 rounded-full ${
                                       currentDosen ? "bg-amber-500/10 text-amber-600 border border-amber-500/10" : "bg-emerald-500/10 text-emerald-600 border border-emerald-500/10"
                                     }`}>
-                                      {currentDosen ? `Dosen: ${currentDosen.nama}` : "Belum Memilih"}
+                                      {currentDosen ? `${t("type_dosen")}: ${currentDosen.nama}` : t("label_belum_memilih")}
                                     </span>
                                   </div>
                                 );
@@ -4640,7 +4665,7 @@ const AdminDashboard = ({
                     onClick={() => setAssignModal(null)}
                     className="w-full sm:w-auto px-6 py-4 bg-white border border-teal-100 text-teal-800/60 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-50 hover:text-teal-950 transition-all"
                   >
-                    Batal
+                    {t("btn_cancel")}
                   </button>
                   <button
                     onClick={handleAssignStudent}
@@ -4648,57 +4673,59 @@ const AdminDashboard = ({
                     className="w-full sm:flex-1 px-6 py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-600 transition-all shadow-lg shadow-teal-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {loading ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                    Assign Mahasiswa
+                    {t("btn_assign_student")}
                   </button>
                 </div>
               </motion.div>
             </div>
-          )}
+          </div>
+        )}
 
           {/* Swap Advisors Modal */}
           {swapModal?.isOpen && (
-            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6">
+            <div className="fixed inset-0 z-[9999] overflow-y-auto">
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-teal-950/40 backdrop-blur-sm"
+                className="fixed inset-0 bg-teal-950/60 backdrop-blur-md"
                 onClick={() => setSwapModal(null)}
               />
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg relative z-10 overflow-hidden flex flex-col max-h-[90vh]"
-              >
+              <div className="min-h-full flex items-center justify-center p-4 sm:p-6 pt-24 pb-12 sm:pt-28 relative z-10 pointer-events-none">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  className="pointer-events-auto bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg relative z-10 overflow-hidden flex flex-col max-h-[90vh]"
+                >
                 <div className="p-6 md:p-8 border-b border-teal-50 bg-[#f8fdfc] flex items-center gap-4">
                   <div className="w-12 h-12 bg-teal-50 text-teal-500 rounded-2xl flex items-center justify-center shrink-0">
                     <ArrowLeftRight className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-teal-950">Tukar Pembimbing</h3>
+                    <h3 className="text-xl font-black text-teal-950">{t("btn_swap_advisor")}</h3>
                     <p className="text-xs font-bold text-teal-800/60 uppercase tracking-widest mt-1">
-                      Exchange pembimbing mahasiswa
+                      {t("label_exchange_subtitle")}
                     </p>
                   </div>
                 </div>
                 
                 <div className="p-6 md:p-8 flex-1 overflow-y-auto space-y-4">
                   <div className="bg-teal-50/50 p-4 rounded-2xl border border-teal-50">
-                    <span className="text-[9px] font-black uppercase text-teal-800/40 tracking-wider block mb-1">Mahasiswa 1 (Sumber)</span>
+                    <span className="text-[9px] font-black uppercase text-teal-800/40 tracking-wider block mb-1">{t("label_student_source")}</span>
                     <p className="text-sm font-bold text-teal-950">{swapModal.student1Name}</p>
-                    <p className="text-xs font-semibold text-teal-800/60 mt-0.5">Pembimbing: {swapModal.student1DosenName || "[Belum Ada]"}</p>
+                    <p className="text-xs font-semibold text-teal-800/60 mt-0.5">{t("type_dosen")}: {swapModal.student1DosenName || `[${t("label_belum_memilih")}]`}</p>
                   </div>
 
                   <div className="min-h-[250px]">
                     <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 mb-2 block ml-1">
-                      Pilih Mahasiswa 2 (Untuk Ditukar)
+                      {t("label_pick_student_2")}
                     </label>
                     <div className="relative">
                       <div className="relative">
                         <input
                           type="text"
-                          placeholder="Cari nama atau NIM mahasiswa..."
+                          placeholder={t("label_search_nim")}
                           value={swapSearch}
                           onChange={(e) => {
                             setSwapSearch(e.target.value);
@@ -4716,7 +4743,7 @@ const AdminDashboard = ({
                             }}
                             className="absolute right-4 top-1/2 -translate-y-1/2 text-rose-500 text-xs font-bold uppercase tracking-wider"
                           >
-                            Clear
+                            {t("btn_clear")}
                           </button>
                         )}
                       </div>
@@ -4731,7 +4758,7 @@ const AdminDashboard = ({
                             })
                             .length === 0 ? (
                               <div className="p-4 text-center text-xs text-teal-800/40 font-bold uppercase tracking-widest">
-                                Mahasiswa tidak ditemukan
+                                {t("label_student_not_found")}
                               </div>
                             ) : (
                               students
@@ -4756,13 +4783,13 @@ const AdminDashboard = ({
                                       <div>
                                         <p className="text-sm font-bold text-teal-950">{s.nama}</p>
                                         <p className="text-[10px] font-black text-teal-800/50 uppercase tracking-wider mt-0.5">
-                                          NIM: {s.nim} {s.angkatan ? `• Angkatan ${s.angkatan}` : ""}
+                                          {t("label_nim")}: {s.nim} {s.angkatan ? `• ${t("dash_student_angkatan")} ${s.angkatan}` : ""}
                                         </p>
                                       </div>
                                       <span className={`text-[8px] font-black uppercase px-2.5 py-1 rounded-full ${
                                         currentDosen ? "bg-amber-500/10 text-amber-600 border border-amber-500/10" : "bg-emerald-500/10 text-emerald-600 border border-emerald-500/10"
                                       }`}>
-                                        {currentDosen ? `Dosen: ${currentDosen.nama}` : "Belum Memilih"}
+                                        {currentDosen ? `${t("type_dosen")}: ${currentDosen.nama}` : t("label_belum_memilih")}
                                       </span>
                                     </div>
                                   );
@@ -4779,7 +4806,7 @@ const AdminDashboard = ({
                     onClick={() => setSwapModal(null)}
                     className="w-full sm:w-auto px-6 py-4 bg-white border border-teal-100 text-teal-800/60 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-50 hover:text-teal-950 transition-all"
                   >
-                    Batal
+                    {t("btn_cancel")}
                   </button>
                   <button
                     onClick={handleSwapStudents}
@@ -4787,12 +4814,13 @@ const AdminDashboard = ({
                     className="w-full sm:flex-1 px-6 py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-600 transition-all shadow-lg shadow-teal-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {loading ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <ArrowLeftRight className="w-4 h-4" />}
-                    Tukar Pembimbing
+                    {t("btn_swap_advisor")}
                   </button>
                 </div>
               </motion.div>
             </div>
-          )}
+          </div>
+        )}
 
           {/* Float Notification Toast */}
           {message && (
@@ -4839,3 +4867,4 @@ const AdminDashboard = ({
 };
 
 export default AdminDashboard;
+

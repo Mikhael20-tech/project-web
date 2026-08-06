@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLanguage } from "@/src/lib/LanguageContext";
+import DynamicText from "@/src/components/DynamicText";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -347,7 +348,7 @@ const PortfolioPage = () => {
                     </h2>
                     <p className="text-teal-800/60 font-bold text-sm tracking-wide flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-orange-400" />
-                      NIP. {selectedDosen.nip}
+                      {t("label_nip_prefix")} {selectedDosen.nip}
                     </p>
 
                     <button
@@ -390,8 +391,11 @@ const PortfolioPage = () => {
                     </div>
                     <p className="text-teal-950 text-lg leading-relaxed font-semibold italic opacity-90 border-l-4 border-teal-100 pl-6">
                       "
-                      {selectedDosen.bio ||
-                        t("port_default_bio")}
+                      {selectedDosen.bio ? (
+                        <DynamicText text={selectedDosen.bio} />
+                      ) : (
+                        t("port_default_bio")
+                      )}
                       "
                     </p>
                   </motion.section>
@@ -425,7 +429,7 @@ const PortfolioPage = () => {
                                 <Plus className="w-5 h-5" />
                               </div>
                               <p className="font-bold text-teal-900 leading-relaxed">
-                                {p.judul}
+                                <DynamicText text={p.judul} />
                               </p>
                             </div>
                           ))

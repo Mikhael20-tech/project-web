@@ -24,6 +24,7 @@ import { socket } from "@/src/lib/socket";
 import { cn } from "@/src/lib/utils";
 import { useToast } from "@/src/components/ToastProvider";
 import { useLanguage } from "@/src/lib/LanguageContext";
+import DynamicText from "@/src/components/DynamicText";
 import LoadingOverlay from "@/src/components/LoadingOverlay";
 import DosenCardSkeleton from "@/src/components/DosenCardSkeleton";
 import confetti from "canvas-confetti";
@@ -216,6 +217,20 @@ const Dashboard = ({
 
     return () => clearInterval(timer);
   }, [config]);
+
+  useEffect(() => {
+    if (confirmingDosen || isProfileModalOpen) {
+      document.body.style.overflow = "hidden";
+      document.body.classList.add("modal-open");
+    } else {
+      document.body.style.overflow = "";
+      document.body.classList.remove("modal-open");
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.body.classList.remove("modal-open");
+    };
+  }, [confirmingDosen, isProfileModalOpen]);
 
   const isBatchAllowed = () => {
     if (!config?.targetAngkatan || config.targetAngkatan === "All") return true;
@@ -466,24 +481,24 @@ const Dashboard = ({
     const cat = config?.category || "SKRIPSI_ARTIKEL";
     if (cat === "MAGANG") {
       return {
-        dosenChoice: "Dosen Pembimbing Magang Pilihan",
-        selected: "Dosen Magang Terpilih",
-        timelineLabel: "Milestone Pemilihan Magang",
-        step2Title: "Input Posisi & Mitra Magang",
-        step2Desc: profileStatus.title || "Posisi dan lokasi magang belum diisi",
-        step3Title: "Dosen Magang Dikunci",
-        step3Desc: "Dosen Pembimbing Magang telah resmi dikunci dan disetujui",
-        guidanceStatus: "Status Pembimbing Magang",
+        dosenChoice: t("magang_dosen_choice"),
+        selected: t("magang_selected"),
+        timelineLabel: t("magang_timeline"),
+        step2Title: t("magang_step2_title"),
+        step2Desc: profileStatus.title || t("magang_step2_empty"),
+        step3Title: t("magang_step3_title"),
+        step3Desc: t("magang_step3_desc"),
+        guidanceStatus: t("magang_guidance_status"),
       };
     } else {
       return {
         dosenChoice: t("dash_student_dosen_choice"),
         selected: t("dash_student_selected"),
         timelineLabel: t("dash_student_timeline_label") && !t("dash_student_timeline_label").includes("TIMELINE") ? t("dash_student_timeline_label") : "Milestone Pemilihan Tugas Akhir",
-        step2Title: "Input Rencana Judul",
-        step2Desc: profileStatus.title || "Rencana Judul Tugas Akhir belum diisi",
-        step3Title: "Pilihan Dosen Dikunci",
-        step3Desc: "Kandidat pembimbing Tugas Akhir berhasil dikunci dan terdaftar",
+        step2Title: t("skripsi_step2_title"),
+        step2Desc: profileStatus.title || t("skripsi_step2_empty"),
+        step3Title: t("skripsi_step3_title"),
+        step3Desc: t("skripsi_step3_desc"),
         guidanceStatus: t("dash_student_guidance_status"),
       };
     }
@@ -696,9 +711,11 @@ const Dashboard = ({
                         {labels.selected}
                       </div>
                       <span className="text-xl font-black text-white tracking-tight leading-tight mb-0.5">{studentData.dosen.nama}</span>
-                      <span className="text-[11px] font-semibold text-teal-400/80 font-mono">NIP. {studentData.dosen.nip}</span>
+                      <span className="text-[11px] font-semibold text-teal-400/80 font-mono">{t("label_nip_prefix")} {studentData.dosen.nip}</span>
                       {studentData.dosen.keahlian && (
-                        <span className="text-[10px] font-bold text-teal-500 uppercase tracking-wider mt-1">{studentData.dosen.keahlian}</span>
+                        <span className="text-[10px] font-bold text-teal-500 uppercase tracking-wider mt-1">
+                          <DynamicText text={studentData.dosen.keahlian} />
+                        </span>
                       )}
                       
                       <button
@@ -722,7 +739,7 @@ const Dashboard = ({
                         className="flex items-center gap-2 mt-4 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-300 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 group cursor-pointer shadow-lg shadow-emerald-950/20"
                       >
                         <Smartphone className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
-                        <span>{studentData.dosen.kontak ? "Hubungi Dosen" : "Hubungi Dosen (Kontak Belum Ada)"}</span>
+                        <span>{studentData.dosen.kontak ? t("dash_contact_dosen") : t("dash_contact_dosen_none")}</span>
                       </button>
                     </div>
                   </div>
@@ -755,7 +772,7 @@ const Dashboard = ({
                   <div className="text-right">
                     <p className="text-[9px] font-black uppercase text-teal-500/50 tracking-[0.2em]">{t("dash_student_angkatan")}</p>
                     <span className="inline-block mt-1 px-3 py-1 bg-white/[0.03] border border-white/5 rounded-lg text-xs font-black text-teal-200 font-mono tracking-tight">
-                      {studentData.periode || config?.periode || "-"}
+                      <DynamicText text={studentData.periode || config?.periode || "-"} />
                     </span>
                   </div>
                 </div>
@@ -774,8 +791,8 @@ const Dashboard = ({
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[11px] font-black text-white uppercase tracking-wider leading-none mb-1">Registrasi Akun</p>
-                        <p className="text-[10px] font-bold text-teal-400/60 leading-tight">Akun mahasiswa telah aktif dan terverifikasi di prodi</p>
+                        <p className="text-[11px] font-black text-white uppercase tracking-wider leading-none mb-1">{t("dash_step1_title")}</p>
+                        <p className="text-[10px] font-bold text-teal-400/60 leading-tight">{t("dash_step1_desc")}</p>
                       </div>
                     </div>
 
@@ -877,7 +894,7 @@ const Dashboard = ({
 
                       <div className="space-y-2">
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 rounded-full border border-teal-100">
-                          <p className="text-[8px] text-teal-600 uppercase tracking-[0.2em] font-black">NIP. {dosen.nip}</p>
+                          <p className="text-[8px] text-teal-600 uppercase tracking-[0.2em] font-black">{t("label_nip")}: {dosen.nip}</p>
                         </div>
                         <h3 className="font-black text-2xl text-teal-950 group-hover:text-teal-600 transition-colors tracking-tighter leading-tight">{dosen.nama}</h3>
                         <p className="text-[10px] font-bold text-teal-800/40 uppercase tracking-widest">{dosen.keahlian || "Pendidikan Teknologi Informasi"}</p>
@@ -926,7 +943,7 @@ const Dashboard = ({
                                   : "bg-slate-50 text-slate-400 border-slate-100"
                               )}
                             >
-                              PILIH: {p.judul}
+                              {t("dash_student_pick_advisor")}: {p.judul}
                             </Button>
                           ))}
                           <Button
@@ -939,7 +956,7 @@ const Dashboard = ({
                                 : "bg-slate-100 text-slate-400 border border-slate-200"
                             )}
                           >
-                            PILIH (JUDUL DARI PROFIL)
+                            {t("btn_pick_profile_title")}
                           </Button>
                         </div>
                       ) : (
@@ -958,7 +975,7 @@ const Dashboard = ({
                               config?.isForcedClosed ? t("dash_student_system_closed") :
                               !isWarActive ? t("dash_student_waiting_war") : 
                               !isBatchAllowed() ? t("dash_student_access_denied") :
-                              !profileStatus.completed ? "ISI PROFIL TERLEBIH DAHULU" :
+                              !profileStatus.completed ? t("dash_profile_complete_first") :
                               dosen.kuotaMax - dosen._count.mahasiswa <= 0 ? t("dash_student_quota_full") : t("dash_student_pick_advisor")}
                           </span>
                         </Button>
@@ -971,39 +988,38 @@ const Dashboard = ({
           </>
         )}
 
-        {/* Modals: Same as before but with updated styling if needed */}
         <AnimatePresence>
-           {/* Confirm Dosen Modal */}
            {confirmingDosen && (
-             <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
-               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setConfirmingDosen(null)} className="absolute inset-0 bg-teal-950/60 backdrop-blur-sm" />
-               <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-md bg-white rounded-[2.5rem] p-10 shadow-2xl overflow-hidden">
-                 <div className="relative space-y-6 text-center">
-                   <div className="w-16 h-16 bg-teal-50 rounded-2xl flex items-center justify-center text-teal-500 mx-auto mb-6">
-                     <Info className="w-8 h-8" />
-                   </div>
-                   <h2 className="text-2xl font-black text-teal-950 leading-tight">{t("dash_student_confirm_choice")}</h2>
-                   <p className="text-sm text-teal-800/60 font-medium">Anda akan memilih <span className="font-black text-teal-900">{confirmingDosen.dosen.nama}</span>.</p>
-                   
-                   <div className="p-4 bg-teal-50 rounded-2xl border border-teal-100/50 text-left">
-                     <p className="text-[10px] font-black uppercase tracking-widest text-teal-800/40 mb-1">
-                       {config?.category === "MAGANG" ? t("dash_dosen_title_magang") : t("dash_dosen_title_plan")}
-                     </p>
-                     <p className="text-xs font-bold text-teal-950">{confirmingDosen.title}</p>
-                   </div>
+             <div className="fixed inset-0 z-[9999] overflow-y-auto">
+               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setConfirmingDosen(null)} className="fixed inset-0 bg-teal-950/60 backdrop-blur-md" />
+               <div className="min-h-full flex items-center justify-center p-4 sm:p-6 pt-24 pb-12 sm:pt-28 relative z-10 pointer-events-none">
+                 <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="pointer-events-auto relative w-full max-w-md bg-white rounded-[2.5rem] p-10 shadow-2xl overflow-hidden">
+                   <div className="relative space-y-6 text-center">
+                     <div className="w-16 h-16 bg-teal-50 rounded-2xl flex items-center justify-center text-teal-500 mx-auto mb-6">
+                       <Info className="w-8 h-8" />
+                     </div>
+                     <h2 className="text-2xl font-black text-teal-950 leading-tight">{t("dash_student_confirm_choice")}</h2>
+                     <p className="text-sm text-teal-800/60 font-medium">Anda akan memilih <span className="font-black text-teal-900">{confirmingDosen.dosen.nama}</span>.</p>
+                     
+                     <div className="p-4 bg-teal-50 rounded-2xl border border-teal-100/50 text-left">
+                       <p className="text-[10px] font-black uppercase tracking-widest text-teal-800/40 mb-1">
+                         {config?.category === "MAGANG" ? t("dash_dosen_title_magang") : t("dash_dosen_title_plan")}
+                       </p>
+                       <p className="text-xs font-bold text-teal-950">{confirmingDosen.title}</p>
+                     </div>
 
-                   <div className="flex flex-col gap-3">
-                     <button onClick={() => handlePickDosen(confirmingDosen.dosen.id, confirmingDosen.title)} className="w-full py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg">{t("dash_student_yes_sure")}</button>
-                     <button onClick={() => setConfirmingDosen(null)} className="w-full py-4 bg-teal-50 text-teal-800/40 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-100 transition-all">{t("dash_student_cancel")}</button>
+                     <div className="flex flex-col gap-3">
+                       <button onClick={() => handlePickDosen(confirmingDosen.dosen.id, confirmingDosen.title)} className="w-full py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg">{t("dash_student_yes_sure")}</button>
+                       <button onClick={() => setConfirmingDosen(null)} className="w-full py-4 bg-teal-50 text-teal-800/40 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-100 transition-all">{t("dash_student_cancel")}</button>
+                     </div>
                    </div>
-                 </div>
-               </motion.div>
+                 </motion.div>
+               </div>
              </div>
            )}
 
-           {/* Profile Settings Modal */}
            {isProfileModalOpen && (
-             <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+             <div className="fixed inset-0 z-[9999] overflow-y-auto">
                 <motion.div 
                   initial={{ opacity: 0 }} 
                   animate={{ opacity: 1 }} 
@@ -1013,105 +1029,107 @@ const Dashboard = ({
                       setIsProfileModalOpen(false);
                     }
                   }} 
-                  className="absolute inset-0 bg-teal-950/60 backdrop-blur-sm" 
+                  className="fixed inset-0 bg-teal-950/60 backdrop-blur-md" 
                 />
-                <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
-                  <div className="flex justify-between items-center p-10 pb-4 shrink-0">
-                    <h2 className="text-2xl font-black text-teal-950">{t("dash_student_profile_custom")}</h2>
-                    {!isProfileIncomplete && (
-                      <button onClick={() => setIsProfileModalOpen(false)} className="p-2 hover:bg-teal-50 rounded-xl transition-all"><XCircle className="w-6 h-6 text-teal-200" /></button>
-                    )}
-                  </div>
-
-                 <div className="flex-1 overflow-y-auto px-10 pb-10 pt-2 custom-scrollbar">
-                   <form onSubmit={handleUpdateProfile} className="space-y-6">
-                     <div className="flex flex-col items-center gap-4 py-6 bg-teal-50/50 border border-dashed border-teal-100 rounded-[2rem]">
-                        <div className="relative group">
-                          <div className="w-24 h-24 rounded-3xl bg-white border-2 border-teal-50 overflow-hidden shadow-inner">
-                            <img src={profileForm.foto || "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&h=200&fit=crop"} className="w-full h-full object-cover" alt="Preview" />
-                          </div>
-                          <label htmlFor="photo-upload" className="absolute inset-0 flex items-center justify-center bg-teal-950/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-3xl"><Camera className="w-6 h-6 text-white" /></label>
-                          <input id="photo-upload" type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-                        </div>
-                        <p className="text-[10px] font-black uppercase text-teal-500 tracking-widest">{t("dash_student_change_photo")}</p>
-                     </div>
-
-                     <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">NIM (Nomor Induk Mahasiswa)</label>
-                          <input value={profileForm.nim} disabled className="w-full bg-teal-50/50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950/40 cursor-not-allowed focus:outline-none animate-pulse-subtle" />
-                       </div>
-
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">{t("dash_student_fullname")}</label>
-                        <input value={profileForm.nama} onChange={(e) => setProfileForm({...profileForm, nama: e.target.value})} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" required />
-                     </div>
-
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">{t("dash_student_contact")}</label>
-                        <input value={profileForm.kontak} onChange={(e) => setProfileForm({...profileForm, kontak: e.target.value})} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" placeholder="08..." />
-                     </div>
-
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">{t("dash_student_bio")}</label>
-                        <textarea value={profileForm.bio} onChange={(e) => setProfileForm({...profileForm, bio: e.target.value})} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none min-h-[100px]" placeholder="Ceritakan sedikit tentang ketertarikan riset Anda..." />
-                     </div>
-
-                     {config?.category === "MAGANG" ? (
-                         <div className="flex flex-col md:flex-row gap-4">
-                           <div className="flex-1 space-y-2">
-                             <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Posisi Magang</label>
-                             <input 
-                               value={profileForm.magangPosisi} 
-                               onChange={(e) => setProfileForm({...profileForm, magangPosisi: e.target.value})} 
-                               className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" 
-                               placeholder="Misal: UI/UX Designer" 
-                               required 
-                             />
-                           </div>
-                           <div className="flex-1 space-y-2">
-                             <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Tempat / Instansi</label>
-                             <input 
-                               value={profileForm.magangTempat} 
-                               onChange={(e) => setProfileForm({...profileForm, magangTempat: e.target.value})} 
-                               className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" 
-                               placeholder="Misal: PT. Telkom Indonesia" 
-                               required 
-                             />
-                           </div>
-                         </div>
-                      ) : (
-                        <div className="space-y-2">
-                           <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                             Rencana Judul Riset Anda
-                           </label>
-                           <textarea 
-                             value={profileForm.rencanaJudul} 
-                             onChange={(e) => setProfileForm({...profileForm, rencanaJudul: e.target.value})} 
-                             className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none min-h-[80px]" 
-                             placeholder="Ketik disini..." 
-                             required 
-                           />
-                        </div>
+                <div className="min-h-full flex items-center justify-center p-4 sm:p-6 pt-24 pb-12 sm:pt-28 relative z-10 pointer-events-none">
+                  <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="pointer-events-auto relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
+                    <div className="flex justify-between items-center p-10 pb-4 shrink-0">
+                      <h2 className="text-2xl font-black text-teal-950">{t("dash_student_profile_custom")}</h2>
+                      {!isProfileIncomplete && (
+                        <button onClick={() => setIsProfileModalOpen(false)} className="p-2 hover:bg-teal-50 rounded-xl transition-all"><XCircle className="w-6 h-6 text-teal-200" /></button>
                       )}
+                    </div>
 
-                      <div className="border-t border-teal-100/50 pt-6 space-y-4">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-500">Setup / Ganti Password</p>
-                        <div className="flex flex-col md:flex-row gap-4">
-                           <div className="flex-1 space-y-2">
-                             <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Password Baru (Opsional)</label>
-                             <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" placeholder="Minimal 6 karakter" />
+                    <div className="flex-1 overflow-y-auto px-10 pb-10 pt-2 custom-scrollbar">
+                      <form onSubmit={handleUpdateProfile} className="space-y-6">
+                        <div className="flex flex-col items-center gap-4 py-6 bg-teal-50/50 border border-dashed border-teal-100 rounded-[2rem]">
+                           <div className="relative group">
+                             <div className="w-24 h-24 rounded-3xl bg-white border-2 border-teal-50 overflow-hidden shadow-inner">
+                               <img src={profileForm.foto || "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&h=200&fit=crop"} className="w-full h-full object-cover" alt="Preview" />
+                             </div>
+                             <label htmlFor="photo-upload" className="absolute inset-0 flex items-center justify-center bg-teal-950/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-3xl"><Camera className="w-6 h-6 text-white" /></label>
+                             <input id="photo-upload" type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
                            </div>
-                           <div className="flex-1 space-y-2">
-                             <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Konfirmasi Password</label>
-                             <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" placeholder="Ulangi password baru" />
-                           </div>
+                           <p className="text-[10px] font-black uppercase text-teal-500 tracking-widest">{t("dash_student_change_photo")}</p>
                         </div>
-                      </div>
 
-                     <button type="submit" disabled={loading} className="w-full py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg">{loading ? t("dash_student_saving") : t("dash_student_save_changes")}</button>
-                   </form>
-                 </div>
-               </motion.div>
+                        <div className="space-y-2">
+                             <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">{t("label_nim")}</label>
+                             <input value={profileForm.nim} disabled className="w-full bg-teal-50/50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950/40 cursor-not-allowed focus:outline-none animate-pulse-subtle" />
+                          </div>
+
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">{t("dash_student_fullname")}</label>
+                           <input value={profileForm.nama} onChange={(e) => setProfileForm({...profileForm, nama: e.target.value})} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" required />
+                        </div>
+
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">{t("dash_student_contact")}</label>
+                           <input value={profileForm.kontak} onChange={(e) => setProfileForm({...profileForm, kontak: e.target.value})} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" placeholder="08..." />
+                        </div>
+
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">{t("dash_student_bio")}</label>
+                           <textarea value={profileForm.bio} onChange={(e) => setProfileForm({...profileForm, bio: e.target.value})} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none min-h-[100px]" placeholder="Ceritakan sedikit tentang ketertarikan riset Anda..." />
+                        </div>
+
+                        {config?.category === "MAGANG" ? (
+                            <div className="flex flex-col md:flex-row gap-4">
+                              <div className="flex-1 space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Posisi Magang</label>
+                                <input 
+                                  value={profileForm.magangPosisi} 
+                                  onChange={(e) => setProfileForm({...profileForm, magangPosisi: e.target.value})} 
+                                  className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" 
+                                  placeholder="Misal: UI/UX Designer" 
+                                  required 
+                                />
+                              </div>
+                              <div className="flex-1 space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Tempat / Instansi</label>
+                                <input 
+                                  value={profileForm.magangTempat} 
+                                  onChange={(e) => setProfileForm({...profileForm, magangTempat: e.target.value})} 
+                                  className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" 
+                                  placeholder="Misal: PT. Telkom Indonesia" 
+                                  required 
+                                />
+                              </div>
+                            </div>
+                         ) : (
+                           <div className="space-y-2">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                                Rencana Judul Riset Anda
+                              </label>
+                              <textarea 
+                                value={profileForm.rencanaJudul} 
+                                onChange={(e) => setProfileForm({...profileForm, rencanaJudul: e.target.value})} 
+                                className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none min-h-[80px]" 
+                                placeholder="Ketik disini..." 
+                                required 
+                              />
+                           </div>
+                         )}
+
+                        <div className="border-t border-teal-100/50 pt-6 space-y-4">
+                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-500">Setup / Ganti Password</p>
+                          <div className="flex flex-col md:flex-row gap-4">
+                             <div className="flex-1 space-y-2">
+                               <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Password Baru (Opsional)</label>
+                               <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" placeholder="Minimal 6 karakter" />
+                             </div>
+                             <div className="flex-1 space-y-2">
+                               <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Konfirmasi Password</label>
+                               <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" placeholder="Ulangi password baru" />
+                             </div>
+                          </div>
+                        </div>
+
+                        <button type="submit" disabled={loading} className="w-full py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg">{loading ? t("dash_student_saving") : t("dash_student_save_changes")}</button>
+                      </form>
+                    </div>
+                  </motion.div>
+                </div>
              </div>
            )}
         </AnimatePresence>
@@ -1122,4 +1140,3 @@ const Dashboard = ({
 };
 
 export default Dashboard;
-

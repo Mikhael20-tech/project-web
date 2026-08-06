@@ -148,7 +148,7 @@ const Navbar = ({ user, onLogout }: { user: any; onLogout: () => void }) => {
   return (
     <nav
       className={cn(
-        "fixed top-0 left-0 right-0 z-[100] transition-all duration-500 px-4 md:px-8",
+        "fixed top-0 left-0 right-0 z-40 transition-all duration-500 px-4 md:px-8",
         scrolled ? "py-4" : "py-6",
         visible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0",
       )}

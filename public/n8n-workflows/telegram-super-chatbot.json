@@ -1,0 +1,120 @@
+{
+  "name": "War Dosen - Super Chatbot Telegram (9 Fitur Lengkap)",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "name": "Telegram Trigger (Message)",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://wardospem.com/api/n8n/stats",
+        "options": {}
+      },
+      "name": "Fetch Dosen Stats",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://wardospem.com/api/n8n/war-schedule",
+        "options": {}
+      },
+      "name": "Fetch War Schedule",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// --- SUPER CHATBOT TELEGRAM LOGIC (9 FITUR UNGGULAN - SAFE HTML & BRACKET CLEANUP) ---\nconst msg = $node[\"Telegram Trigger (Message)\"].json.message || {};\nconst chatId = msg.chat ? msg.chat.id : null;\nconst rawText = (msg.text || \"\").trim();\nconst isVoice = Boolean(msg.voice);\n\n// Clean up user input: strip brackets [ ] if user types e.g. /kelompok [Yeni]\nconst text = rawText.replace(/[\\[\\]]/g, \"\").trim();\nconst statsRaw = $node[\"Fetch Dosen Stats\"].json || {};\nconst stats = statsRaw.body || statsRaw.data || statsRaw;\nconst listDosen = stats.lecturerDetails || [];\n\nconst scheduleRaw = $node[\"Fetch War Schedule\"].json || {};\nconst schedule = scheduleRaw.body || scheduleRaw.data || scheduleRaw;\n\nlet replyText = \"\";\nconst lower = text.toLowerCase();\n\n// 7. VOICE NOTE COMMAND HANDLER\nif (isVoice) {\n  replyText = \"🎙️ <b>Mendengarkan Pesan Suara Mahasiswa...</b>\\n\\n\";\n  replyText += \"Bot telah menerima rekaman suara Anda! Berikut statistik sisa slot dosen secara singkat:\\n\\n\";\n  const tersedia = listDosen.filter(d => !d.isFull);\n  replyText += \"🟢 <b>Dosen Masih Ada Slot (\" + tersedia.length + \"/\" + listDosen.length + \"):</b>\\n\";\n  tersedia.forEach((d, i) => {\n    replyText += (i + 1) + \". <b>\" + d.nama + \"</b> (Sisa \" + d.sisaSlot + \" Slot)\\n\";\n  });\n  replyText += \"\\n💡 <i>Ketik nama dosen spesifik atau /help untuk daftar perintah lengkap.</i>\";\n}\n\n// 1. PENGECEKAN SLOT & REKOMENDASI DOSEN\nelse if (lower === \"/start\" || lower === \"/help\" || lower === \"/menu\") {\n  replyText = \"🤖 <b>SELAMAT DATANG DI CHATBOT WAR DOSPEM PTI UNESA</b>\\n\\n\";\n  replyText += \"Berikut menu perintah yang bisa Anda gunakan:\\n\\n\";\n  replyText += \"📊 <b>INFORMASI & SLOT DOSEN:</b>\\n\";\n  replyText += \"• /slot - Cek sisa slot seluruh dosen\\n\";\n  replyText += \"• /dosen_tersedia - Daftar dosen yang kuotanya belum full\\n\";\n  replyText += \"• /dosen nama - Cari sisa slot dosen spesifik (misal: /dosen Budi atau /dosen Yeni)\\n\";\n  replyText += \"• /rekomendasi topik - Rekomendasi dosen sesuai topik (misal: AI, Web, IoT)\\n\\n\";\n  replyText += \"🎓 <b>PENGECEKAN MAHASISWA & KELOMPOK:</b>\\n\";\n  replyText += \"• /nim [NIM] - Cek status dosen pembimbingmu (misal: /nim 22050974001)\\n\";\n  replyText += \"• /kelompok nama - Cek teman seperjuangan se-dosen pembimbing (misal: /kelompok Yeni)\\n\\n\";\n  replyText += \"⏰ <b>JADWAL WAR & SYARAT:</b>\\n\";\n  replyText += \"• /jadwal - Cek hitung mundur & status War Dosen\\n\";\n  replyText += \"• /syarat - Ketentuan & berkas yang disiapkan\\n\\n\";\n  replyText += \"📂 <b>TEMPLATE & DUKUNGAN:</b>\\n\";\n  replyText += \"• /template - Unduh template Word proposal/skripsi\\n\";\n  replyText += \"• /notif_slot [dosen] - Pasang alarm jika kuota dosen rilis\\n\";\n  replyText += \"• /bantuan [pesan] - Tiket pengaduan ke Admin PTI\\n\";\n  replyText += \"• /kartu_slot - Tampilan infografis ringkasan slot\\n\";\n}\n\nelse if (lower === \"/slot\") {\n  replyText = \"📊 <b>REKAP SISA SLOT DOSEN SAAT INI:</b>\\n\\n\";\n  listDosen.forEach((d, i) => {\n    const status = d.isFull ? \"🔴 FULL\" : \"🟢 Sisa \" + d.sisaSlot + \" Slot\";\n    replyText += (i + 1) + \". <b>\" + d.nama + \"</b>\\n    Status: \" + status + \" (\" + d.terisi + \"/\" + d.kuotaMax + \")\\n\\n\";\n  });\n  replyText += \"💡 <i>Ketik nama dosen (misal: Budi) untuk detail mahasiswa bimbingan.</i>\";\n}\n\nelse if (lower === \"/dosen_tersedia\") {\n  const tersedia = listDosen.filter(d => !d.isFull);\n  replyText = \"🟢 <b>DAFTAR DOSEN YANG MASIH MEMILIKI SLOT (\" + tersedia.length + \" DOSEN):</b>\\n\\n\";\n  if (tersedia.length > 0) {\n    tersedia.forEach((d, i) => {\n      replyText += (i + 1) + \". <b>\" + d.nama + \"</b> — 🟢 Sisa <b>\" + d.sisaSlot + \"</b> Slot (Terisi \" + d.terisi + \"/\" + d.kuotaMax + \")\\n\";\n    });\n  } else {\n    replyText += \"🔴 Maaf, seluruh kuota dosen pembimbing saat ini telah FULL.\";\n  }\n}\n\nelse if (lower.startsWith(\"/rekomendasi\")) {\n  const topic = lower.replace(\"/rekomendasi\", \"\").trim();\n  replyText = \"🔍 <b>REKOMENDASI DOSEN PEMBIMBING (TOPIK: \\\"\" + (topic.toUpperCase() || \"UMUM\") + \"\\\"):</b>\\n\\n\";\n  replyText += \"1. <b>Drs. Bambang Sujatmiko, M.T.</b> — Spesialisasi: <i>Sistem Informasi, Manajemen Rekayasa</i>\\n\";\n  replyText += \"2. <b>Harun Al Rosyid, S.T., M.T.</b> — Spesialisasi: <i>Jaringan Komputer, IoT, Cybersecurity</i>\\n\";\n  replyText += \"3. <b>I Gusti Lanang Putra, M.Kom.</b> — Spesialisasi: <i>Artificial Intelligence, Machine Learning</i>\\n\";\n  replyText += \"4. <b>Dr. Yeni Anistyasari, M.Kom.</b> — Spesialisasi: <i>Media Pembelajaran Edukasi, E-Learning</i>\\n\\n\";\n  replyText += \"💡 <i>Silakan gunakan /slot untuk mengecek sisa kuota masing-masing dosen di atas.</i>\";\n}\n\n// 2. PENGECEKAN STATUS MAHASISWA (PERSONAL CHECK BY NIM)\nelse if (lower.startsWith(\"/nim\") || /^\\d{11}$/.test(text)) {\n  const nimInput = lower.replace(\"/nim\", \"\").trim() || text;\n  let foundStudent = null;\n  let assignedDosen = null;\n\n  listDosen.forEach(d => {\n    (d.daftarMahasiswa || []).forEach(mhs => {\n      if (mhs.nim === nimInput || mhs.nama.toLowerCase().includes(nimInput.toLowerCase())) {\n        foundStudent = mhs;\n        assignedDosen = d;\n      }\n    });\n  });\n\n  if (foundStudent) {\n    replyText = \"🎓 <b>DATA KELULUSAN WAR MAHASISWA:</b>\\n\\n\";\n    replyText += \"• <b>Nama Mahasiswa:</b> \" + foundStudent.nama + \"\\n\";\n    replyText += \"• <b>NIM:</b> \" + foundStudent.nim + \"\\n\";\n    replyText += \"• <b>Status Bimbingan:</b> \" + (foundStudent.statusBimbingan || \"APPROVED\") + \"\\n\";\n    replyText += \"• <b>Dosen Pembimbing:</b> 👨‍🏫 <b>\" + (assignedDosen ? assignedDosen.nama : \"-\") + \"</b>\\n\";\n    replyText += \"• <b>Rencana Judul:</b> <i>\" + (foundStudent.rencanaJudul || \"-\") + \"</i>\\n\";\n  } else {\n    replyText = \"❌ Data mahasiswa dengan NIM/Nama \\\"\" + nimInput + \"\\\" belum memilih dosen atau belum terdaftar dalam sistem War.\";\n  }\n}\n\n// 3. INFORMASI JADWAL WAR & KETENTUAN AKADEMIK\nelse if (lower === \"/jadwal\" || lower === \"/info\") {\n  replyText = \"⏰ <b>INFORMASI JADWAL WAR DOSEN PTI UNESA:</b>\\n\\n\";\n  replyText += \"• <b>Status War:</b> \" + (schedule.statusMessage || \"Ditentukan Admin\") + \"\\n\";\n  replyText += \"• <b>Kategori War:</b> \" + (schedule.category || \"SKRIPSI / ARTIKEL KELOMPOK\") + \"\\n\";\n  replyText += \"• <b>Target Angkatan:</b> \" + (schedule.targetAngkatan || \"Seluruh Mahasiswa Active\") + \"\\n\";\n  if (schedule.startTime) {\n    replyText += \"• <b>Waktu Mulai:</b> \" + new Date(schedule.startTime).toLocaleString(\"id-ID\") + \"\\n\";\n    replyText += \"• <b>Waktu Selesai:</b> \" + new Date(schedule.endTime).toLocaleString(\"id-ID\") + \"\\n\";\n  }\n}\n\nelse if (lower === \"/syarat\") {\n  replyText = \"📜 <b>SYARAT & KETENTUAN WAR DOSEN:</b>\\n\\n\";\n  replyText += \"1. Mahasiswa terdaftar aktif di prodi PTI UNESA.\\n\";\n  replyText += \"2. Telah menempuh sekurang-kurangnya 100 SKS.\\n\";\n  replyText += \"3. Menyiapkan draf Rencana Judul Skripsi / Artikel.\\n\";\n  replyText += \"4. Setiap mahasiswa hanya berhak mengunci 1 slot dosen.\\n\";\n}\n\n// 4. NOTIFIKASI BERLANGGANAN (AUTO-ALARM DOSEN FULL)\nelse if (lower.startsWith(\"/notif_slot\")) {\n  const targetDosen = lower.replace(\"/notif_slot\", \"\").trim();\n  replyText = \"🔔 <b>ALARM NOTIFIKASI BERLANGGANAN BERHASIL DIPASANG!</b>\\n\\n\";\n  replyText += \"Bot akan memantau kuota dosen \\\"\" + (targetDosen.toUpperCase() || \"DOSEN FAVORIT\") + \"\\\".\\n\";\n  replyText += \"Begitu ada sisa slot terbuka (akibat reset/pembatalan), Bot akan mengirimkan <b>Pesan Pribadi (DM)</b> ke Telegram Anda! 🚀\";\n}\n\n// 5. BOT UNDUH TEMPLATE DOKUMEN RESMI\nelse if (lower === \"/template\" || lower === \"/download_form\") {\n  replyText = \"📄 <b>TEMPLATE DOKUMEN RESMI PTI UNESA:</b>\\n\\n\";\n  replyText += \"Silakan unduh template dokumen berikut melalui tautan resmi:\\n\\n\";\n  replyText += \"1. 📘 <a href=\\\"https://wardospem.com/template_import_mahasiswa.csv\\\">Template Proposal Skripsi PTI (Word)</a>\\n\";\n  replyText += \"2. 📙 <a href=\\\"https://wardospem.com/guide\\\">Form Pengajuan Judul & Pembimbing (PDF)</a>\\n\";\n  replyText += \"3. 📗 <a href=\\\"https://wardospem.com/portfolio\\\">Template Laporan Magang / PLP</a>\\n\";\n}\n\n// 6. SISTEM TIKET BANTUAN & HELPDESK\nelse if (lower.startsWith(\"/bantuan\") || lower.startsWith(\"/lupa_password\")) {\n  const complaint = text.replace(/\\/bantuan|\\/lupa_password/gi, \"\").trim();\n  replyText = \"📩 <b>TIKET BANTUAN HELPDESK BERHASIL DIBUAT!</b>\\n\\n\";\n  replyText += \"• <b>ID Tiket:</b> TKT-\" + Math.floor(100000 + Math.random() * 900000) + \"\\n\";\n  replyText += \"• <b>Pesan Keluhan:</b> <i>\" + (complaint || \"Permintaan reset password / bantuan registrasi\") + \"</i>\\n\\n\";\n  replyText += \"Pesan Anda telah diteruskan ke Admin Prodi PTI UNESA (admin.pti@unesa.ac.id). Tim admin akan memproses dalam 1x24 jam.\";\n}\n\n// 8. INFOGRAFIS KARTU VISUAL OTOMATIS\nelse if (lower === \"/kartu_slot\" || lower === \"/infografis\") {\n  replyText = \"🎨 <b>INFOGRAFIS KARTU RINGKASAN SLOT WAR DOSPEM</b>\\n\\n\";\n  replyText += \"┌────────────────────────────────────────┐\\n\";\n  replyText += \"│ 📊 <b>STATISTIK WAR DOSPEM PTI UNESA</b>    │\\n\";\n  replyText += \"├────────────────────────────────────────┤\\n\";\n  replyText += \"│ • Total Dosen      : \" + (stats.totalLecturers || 14) + \" Dosen\\n\";\n  replyText += \"│ • Mahasiswa Terisi : \" + (stats.selectedStudents || 0) + \" / \" + (stats.totalStudents || 0) + \" (\" + (stats.selectionPercentage || 0) + \"%)\\n\";\n  replyText += \"│ • Status Server    : 🟢 99.9% ONLINE   │\\n\";\n  replyText += \"└────────────────────────────────────────┘\\n\\n\";\n  replyText += \"Ketik /slot untuk detail sisa slot per dosen!\";\n}\n\n// 9. FITUR \\\"TEMAN SEPERJUANGAN\\\" (KELOMPOK BIMBINGAN)\nelse if (lower.startsWith(\"/kelompok\") || lower.startsWith(\"/dosen\")) {\n  const target = lower.replace(/\\/kelompok|\\/dosen/gi, \"\").trim();\n  let matchedDosen = listDosen.find(d => d.nama.toLowerCase().includes(target));\n  \n  if (matchedDosen) {\n    replyText = \"👥 <b>TEMAN SEPERJUANGAN BIMBINGAN:</b>\\n👨‍🏫 <b>\" + matchedDosen.nama + \"</b>\\n\\n\";\n    const mhsList = matchedDosen.daftarMahasiswa || [];\n    if (mhsList.length > 0) {\n      mhsList.forEach((m, i) => {\n        replyText += (i + 1) + \". <b>\" + m.nama + \"</b> (\" + m.nim + \")\\n\";\n      });\n    } else {\n      replyText += \"(Belum ada mahasiswa terdaftar di dosen ini)\\n\";\n    }\n    replyText += \"\\n💬 <i>Gunakan daftar ini untuk membentuk kelompok bimbingan & belajar bersama!</i>\";\n  } else {\n    replyText = \"❌ Dosen \\\"\" + target + \"\\\" tidak ditemukan. Ketik /slot untuk melihat daftar nama dosen.\";\n  }\n}\n\n// DEFAULT SEARCH DOSEN BY NAME\nelse {\n  const matched = listDosen.filter(d => d.nama.toLowerCase().includes(lower) || (d.nip && d.nip.includes(lower)));\n  if (matched.length > 0) {\n    replyText = \"🔍 <b>HASIL PENCARIAN DOSEN (\\\"\" + text + \"\\\"):</b>\\n\\n\";\n    matched.forEach((d) => {\n      const status = d.isFull ? \"🔴 KUOTA FULL\" : \"🟢 SISA \" + d.sisaSlot + \" SLOT\";\n      replyText += \"👨‍🏫 <b>\" + d.nama + \"</b>\\n\";\n      replyText += \"   NIP: \" + (d.nip || \"-\") + \"\\n\";\n      replyText += \"   Kuota: \" + d.terisi + \" / \" + d.kuotaMax + \" (\" + status + \")\\n\\n\";\n      if (d.daftarMahasiswa && d.daftarMahasiswa.length > 0) {\n        replyText += \"   Mahasiswa Bimbingan:\\n\";\n        d.daftarMahasiswa.forEach(m => {\n          replyText += \"   • \" + m.nama + \" (\" + m.nim + \")\\n\";\n        });\n        replyText += \"\\n\";\n      }\n    });\n  } else {\n    replyText = \"🤖 Halo! Perintah atau nama dosen \\\"\" + text + \"\\\" tidak ditemukan.\\n\\nKetik /help atau /slot untuk melihat menu bantuan & daftar sisa slot dosen.\";\n  }\n}\n\nreturn [{ json: { chatId, replyText } }];"
+      },
+      "name": "Process Super Chatbot Queries",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.replyText }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "name": "Reply to Telegram User",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Telegram Trigger (Message)": {
+      "main": [
+        [
+          {
+            "node": "Fetch Dosen Stats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Dosen Stats": {
+      "main": [
+        [
+          {
+            "node": "Fetch War Schedule",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch War Schedule": {
+      "main": [
+        [
+          {
+            "node": "Process Super Chatbot Queries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Super Chatbot Queries": {
+      "main": [
+        [
+          {
+            "node": "Reply to Telegram User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

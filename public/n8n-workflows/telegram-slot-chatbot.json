@@ -1,0 +1,84 @@
+{
+  "name": "War Dosen - Telegram Slot Chatbot (Tanya Sisa Slot)",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "name": "Telegram Trigger (Message)",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://wardospem.com/api/n8n/stats",
+        "options": {}
+      },
+      "name": "Fetch Live Dosen Stats",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [470, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Tangkap pesan masuk dari mahasiswa\nconst userText = ($node[\"Telegram Trigger (Message)\"].json.message.text || \"\").trim();\nconst chatId = $node[\"Telegram Trigger (Message)\"].json.message.chat.id;\n\nconst raw = $input.first().json;\nconst data = raw.body || raw.data || raw;\nconst listDosen = data.lecturerDetails || [];\n\nlet replyText = \"\";\n\n// Jika mahasiswa bertanya secara umum atau ketik /start atau /slot\nif (userText === \"/start\" || userText === \"/slot\" || userText.toLowerCase().includes(\"slot\") || userText.toLowerCase().includes(\"cek\")) {\n  replyText = `🤖 *BOT WAR DOSPEM PTI UNESA*\\n\\n🔍 *STATUS SISA SLOT DOSEN SAAT INI:*\\n\\n`;\n  listDosen.forEach((dosen, i) => {\n    const status = dosen.isFull ? \"🔴 FULL\" : `🟢 Sisa ${dosen.sisaSlot} Slot`;\n    replyText += `${i + 1}. *${dosen.nama}*\\n    Status: ${status} (${dosen.terisi}/${dosen.kuotaMax})\\n\\n`;\n  });\n  replyText += `💡 _Ketik nama dosen (contoh: Budi) untuk mencari sisa slot spesifik._`;\n} else {\n  // Cari dosen berdasarkan nama yang diketik mahasiswa\n  const matched = listDosen.filter(d => d.nama.toLowerCase().includes(userText.toLowerCase()) || (d.nip && d.nip.includes(userText)));\n  if (matched.length > 0) {\n    replyText = `🔍 *HASIL PENCARIAN DOSEN (\"${userText}\"):*\\n\\n`;\n    matched.forEach((dosen) => {\n      const status = dosen.isFull ? \"🔴 KUOTA FULL\" : `🟢 SISA ${dosen.sisaSlot} SLOT`;\n      replyText += `👨‍🏫 *${dosen.nama}*\\n`;\n      replyText += `   NIP: ${dosen.nip || \"-\"}\\n`;\n      replyText += `   Kuota: ${dosen.terisi} / ${dosen.kuotaMax} (${status})\\n\\n`;\n    });\n  } else {\n    replyText = `❌ Dosen dengan kata kunci \"*${userText}*\" tidak ditemukan.\\n\\nKetik /slot untuk melihat seluruh daftar sisa slot dosen.`;\n  }\n}\n\nreturn [{ json: { chatId, replyText } }];"
+      },
+      "name": "Process Query & Search Dosen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [690, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.replyText }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "name": "Reply to Student on Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [910, 300]
+    }
+  ],
+  "connections": {
+    "Telegram Trigger (Message)": {
+      "main": [
+        [
+          {
+            "node": "Fetch Live Dosen Stats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Live Dosen Stats": {
+      "main": [
+        [
+          {
+            "node": "Process Query & Search Dosen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Query & Search Dosen": {
+      "main": [
+        [
+          {
+            "node": "Reply to Student on Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
