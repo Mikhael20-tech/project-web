@@ -38,6 +38,24 @@ const staticDictionary: Record<string, Record<string, string>> = {
     zh: "计算机网络",
     ja: "コンピュータネットワーク",
     ko: "컴퓨터 네트워크"
+  },
+  "Dosen tetap di Program Studi Pendidikan Teknologi Informasi UNESA dengan fokus pada pengembangan sistem dan metodologi pembelajaran berbasis teknologi.": {
+    en: "Full-time lecturer in Information Technology Education at UNESA, focusing on system development and technology-based learning methodologies.",
+    zh: "UNESA 信息技术教育专业专任教师，专注于技术型学习系统与方法论的开发。",
+    ja: "UNESA情報技術教育専攻の専任講師。システム開発および技術ベースの学習方法論を専門としています。",
+    ko: "UNESA 정보 기술 교육 전공 전임 교수로, 시스템 개발 및 기술 기반 학습 방법론을 연구합니다."
+  },
+  "Pakar Pendidikan Teknologi Informasi dengan fokus pada pengembangan sistem cerdas dan metodologi pembelajaran digital berbasis industri.": {
+    en: "IT Education Expert focusing on intelligent systems development and industry-based digital learning methodologies.",
+    zh: "信息技术教育专家，专注于智能系统开发与基于工业的数字学习方法论。",
+    ja: "情報技術教育の専門家。インテリジェントシステム開発および産業ベースのデジタル学習方法論に焦点を当てています。",
+    ko: "정보 기술 교육 전문가로, 지능형 시스템 개발 및 산업 기반 디지털 학습 방법론에 중점을 둡니다."
+  },
+  "Dosen tetap di Program Studi Pendidikan Teknologi Informasi UNESA.": {
+    en: "Full-time lecturer in the Information Technology Education Study Program at UNESA.",
+    zh: "UNESA 信息技术教育专业专任教师。",
+    ja: "UNESA情報技術教育専攻の専任講師。",
+    ko: "UNESA 정보 기술 교육 전공 전임 교원."
   }
 };
 
