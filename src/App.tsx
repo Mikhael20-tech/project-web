@@ -37,8 +37,8 @@ const AppContent = ({
   const navigate = useNavigate();
   const isLoginPage = location.pathname === "/login";
   const isLandingPage = location.pathname === "/";
-  const isPortfolioPage = location.pathname === "/portfolio";
-  const isGuidePage = location.pathname === "/guide" || location.pathname === "/panduan";
+  const isPortfolioPage = location.pathname.startsWith("/portfolio");
+  const isGuidePage = location.pathname.startsWith("/guide") || location.pathname.startsWith("/panduan");
 
   const handleLogout = () => {
     logout();

@@ -332,12 +332,12 @@ const LandingPage = () => {
               <h4 className="text-[11px] font-semibold text-zinc-900 uppercase tracking-widest mb-4">{t("footer_contact")}</h4>
               <ul className="space-y-3 text-sm text-zinc-500">
                 <li>
-                  <a href="mailto:admin.pti@unesa.ac.id" className="hover:text-zinc-900 transition-colors">
-                    admin.pti@unesa.ac.id
+                  <a href="mailto:s1ptiunesa1@gmail.com" className="hover:text-zinc-900 transition-colors">
+                    s1ptiunesa1@gmail.com
                   </a>
                 </li>
-                <li>Gedung A10, FT UNESA</li>
-                <li>Surabaya, Indonesia</li>
+                <li>{t("footer_address_building")}</li>
+                <li>{t("footer_address_city")}</li>
                 <li>
                   <a
                     href="https://www.instagram.com/hmppti.unesa"

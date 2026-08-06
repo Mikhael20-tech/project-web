@@ -3,6 +3,50 @@ import { useLanguage } from "@/src/lib/LanguageContext";
 
 // Instant dictionary for common dynamic terms to avoid API latency/rate limits
 const staticDictionary: Record<string, Record<string, string>> = {
+
+  "Template Laporan Akhir Mobilitas Akademik Magang": {
+    en: "Academic Mobility Internship Final Report Template",
+    zh: "学术交流实习最终报告模板",
+    ja: "学術交流インターンシップ最終報告書テンプレート",
+    ko: "학술 교류 인턴십 최종 보고서 템플릿"
+  },
+  "Template Proposal Mobilitas Akademik Magang": {
+    en: "Academic Mobility Internship Proposal Template",
+    zh: "学术交流实习提案模板",
+    ja: "学術交流インターンシップ提案書テンプレート",
+    ko: "학술 교류 인턴십 제안서 템플릿"
+  },
+  "Dokumen ini adalah template atau panduan untuk menyusun proposal kegiatan mobilitas akademik yang berfokus pada program magang.": {
+    en: "This document is a template or guide for preparing a proposal for academic mobility activities focusing on internship programs.",
+    zh: "本文件是编制侧重于实习项目的学术交流活动提案的模板或指南。",
+    ja: "このドキュメントは、インターンシッププログラムに焦点を当てた学術交流活動の提案書を作成するためのテンプレートまたはガイドです。",
+    ko: "이 문서는 인턴십 프로그램에 초점을 맞춘 학술 교류 활동에 대한 제안서를 작성하기 위한 템플릿 또는 가이드입니다."
+  },
+  "MoA": {
+    en: "MoA",
+    zh: "MoA",
+    ja: "MoA",
+    ko: "MoA"
+  },
+  "Folder ini berisi kumpulan dokumen akademik. Detail spesifik mengenai isi dokumen tidak dapat diidentifikasi dari tautan drive saja.": {
+    en: "This folder contains a collection of academic documents. Specific details regarding the contents of the documents cannot be identified from the drive link alone.",
+    zh: "该文件夹包含学术文档集合。仅凭网盘链接无法识别文档的具体内容细节。",
+    ja: "このフォルダーには学術文書のコレクションが含まれています。ドライブリンクだけでは文書の内容に関する具体的な詳細は特定できません。",
+    ko: "이 폴더에는 학술 문서 모음이 포함되어 있습니다. 드라이브 링크만으로는 문서 내용에 대한 구체적인 세부 정보를 확인할 수 없습니다."
+  },
+  "IA": {
+    en: "IA",
+    zh: "IA",
+    ja: "IA",
+    ko: "IA"
+  },
+  "Folder Google Drive ini berisi kumpulan dokumen akademik. Informasi lebih lanjut mengenai isi spesifik folder tidak tersedia tanpa akses.": {
+    en: "This Google Drive folder contains a collection of academic documents. Further information regarding the specific contents of the folder is not available without access.",
+    zh: "此 Google 云端硬盘文件夹包含学术文档集合。如无权限，则无法获取有关该文件夹具体内容的进一步信息。",
+    ja: "このGoogleドライブフォルダーには学術文書のコレクションが含まれています。アクセス権がない場合、フォルダーの具体的な内容に関する詳細情報は利用できません。",
+    ko: "이 Google 드라이브 폴더에는 학술 문서 모음이 포함되어 있습니다. 액세스 권한 없이는 폴더의 구체적인 내용에 대한 추가 정보를 얻을 수 없습니다."
+  },
+
   "Pendidikan Teknologi Informasi": {
     en: "Information Technology Education",
     zh: "信息技术教育",

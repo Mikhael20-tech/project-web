@@ -140,6 +140,10 @@ const AdminDashboard = ({
   const [searchMonitoring, setSearchMonitoring] = useState("");
   const [activities, setActivities] = useState<any[]>([]);
 
+  // Custom Dropdown States
+  const [isAngkatanDropdownOpen, setIsAngkatanDropdownOpen] = useState(false);
+  const [isDocCategoryDropdownOpen, setIsDocCategoryDropdownOpen] = useState(false);
+
   // Forms State
   const [dosenForm, setDosenForm] = useState({
     id: "",
@@ -3137,7 +3141,7 @@ const AdminDashboard = ({
                     {/* ── HeroUI Booking Calendar Preview ── */}
                     <div className="bg-teal-50/40 border border-teal-100 rounded-[2rem] p-8 text-left">
                       <p className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 mb-6 flex items-center gap-2">
-                        <Calendar className="w-3 h-3" /> <DynamicText text="Preview Kalender Jadwal" />
+                        <Calendar className="w-3 h-3" /> <DynamicText text={t("admin_preview_calendar")} />
                       </p>
                       <div className="flex justify-center">
                         <BookingCalendar />
@@ -3340,7 +3344,7 @@ const AdminDashboard = ({
                         AI Broadcast Center
                       </h3>
                       <p className="text-sm text-teal-800/60 font-medium mt-1">
-                        <DynamicText text="Gunakan kecerdasan buatan untuk menyusun pengumuman WhatsApp yang profesional." />
+                        <DynamicText text={t("admin_broadcast_desc")} />
                       </p>
                     </div>
                   </div>
@@ -3392,18 +3396,73 @@ const AdminDashboard = ({
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/40 ml-1">
-                            <DynamicText text="KIRIM KE:" />
+                            <DynamicText text={t("admin_send_to")} />
                           </label>
-                          <select 
-                            value={broadcastForm.targetAngkatan}
-                            onChange={(e) => setBroadcastForm({ ...broadcastForm, targetAngkatan: e.target.value })}
-                            className="w-full p-4 bg-teal-50 border border-teal-100 rounded-xl text-xs font-bold text-teal-950 focus:outline-none focus:border-teal-400 transition-all"
-                          >
-                            <option value="All">{t("dash_admin_all_students")}</option>
-                            {[...new Set(students.map(s => s.angkatan))].filter(Boolean).sort().map(a => (
-                              <option key={a} value={a}>{t("dash_student_angkatan")} {a}</option>
-                            ))}
-                          </select>
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => setIsAngkatanDropdownOpen(!isAngkatanDropdownOpen)}
+                              className="w-full flex items-center justify-between p-4 bg-teal-50 border border-teal-100 rounded-xl text-xs font-bold text-teal-950 shadow-sm hover:border-teal-300 transition-all focus:outline-none focus:ring-2 focus:ring-teal-500/20 group"
+                            >
+                              <span className="truncate">
+                                {broadcastForm.targetAngkatan === "All" 
+                                  ? t("dash_admin_all_students") 
+                                  : `${t("dash_student_angkatan")} ${broadcastForm.targetAngkatan}`}
+                              </span>
+                              <ChevronDown className={cn("w-4 h-4 text-teal-500 shrink-0 transition-transform duration-300", isAngkatanDropdownOpen && "rotate-180")} />
+                            </button>
+                            <AnimatePresence>
+                              {isAngkatanDropdownOpen && (
+                                <>
+                                  <div className="fixed inset-0 z-20" onClick={() => setIsAngkatanDropdownOpen(false)} />
+                                  <motion.div
+                                    initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                                    transition={{ duration: 0.15, ease: "easeOut" }}
+                                    className="absolute z-30 top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-teal-100 rounded-2xl shadow-2xl overflow-hidden py-1.5 max-h-60 overflow-y-auto custom-scrollbar"
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setBroadcastForm({ ...broadcastForm, targetAngkatan: "All" });
+                                        setIsAngkatanDropdownOpen(false);
+                                      }}
+                                      className={cn(
+                                        "w-full px-4 py-3 text-left text-xs font-bold flex items-center justify-between transition-colors",
+                                        broadcastForm.targetAngkatan === "All"
+                                          ? "bg-teal-50 text-teal-950 font-black"
+                                          : "text-teal-800/70 hover:bg-teal-50/50 hover:text-teal-950"
+                                      )}
+                                    >
+                                      <span>{t("dash_admin_all_students")}</span>
+                                      {broadcastForm.targetAngkatan === "All" && <CheckCircle2 className="w-4 h-4 text-teal-500 shrink-0" />}
+                                    </button>
+                                    <div className="h-px bg-teal-50/80 my-1 mx-2" />
+                                    {[...new Set(students.map(s => s.angkatan))].filter(Boolean).sort().map(a => (
+                                      <button
+                                        key={a}
+                                        type="button"
+                                        onClick={() => {
+                                          setBroadcastForm({ ...broadcastForm, targetAngkatan: a });
+                                          setIsAngkatanDropdownOpen(false);
+                                        }}
+                                        className={cn(
+                                          "w-full px-4 py-3 text-left text-xs font-bold flex items-center justify-between transition-colors",
+                                          broadcastForm.targetAngkatan === a
+                                            ? "bg-teal-50 text-teal-950 font-black"
+                                            : "text-teal-800/70 hover:bg-teal-50/50 hover:text-teal-950"
+                                        )}
+                                      >
+                                        <span>{t("dash_student_angkatan")} {a}</span>
+                                        {broadcastForm.targetAngkatan === a && <CheckCircle2 className="w-4 h-4 text-teal-500 shrink-0" />}
+                                      </button>
+                                    ))}
+                                  </motion.div>
+                                </>
+                              )}
+                            </AnimatePresence>
+                          </div>
                         </div>
                         <button
                           onClick={handleSendBroadcast}
@@ -3425,13 +3484,13 @@ const AdminDashboard = ({
                     <Info className="w-5 h-5 text-teal-500 shrink-0 mt-0.5" />
                     <div className="space-y-1">
                       <p className="text-[11px] font-bold text-teal-900 leading-relaxed uppercase tracking-wide">
-                        <DynamicText text="Panduan Cepat" />
+                        <DynamicText text={t("admin_quick_guide")} />
                       </p>
                       <div className="text-[10px] text-teal-800/60 font-medium leading-relaxed space-y-1">
-                        <p><DynamicText text="1. Masukkan instruksi singkat (misal: 'Ingatkan war besok pagi')" /></p>
-                        <p><DynamicText text="2. Klik tombol AI untuk mendapatkan draf pesan WhatsApp yang profesional" /></p>
-                        <p><DynamicText text="3. Periksa dan edit pesan jika perlu di kotak preview" /></p>
-                        <p><DynamicText text="4. Pilih target angkatan dan klik BLAST untuk mengirim ke seluruh mahasiswa." /></p>
+                        <p><DynamicText text={t("admin_guide_step1")} /></p>
+                        <p><DynamicText text={t("admin_guide_step2")} /></p>
+                        <p><DynamicText text={t("admin_guide_step3")} /></p>
+                        <p><DynamicText text={t("admin_guide_step4")} /></p>
                       </div>
                     </div>
                   </div>
@@ -3717,18 +3776,52 @@ const AdminDashboard = ({
                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
                         {t("doc_category_label")}
                       </label>
-                      <select
-                        value={docForm.category}
-                        onChange={(e) => setDocForm({ ...docForm, category: e.target.value })}
-                        required
-                        className="w-full p-4 bg-teal-50 border border-teal-100 rounded-[1.25rem] text-teal-950 text-xs font-bold focus:outline-none focus:border-teal-400 transition-all shadow-inner"
-                      >
-                        {Object.keys(categoryTranslationKeys).map((key) => (
-                          <option key={key} value={key}>
-                            {t(categoryTranslationKeys[key])}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setIsDocCategoryDropdownOpen(!isDocCategoryDropdownOpen)}
+                          className="w-full flex items-center justify-between p-4 bg-teal-50 border border-teal-100 rounded-[1.25rem] text-xs font-bold text-teal-950 shadow-inner hover:border-teal-300 transition-all focus:outline-none focus:ring-2 focus:ring-teal-500/20 group"
+                        >
+                          <span className="truncate">
+                            {t(categoryTranslationKeys[docForm.category] || "cat_label_other")}
+                          </span>
+                          <ChevronDown className={cn("w-4 h-4 text-teal-500 shrink-0 transition-transform duration-300", isDocCategoryDropdownOpen && "rotate-180")} />
+                        </button>
+                        <AnimatePresence>
+                          {isDocCategoryDropdownOpen && (
+                            <>
+                              <div className="fixed inset-0 z-20" onClick={() => setIsDocCategoryDropdownOpen(false)} />
+                              <motion.div
+                                initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                                transition={{ duration: 0.15, ease: "easeOut" }}
+                                className="absolute z-30 top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-teal-100 rounded-2xl shadow-2xl overflow-hidden py-1.5 max-h-60 overflow-y-auto custom-scrollbar"
+                              >
+                                {Object.keys(categoryTranslationKeys).map((key) => (
+                                  <button
+                                    key={key}
+                                    type="button"
+                                    onClick={() => {
+                                      setDocForm({ ...docForm, category: key });
+                                      setIsDocCategoryDropdownOpen(false);
+                                    }}
+                                    className={cn(
+                                      "w-full px-4 py-3 text-left text-xs font-bold flex items-center justify-between transition-colors",
+                                      docForm.category === key
+                                        ? "bg-teal-50 text-teal-950 font-black"
+                                        : "text-teal-800/70 hover:bg-teal-50/50 hover:text-teal-950"
+                                    )}
+                                  >
+                                    <span className="truncate pr-2">{t(categoryTranslationKeys[key])}</span>
+                                    {docForm.category === key && <CheckCircle2 className="w-4 h-4 text-teal-500 shrink-0" />}
+                                  </button>
+                                ))}
+                              </motion.div>
+                            </>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </div>
 
                     {/* Deskripsi Dokumen */}
@@ -4643,7 +4736,7 @@ const AdminDashboard = ({
                 </div>
                 
                 <div className="p-6 md:p-8 flex-1 overflow-y-auto min-h-[300px]">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 mb-2 block ml-1"><DynamicText text="Pilih Mahasiswa" /></label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 mb-2 block ml-1"><DynamicText text={t("admin_select_student")} /></label>
                   <div className="relative">
                     <div className="relative">
                       <input
