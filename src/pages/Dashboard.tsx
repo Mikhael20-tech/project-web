@@ -897,7 +897,7 @@ const Dashboard = ({
                           <p className="text-[8px] text-teal-600 uppercase tracking-[0.2em] font-black">{t("label_nip")}: {dosen.nip}</p>
                         </div>
                         <h3 className="font-black text-2xl text-teal-950 group-hover:text-teal-600 transition-colors tracking-tighter leading-tight">{dosen.nama}</h3>
-                        <p className="text-[10px] font-bold text-teal-800/40 uppercase tracking-widest">{dosen.keahlian || "Pendidikan Teknologi Informasi"}</p>
+                        <p className="text-[10px] font-bold text-teal-800/40 uppercase tracking-widest"><DynamicText text={dosen.keahlian || t("dash_dosen_expert_default")} /></p>
                       </div>
                     </div>
 

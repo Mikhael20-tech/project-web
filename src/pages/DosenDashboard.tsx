@@ -19,6 +19,7 @@ import {
 import { cn } from "@/src/lib/utils";
 import { useLanguage } from "@/src/lib/LanguageContext";
 import LoadingOverlay from "@/src/components/LoadingOverlay";
+import DynamicText from "@/src/components/DynamicText";
 
 const DosenDashboard = ({
   user,
@@ -426,8 +427,8 @@ const DosenDashboard = ({
               <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-teal-950 mb-2 leading-tight">
                 {dosenData.nama}
               </h1>
-              <p className="text-teal-800/60 font-bold text-lg">
-                {dosenData.keahlian || t("dash_dosen_expert_default")}
+              <p className="text-xs font-bold text-teal-800/50 uppercase tracking-widest mt-1">
+                <DynamicText text={dosenData.keahlian || t("dash_dosen_expert_default")} />
               </p>
             </div>
 
