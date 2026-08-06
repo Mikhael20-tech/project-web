@@ -18,6 +18,9 @@ import {
   Folder,
   FileText,
   PlayCircle,
+  ChevronDown,
+  Filter,
+  CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useLanguage } from "@/src/lib/LanguageContext";
@@ -41,6 +44,7 @@ const GuidePage = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
 
   // Category labels built from translations so they switch with language
   const categoryLabels: Record<string, string> = {
@@ -470,18 +474,77 @@ const GuidePage = () => {
                         className="w-full pl-11 pr-4 py-2.5 bg-white border border-teal-100 rounded-xl text-xs font-bold text-teal-950 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
                       />
                     </div>
-                    <select
-                      value={categoryFilter}
-                      onChange={(e) => setCategoryFilter(e.target.value)}
-                      className="p-2.5 bg-white border border-teal-100 rounded-xl text-xs font-bold text-teal-950 focus:outline-none w-full sm:w-64"
-                    >
-                      <option value="All">{t("doc_category_all")}</option>
-                      {Object.entries(categoryLabels).map(([key, label]) => (
-                        <option key={key} value={key}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
+                    {/* Custom Beautiful Category Dropdown */}
+                    <div className="relative w-full sm:w-72">
+                      <button
+                        type="button"
+                        onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                        className="w-full flex items-center justify-between p-3.5 bg-white border border-teal-100 rounded-2xl text-xs font-bold text-teal-950 shadow-sm hover:border-teal-300 hover:shadow-md transition-all group"
+                      >
+                        <div className="flex items-center gap-2.5 truncate">
+                          <Filter className="w-4 h-4 text-teal-500 shrink-0" />
+                          <span className="truncate">
+                            {categoryFilter === "All" ? t("doc_category_all") : (categoryLabels[categoryFilter] || categoryFilter)}
+                          </span>
+                        </div>
+                        <ChevronDown className={cn("w-4 h-4 text-teal-400 transition-transform duration-300 shrink-0", isCategoryDropdownOpen && "rotate-180")} />
+                      </button>
+
+                      <AnimatePresence>
+                        {isCategoryDropdownOpen && (
+                          <>
+                            <div
+                              className="fixed inset-0 z-20"
+                              onClick={() => setIsCategoryDropdownOpen(false)}
+                            />
+                            <motion.div
+                              initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                              transition={{ duration: 0.15, ease: "easeOut" }}
+                              className="absolute z-30 top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-teal-100 rounded-2xl shadow-2xl overflow-hidden py-1.5 max-h-72 overflow-y-auto custom-scrollbar"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCategoryFilter("All");
+                                  setIsCategoryDropdownOpen(false);
+                                }}
+                                className={cn(
+                                  "w-full px-4 py-2.5 text-left text-xs font-bold flex items-center justify-between transition-colors",
+                                  categoryFilter === "All"
+                                    ? "bg-teal-50 text-teal-950 font-black"
+                                    : "text-teal-800/70 hover:bg-teal-50/50 hover:text-teal-950"
+                                )}
+                              >
+                                <span>{t("doc_category_all")}</span>
+                                {categoryFilter === "All" && <CheckCircle2 className="w-3.5 h-3.5 text-teal-500 shrink-0" />}
+                              </button>
+                              <div className="h-px bg-teal-50/80 my-1" />
+                              {Object.entries(categoryLabels).map(([key, label]) => (
+                                <button
+                                  key={key}
+                                  type="button"
+                                  onClick={() => {
+                                    setCategoryFilter(key);
+                                    setIsCategoryDropdownOpen(false);
+                                  }}
+                                  className={cn(
+                                    "w-full px-4 py-2.5 text-left text-xs font-bold flex items-center justify-between transition-colors",
+                                    categoryFilter === key
+                                      ? "bg-teal-50 text-teal-950 font-black"
+                                      : "text-teal-800/70 hover:bg-teal-50/50 hover:text-teal-950"
+                                  )}
+                                >
+                                  <span className="truncate pr-2">{label}</span>
+                                  {categoryFilter === key && <CheckCircle2 className="w-3.5 h-3.5 text-teal-500 shrink-0" />}
+                                </button>
+                              ))}
+                            </motion.div>
+                          </>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
 
                   {/* Documents Grid */}
