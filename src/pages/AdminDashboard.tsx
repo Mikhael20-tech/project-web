@@ -512,25 +512,33 @@ const AdminDashboard = ({
     }
   };
 
-  const handleDocDelete = async (id: string, title: string) => {
-    if (!window.confirm(`Apakah Anda yakin ingin menghapus dokumen "${title}"?`)) return;
-    setMessage(null);
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/admin/documents/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Gagal menghapus dokumen.");
+  const handleDocDelete = (id: string, title: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Hapus Dokumen",
+      message: `Apakah Anda yakin ingin menghapus dokumen "${title}"?`,
+      type: "danger",
+      onConfirm: async () => {
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        setMessage(null);
+        setLoading(true);
+        try {
+          const res = await fetch(`/api/admin/documents/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Gagal menghapus dokumen.");
 
-      setMessage({ type: "success", text: "Dokumen berhasil dihapus." });
-      fetchData();
-    } catch (err: any) {
-      setMessage({ type: "error", text: err.message });
-    } finally {
-      setLoading(false);
-    }
+          setMessage({ type: "success", text: "Dokumen berhasil dihapus." });
+          fetchData();
+        } catch (err: any) {
+          setMessage({ type: "error", text: err.message });
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

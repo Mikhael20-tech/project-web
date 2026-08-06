@@ -29,6 +29,7 @@ const LoginPage = ({
   const [nama, setNama] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -67,7 +68,7 @@ const LoginPage = ({
         "width=600,height=700",
       );
       if (!authWindow) {
-        alert(
+        setError(
           t("alert_popup_blocked"),
         );
       }
@@ -81,6 +82,7 @@ const LoginPage = ({
     e.preventDefault();
     setLoading(true);
     setError("");
+    setSuccess("");
     try {
       if (isRegister) {
         const url = isDosenLogin ? "/api/register-dosen" : "/api/register";
@@ -98,7 +100,7 @@ const LoginPage = ({
           throw new Error(data.error || t("toast_register_failed"));
         }
 
-        alert(
+        setSuccess(
           t("toast_register_success"),
         );
         setIsRegister(false);
@@ -295,6 +297,15 @@ const LoginPage = ({
                     />
                   </div>
 
+                  {success && (
+                    <Alert status="success" className="py-1 px-2.5">
+                      <Alert.Indicator />
+                      <Alert.Content>
+                        <Alert.Title className="text-[10px]">{success}</Alert.Title>
+                      </Alert.Content>
+                    </Alert>
+                  )}
+
                   {error && (
                     <Alert status="danger" className="py-1 px-2.5">
                       <Alert.Indicator />
@@ -433,6 +444,15 @@ const LoginPage = ({
                       className="w-full bg-[#f8fdfc]/50 border border-teal-100/50 hover:border-teal-400 focus:border-teal-400 focus:outline-none focus:ring-0 rounded-lg h-10 px-3 shadow-inner transition-all font-bold text-xs text-teal-950"
                     />
                   </div>
+
+                  {success && (
+                    <Alert status="success" className="py-1 px-2.5">
+                      <Alert.Indicator />
+                      <Alert.Content>
+                        <Alert.Title className="text-[10px]">{success}</Alert.Title>
+                      </Alert.Content>
+                    </Alert>
+                  )}
 
                   {error && (
                     <Alert status="danger" className="py-1 px-2.5">
