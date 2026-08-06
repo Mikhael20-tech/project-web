@@ -202,6 +202,7 @@ const AdminDashboard = ({
   // Searchable select states
   const [assignSearch, setAssignSearch] = useState("");
   const [isAssignDropOpen, setIsAssignDropOpen] = useState(false);
+  const [isDocCategoryDropOpen, setIsDocCategoryDropOpen] = useState(false);
 
   // Swap Modal State
   const [swapModal, setSwapModal] = useState<{
@@ -2336,7 +2337,7 @@ const AdminDashboard = ({
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                        <DynamicText text="NIP Dosen" />
+                        {t("label_nip")}
                       </label>
                       <input
                         value={dosenForm.nip}
@@ -2349,7 +2350,7 @@ const AdminDashboard = ({
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                        <DynamicText text="Kapasitas (Kuota)" />
+                        {t("dash_admin_max_quota")}
                       </label>
                       <input
                         type="number"
@@ -2366,7 +2367,7 @@ const AdminDashboard = ({
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                        <DynamicText text="Foto Profil" />
+                        {t("label_foto_profil")}
                       </label>
                       <div className="flex flex-col gap-4">
                         {dosenForm.foto && (
@@ -2384,7 +2385,7 @@ const AdminDashboard = ({
                             >
                               <Trash2 className="w-5 h-5" />
                               <span className="text-[8px] font-black tracking-widest uppercase">
-                                <DynamicText text="Hapus" />
+                                {t("label_delete")}
                               </span>
                             </button>
                           </div>
@@ -2408,13 +2409,13 @@ const AdminDashboard = ({
                             )}
                           >
                             {uploadLoading ? (
-                              <DynamicText text="MENGUPLOAD..." />
+                              t("label_uploading")
                             ) : (
                               <>
                                 <Camera className="w-4 h-4" />{" "}
                                 {dosenForm.foto
-                                  ? <DynamicText text="Ganti Foto" />
-                                  : <DynamicText text="Pilih dari Perangkat" />}
+                                  ? t("label_change_photo")
+                                  : t("label_pick_from_device")}
                               </>
                             )}
                           </label>
@@ -2422,7 +2423,7 @@ const AdminDashboard = ({
                         <div className="flex items-center gap-3 px-2">
                           <div className="h-px flex-1 bg-teal-100" />
                           <span className="text-[9px] font-black text-teal-800/40 uppercase tracking-widest">
-                            <DynamicText text="Atau URL" />
+                            {t("label_or_url")}
                           </span>
                           <div className="h-px flex-1 bg-teal-100" />
                         </div>
@@ -2438,7 +2439,7 @@ const AdminDashboard = ({
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                        <DynamicText text="Keahlian Utama" />
+                        {t("label_keahlian_utama")}
                       </label>
                       <input
                         value={dosenForm.keahlian || ""}
@@ -2454,7 +2455,7 @@ const AdminDashboard = ({
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                        <DynamicText text="Bio Singkat" />
+                        {t("label_bio_singkat")}
                       </label>
                       <textarea
                         value={dosenForm.bio || ""}
@@ -3489,10 +3490,10 @@ const AdminDashboard = ({
                     </div>
                     <div>
                       <h3 className="text-3xl font-black text-teal-950 tracking-tight leading-tight">
-                        <DynamicText text="Pengaturan Profil" />
+                        {t("dash_admin_profile_settings")}
                       </h3>
                       <p className="text-sm text-teal-800/60 font-medium mt-1">
-                        <DynamicText text="Kelola foto pofil dan kata sandi administrator Anda." />
+                        {t("dash_admin_manage_profile_desc")}
                       </p>
                     </div>
                   </div>
@@ -3500,7 +3501,7 @@ const AdminDashboard = ({
                     <div className="space-y-6 text-left">
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                          <DynamicText text="Password Baru" />
+                          {t("dash_admin_new_password")}
                         </label>
                         <input
                           type="password"
@@ -3518,7 +3519,7 @@ const AdminDashboard = ({
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                          <DynamicText text="Konfirmasi Password" />
+                          {t("dash_admin_confirm_password")}
                         </label>
                         <input
                           type="password"
@@ -3803,18 +3804,77 @@ const AdminDashboard = ({
                         className="w-full pl-11 pr-4 py-2.5 bg-white border border-teal-100 rounded-xl text-xs font-bold text-teal-950 focus:outline-none"
                       />
                     </div>
-                    <select
-                      value={docFilterCategory}
-                      onChange={(e) => setDocFilterCategory(e.target.value)}
-                      className="p-2.5 bg-white border border-teal-100 rounded-xl text-xs font-bold text-teal-950 focus:outline-none w-full sm:w-64"
-                    >
-                      <option value="All">{t("doc_category_all")}</option>
-                      {Object.keys(categoryTranslationKeys).map((key) => (
-                        <option key={key} value={key}>
-                          {t(categoryTranslationKeys[key])}
-                        </option>
-                      ))}
-                    </select>
+                    {/* Custom Beautiful Document Category Filter */}
+                    <div className="relative w-full sm:w-72">
+                      <button
+                        type="button"
+                        onClick={() => setIsDocCategoryDropOpen(!isDocCategoryDropOpen)}
+                        className="w-full flex items-center justify-between p-3.5 bg-white border border-teal-100 rounded-2xl text-xs font-bold text-teal-950 shadow-sm hover:border-teal-300 hover:shadow-md transition-all group"
+                      >
+                        <div className="flex items-center gap-2.5 truncate">
+                          <Filter className="w-4 h-4 text-teal-500 shrink-0" />
+                          <span className="truncate">
+                            {docFilterCategory === "All" ? t("doc_category_all") : t(categoryTranslationKeys[docFilterCategory] || docFilterCategory)}
+                          </span>
+                        </div>
+                        <ChevronDown className={cn("w-4 h-4 text-teal-400 transition-transform duration-300 shrink-0", isDocCategoryDropOpen && "rotate-180")} />
+                      </button>
+
+                      <AnimatePresence>
+                        {isDocCategoryDropOpen && (
+                          <>
+                            <div
+                              className="fixed inset-0 z-20"
+                              onClick={() => setIsDocCategoryDropOpen(false)}
+                            />
+                            <motion.div
+                              initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                              transition={{ duration: 0.15, ease: "easeOut" }}
+                              className="absolute z-30 top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-teal-100 rounded-2xl shadow-2xl overflow-hidden py-1.5 max-h-72 overflow-y-auto custom-scrollbar"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDocFilterCategory("All");
+                                  setIsDocCategoryDropOpen(false);
+                                }}
+                                className={cn(
+                                  "w-full px-4 py-2.5 text-left text-xs font-bold flex items-center justify-between transition-colors",
+                                  docFilterCategory === "All"
+                                    ? "bg-teal-50 text-teal-950 font-black"
+                                    : "text-teal-800/70 hover:bg-teal-50/50 hover:text-teal-950"
+                                )}
+                              >
+                                <span>{t("doc_category_all")}</span>
+                                {docFilterCategory === "All" && <CheckCircle2 className="w-3.5 h-3.5 text-teal-500 shrink-0" />}
+                              </button>
+                              <div className="h-px bg-teal-50/80 my-1" />
+                              {Object.keys(categoryTranslationKeys).map((key) => (
+                                <button
+                                  key={key}
+                                  type="button"
+                                  onClick={() => {
+                                    setDocFilterCategory(key);
+                                    setIsDocCategoryDropOpen(false);
+                                  }}
+                                  className={cn(
+                                    "w-full px-4 py-2.5 text-left text-xs font-bold flex items-center justify-between transition-colors",
+                                    docFilterCategory === key
+                                      ? "bg-teal-50 text-teal-950 font-black"
+                                      : "text-teal-800/70 hover:bg-teal-50/50 hover:text-teal-950"
+                                  )}
+                                >
+                                  <span className="truncate pr-2">{t(categoryTranslationKeys[key])}</span>
+                                  {docFilterCategory === key && <CheckCircle2 className="w-3.5 h-3.5 text-teal-500 shrink-0" />}
+                                </button>
+                              ))}
+                            </motion.div>
+                          </>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
 
                   {/* Table */}
