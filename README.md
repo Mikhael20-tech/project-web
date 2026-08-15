@@ -4,7 +4,7 @@
 
 # WarDosPem PTI UNESA
 
-Sistem Informasi Akademik untuk pemilihan Dosen Pembimbing Skripsi secara adil, transparan, dan real-time bagi mahasiswa Pendidikan Teknologi Informasi (PTI) Universitas Negeri Surabaya.
+Sistem Informasi Akademik untuk pemilihan Dosen Pembimbing Magang dan Skripsi secara adil, transparan, dan real-time bagi mahasiswa Pendidikan Teknologi Informasi (PTI) Universitas Negeri Surabaya.
 
 ## Fitur Utama
 - **Real-time Quota Monitoring:** Lihat sisa kuota dosen secara live.
