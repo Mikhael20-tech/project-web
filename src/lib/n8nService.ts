@@ -26,40 +26,12 @@ export const n8nEventConfigs: Record<string, N8nWebhookEventConfig> = {
     enabled: true,
     webhookUrl: process.env.N8N_WEBHOOK_WAR_BOOKED || "",
   },
-  STATUS_CHANGED: {
-    id: "STATUS_CHANGED",
-    name: "Perubahan Status Bimbingan",
-    description: "Dipicu saat dosen/admin menyetujui, menolak, atau mereset status bimbingan mahasiswa.",
-    enabled: true,
-    webhookUrl: process.env.N8N_WEBHOOK_STATUS_CHANGED || "",
-  },
   BROADCAST_SENT: {
     id: "BROADCAST_SENT",
     name: "Pengumuman Masal Admin",
     description: "Dipicu saat admin mengirim pengumuman masal ke seluruh mahasiswa atau target angkatan.",
     enabled: true,
     webhookUrl: process.env.N8N_WEBHOOK_BROADCAST || "",
-  },
-  AI_SUMMARY_REQUEST: {
-    id: "AI_SUMMARY_REQUEST",
-    name: "Ringkasan Proposal & Revisi AI",
-    description: "Dipicu saat mahasiswa atau dosen meminta analisis AI untuk topik proposal atau catatan revisi.",
-    enabled: true,
-    webhookUrl: process.env.N8N_WEBHOOK_AI_SUMMARY || "",
-  },
-  CALENDAR_SYNC: {
-    id: "CALENDAR_SYNC",
-    name: "Sinkronisasi Google Calendar & Meet",
-    description: "Dipicu saat sesi atau jadwal bimbingan disepakati, dibuat, atau diperbarui.",
-    enabled: true,
-    webhookUrl: process.env.N8N_WEBHOOK_CALENDAR_SYNC || "",
-  },
-  DOCUMENT_UPLOADED: {
-    id: "DOCUMENT_UPLOADED",
-    name: "Unggah Dokumen Skripsi / Magang",
-    description: "Dipicu saat file proposal, draft skripsi, atau dokumen diunggah untuk dirapikan otomatis ke Google Drive.",
-    enabled: true,
-    webhookUrl: process.env.N8N_WEBHOOK_DOC_UPLOAD || "",
   },
 };
 

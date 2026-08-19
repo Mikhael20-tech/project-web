@@ -21,6 +21,8 @@ import {
   ChevronDown,
   Filter,
   CheckCircle2,
+  Lock,
+  LogIn,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useLanguage } from "@/src/lib/LanguageContext";
@@ -39,6 +41,7 @@ const categoryColors: Record<string, string> = {
 const GuidePage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const isLoggedIn = Boolean(localStorage.getItem("token"));
   const [activeTab, setActiveTab] = useState<"tutorial" | "mahasiswa" | "dosen" | "admin" | "kategori" | "documents">("tutorial");
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -462,6 +465,31 @@ const GuidePage = () => {
                     </p>
                   </div>
 
+                  {!isLoggedIn && (
+                    <div className="p-5 bg-amber-50/80 border border-amber-200/80 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-fadeIn">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-amber-500/20 text-amber-700 rounded-xl flex items-center justify-center shrink-0">
+                          <Lock className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="font-extrabold text-amber-950 text-xs sm:text-sm">
+                            {t("guide_doc_locked_title")}
+                          </h4>
+                          <p className="text-[11px] text-amber-800/80 font-medium mt-0.5">
+                            {t("guide_doc_login_required")}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => navigate("/login")}
+                        className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shrink-0 active:scale-95"
+                      >
+                        <LogIn className="w-4 h-4" />
+                        {t("guide_doc_login_btn")}
+                      </button>
+                    </div>
+                  )}
+
                   {/* Search and Category Filter */}
                   <div className="flex flex-col sm:flex-row gap-4 p-6 bg-teal-50/20 border border-teal-50 rounded-[2rem]">
                     <div className="relative flex-1">
@@ -599,12 +627,20 @@ const GuidePage = () => {
                               <div className="text-[9px] font-bold text-teal-800/40 uppercase tracking-wider">
                                 {t("guide_doc_uploaded")} {new Date(doc.createdAt).toLocaleDateString()}
                               </div>
-                              {doc.fileUrl ? (
+                              {!isLoggedIn ? (
+                                <button
+                                  onClick={() => navigate("/login")}
+                                  className="flex items-center gap-1.5 px-4 py-2.5 bg-amber-500/10 text-amber-800 border border-amber-500/30 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-amber-600 hover:text-white transition-all shadow-sm group shrink-0"
+                                >
+                                  <Lock className="w-3.5 h-3.5 text-amber-600 group-hover:text-white transition-colors" />
+                                  {t("guide_doc_login_badge")}
+                                </button>
+                              ) : doc.fileUrl ? (
                                 <a
                                   href={doc.fileUrl}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="flex items-center gap-1.5 px-4 py-2.5 bg-teal-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-teal-700 transition-all shadow-md shadow-teal-500/10"
+                                  className="flex items-center gap-1.5 px-4 py-2.5 bg-teal-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-teal-700 transition-all shadow-md shadow-teal-500/10 shrink-0"
                                 >
                                   <Download className="w-3.5 h-3.5" />
                                   {t("guide_doc_download")}
@@ -614,7 +650,7 @@ const GuidePage = () => {
                                   href={doc.driveUrl}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-indigo-700 transition-all shadow-md shadow-indigo-500/10"
+                                  className="flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-indigo-700 transition-all shadow-md shadow-indigo-500/10 shrink-0"
                                 >
                                   <Briefcase className="w-3.5 h-3.5" />
                                   {t("guide_doc_open_link")}

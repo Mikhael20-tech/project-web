@@ -1,0 +1,42 @@
+{
+  "name": "War Dosen - Broadcast Pengumuman Admin",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "broadcast-announcement",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "@channel_prodi_unesa",
+        "text": "=📢 *PENGUMUMAN RESMI PRODI*\n\n📌 *{{ $json.body?.title || \"Pengumuman\" }}*\n\n{{ $json.body?.message || \"Tidak ada isi pesan.\" }}\n\n🎯 *Target Angkatan:* {{ $json.body?.targetAngkatan || \"Semua Angkatan\" }}\n👤 *Pengirim:* {{ $json.body?.senderName || \"Admin Prodi\" }}\n🕒 *Waktu:* {{ $json.body?.timestamp || $now }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "name": "Telegram Channel Broadcast",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [500, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Telegram Channel Broadcast",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

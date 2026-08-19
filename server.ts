@@ -2729,37 +2729,7 @@ app.get("/api/n8n/stats", async (req, res) => {
   }
 });
 
-// 6. POST /api/n8n/ai-summarize (Trigger n8n AI Proposal & Revision Summarizer)
-app.post("/api/n8n/ai-summarize", authenticate, async (req: any, res) => {
-  const { rencanaJudul, catatanDosen } = req.body;
-  const user = req.user;
 
-  const result = await triggerN8nWebhook("AI_SUMMARY_REQUEST", {
-    userId: user.id,
-    studentName: user.username,
-    rencanaJudul,
-    catatanDosen,
-  });
-
-  res.json({ success: result.success, message: result.success ? "Permintaan AI Summarizer terkirim ke n8n!" : result.error });
-});
-
-// 7. POST /api/n8n/calendar-sync (Trigger n8n Google Calendar Sync)
-app.post("/api/n8n/calendar-sync", authenticate, async (req, res) => {
-  const { scheduledAt, topic, location, studentEmail, lecturerEmail } = req.body;
-
-  const result = await triggerN8nWebhook("CALENDAR_SYNC", {
-    bookingId: "BKG-" + Date.now(),
-    scheduledAt,
-    scheduledEndAt: new Date(new Date(scheduledAt).getTime() + 60 * 60 * 1000).toISOString(),
-    topic,
-    location: location || "Google Meet",
-    studentEmail: studentEmail || "mahasiswa@mhs.unesa.ac.id",
-    lecturerEmail: lecturerEmail || "dosen@unesa.ac.id",
-  });
-
-  res.json({ success: result.success, message: result.success ? "Jadwal bimbingan disinkronkan ke n8n Google Calendar!" : result.error });
-});
 
 // 8. GET /api/n8n/student-status (Public lookup by NIM/Nama for Telegram Chatbot)
 app.get("/api/n8n/student-status", async (req, res) => {

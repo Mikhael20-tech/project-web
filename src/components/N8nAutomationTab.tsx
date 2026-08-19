@@ -145,16 +145,8 @@ export const N8nAutomationTab: React.FC = () => {
     switch (id) {
       case "WAR_BOOKED":
         return <Zap className="w-5 h-5 text-amber-400" />;
-      case "STATUS_CHANGED":
-        return <Activity className="w-5 h-5 text-blue-400" />;
       case "BROADCAST_SENT":
         return <MessageSquare className="w-5 h-5 text-emerald-400" />;
-      case "AI_SUMMARY_REQUEST":
-        return <Bot className="w-5 h-5 text-purple-400" />;
-      case "CALENDAR_SYNC":
-        return <Calendar className="w-5 h-5 text-indigo-400" />;
-      case "DOCUMENT_UPLOADED":
-        return <FileText className="w-5 h-5 text-cyan-400" />;
       default:
         return <Zap className="w-5 h-5 text-slate-400" />;
     }
@@ -162,46 +154,25 @@ export const N8nAutomationTab: React.FC = () => {
 
   const workflowTemplates = [
     {
-      title: "Notifikasi WhatsApp & Telegram",
-      desc: "Kirim pesan WA konfirmasi ke mahasiswa dan alert ke Telegram Channel saat War Dosen.",
+      title: "Notifikasi WhatsApp & Telegram (WAR_BOOKED)",
+      desc: "Kirim pesan WA konfirmasi ke mahasiswa dan alert ke Telegram Channel saat War Dosen terisi.",
       file: "/n8n-workflows/whatsapp-telegram-notification.json",
       tag: "Notifikasi Instant",
       color: "from-amber-500/20 to-orange-500/10 border-amber-500/30",
     },
     {
-      title: "Sinkronisasi Google Calendar & Meet",
-      desc: "Otomatis buat event kalender & link Meet saat jadwal bimbingan disepakati.",
-      file: "/n8n-workflows/google-calendar-sync.json",
-      tag: "Jadwal & Meet",
-      color: "from-blue-500/20 to-indigo-500/10 border-blue-500/30",
+      title: "Broadcast Pengumuman Admin (BROADCAST_SENT)",
+      desc: "Otomatis kirim pesan broadcast pengumuman masal dari Admin ke Telegram Channel / WA Group.",
+      file: "/n8n-workflows/broadcast-sent-notification.json",
+      tag: "Broadcast Masal",
+      color: "from-purple-500/20 to-indigo-500/10 border-purple-500/30",
     },
     {
-      title: "Ringkasan Proposal & Revisi AI",
-      desc: "Ekstrak poin revisi dan kesesuaian judul skripsi memakai LLM node n8n.",
-      file: "/n8n-workflows/ai-proposal-summarizer.json",
-      tag: "AI Node",
-      color: "from-purple-500/20 to-pink-500/10 border-purple-500/30",
-    },
-    {
-      title: "Pengorganisir Dokumen Google Drive",
-      desc: "Simpan & rapikan file proposal/draft skripsi mahasiswa ke Google Drive prodi.",
-      file: "/n8n-workflows/google-drive-organizer.json",
-      tag: "Drive Storage",
-      color: "from-cyan-500/20 to-teal-500/10 border-cyan-500/30",
-    },
-    {
-      title: "Rangkuman Analisis Mingguan",
+      title: "Rangkuman Analisis Mingguan (Cron Digest)",
       desc: "Tarik statistik mingguan War Dosen dan kirim rangkuman ke Slack/Email Kaprodi.",
       file: "/n8n-workflows/weekly-analytics-digest.json",
       tag: "Cron Digest",
       color: "from-emerald-500/20 to-green-500/10 border-emerald-500/30",
-    },
-    {
-      title: "Notifikasi Perubahan Status",
-      desc: "Notifikasi otomatis ke Telegram saat status bimbingan disetujui, ditolak, atau di-reset.",
-      file: "/n8n-workflows/status-changed-notification.json",
-      tag: "Status Update",
-      color: "from-rose-500/20 to-orange-500/10 border-rose-500/30",
     },
     {
       title: "Super Chatbot Telegram (9 Fitur Lengkap)",
