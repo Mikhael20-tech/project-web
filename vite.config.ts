@@ -16,6 +16,7 @@ export default defineConfig(({mode}) => {
       },
     },
     server: {
+      allowedHosts: ['wardospem.com', '.wardospem.com'],
       watch: {
         ignored: [
           '**/prisma/**',
@@ -26,6 +27,9 @@ export default defineConfig(({mode}) => {
           '**/uploads\\\\**',
         ],
       },
+    },
+    preview: {
+      allowedHosts: ['wardospem.com', '.wardospem.com'],
     },
   };
 });
