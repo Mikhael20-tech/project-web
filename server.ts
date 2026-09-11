@@ -55,6 +55,12 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
+  "https://wardospem.com",
+  "https://www.wardospem.com",
+  "http://wardospem.com",
+  "http://www.wardospem.com",
+  "https://wardospem.tech",
+  "http://wardospem.tech",
   "https://dosenkita.up.railway.app", // Railway production URL (hardcoded fallback)
   "https://dosenkitapti.up.railway.app", // User's Railway production URL
   "http://72.60.79.72", // VPS IP Address
@@ -65,7 +71,7 @@ app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.some(o => origin.startsWith(o)) || origin.endsWith(".railway.app")) {
+    if (allowedOrigins.some(o => origin.startsWith(o)) || origin.endsWith(".railway.app") || origin.includes("wardospem.com") || origin.includes("wardospem.tech")) {
       callback(null, true);
     } else {
       // Return false instead of throwing an Error to prevent 500 Internal Server Error
@@ -77,7 +83,23 @@ app.use(cors({
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  cors: { origin: allowedOrigins, credentials: true },
+  cors: {
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (
+        allowedOrigins.some(o => origin.startsWith(o)) ||
+        origin.includes("localhost") ||
+        origin.includes("127.0.0.1") ||
+        origin.endsWith(".railway.app") ||
+        origin.includes("wardospem.com") ||
+        origin.includes("wardospem.tech")
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, false);
+    },
+    credentials: true,
+  },
 });
 
 // Redis Adapter for Auto-Scaling
@@ -2817,6 +2839,12 @@ app.post("/api/n8n/support-ticket", async (req, res) => {
   }
 });
 
+// 11. GET /api/online-count (Real-time active online user count)
+app.get("/api/online-count", (req, res) => {
+  const count = Math.max(1, io.engine.clientsCount || 0);
+  res.json({ online: count });
+});
+
 // --- VITE SETUP ---
 async function startServer() {
   // Migration for Angkatan on startup
@@ -2898,6 +2926,20 @@ async function startServer() {
 
   io.on("connection", (socket) => {
     console.log("Client connected:", socket.id);
+    const count = Math.max(1, io.engine.clientsCount);
+    // Emit real-time active online users count to the newly connected client and broadcast
+    socket.emit("online_count", count);
+    io.emit("online_count", count);
+
+    socket.on("get_online_count", () => {
+      socket.emit("online_count", Math.max(1, io.engine.clientsCount));
+    });
+
+    socket.on("disconnect", () => {
+      console.log("Client disconnected:", socket.id);
+      const updatedCount = Math.max(0, io.engine.clientsCount);
+      io.emit("online_count", updatedCount);
+    });
   });
 
   httpServer.listen(PORT, "0.0.0.0", () => {

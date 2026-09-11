@@ -32,9 +32,18 @@ export const LecturersTab = ({
               className="grid grid-cols-1 xl:grid-cols-3 gap-8"
             >
               <div className="xl:col-span-1">
-                <div className="bg-white border border-teal-50 rounded-[2.5rem] p-8 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] sticky top-28">
-                  <h3 className="text-2xl font-black text-teal-950 mb-8 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center text-teal-500">
+                <div 
+                  id="form-dosen-card"
+                  className={cn(
+                    "bg-white border rounded-[2.5rem] p-8 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] sticky top-28 transition-all duration-300",
+                    dosenForm.id ? "border-teal-400 ring-4 ring-teal-500/15" : "border-teal-50"
+                  )}
+                >
+                  <h3 className="text-2xl font-black text-teal-950 mb-4 flex items-center gap-3">
+                    <div className={cn(
+                      "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
+                      dosenForm.id ? "bg-teal-500 text-white shadow-md shadow-teal-500/20" : "bg-teal-50 text-teal-500"
+                    )}>
                       {dosenForm.id ? (
                         <Edit className="w-5 h-5" />
                       ) : (
@@ -43,12 +52,44 @@ export const LecturersTab = ({
                     </div>
                     {dosenForm.id ? t("dash_admin_edit") + " Dosen" : t("dash_admin_add_lecturer")}
                   </h3>
+
+                  {dosenForm.id && (
+                    <div className="mb-6 p-4 bg-teal-50/80 border border-teal-200 rounded-2xl flex items-center justify-between gap-2 animate-in fade-in duration-200">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <span className="w-2.5 h-2.5 rounded-full bg-teal-500 animate-pulse shrink-0" />
+                        <span className="text-xs font-bold text-teal-900 truncate">
+                          Sedang Mengedit: <span className="font-extrabold">{dosenForm.nama || "Dosen"}</span>
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setDosenForm({
+                            id: "",
+                            nama: "",
+                            nip: "",
+                            kuotaMax: 3,
+                            foto: "",
+                            keahlian: "",
+                            bio: "",
+                            kontak: "",
+                            password: "",
+                          })
+                        }
+                        className="shrink-0 text-[10px] font-black uppercase text-rose-500 hover:text-rose-700 bg-white px-3 py-1.5 rounded-xl border border-rose-100 shadow-sm transition-all cursor-pointer hover:bg-rose-50"
+                      >
+                        ✕ Batal
+                      </button>
+                    </div>
+                  )}
+
                   <form onSubmit={handleDosenSubmit} className="space-y-5">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
                         {t("dash_admin_full_name")}
                       </label>
                       <input
+                        id="dosen-nama-input"
                         value={dosenForm.nama}
                         onChange={(e) =>
                           setDosenForm({ ...dosenForm, nama: e.target.value })
@@ -306,75 +347,108 @@ export const LecturersTab = ({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {reports.map((dosen, i) => (
-                    <motion.div
-                      key={dosen.id}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: i * 0.05 }}
-                      className={cn(
-                        "bg-white p-6 rounded-[2.5rem] border shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_40px_-15px_rgba(79,70,229,0.15)] transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between group relative",
-                        selectedDosen.includes(dosen.id) ? "border-teal-400 bg-teal-50/30" : "border-teal-50 hover:border-teal-100"
-                      )}
-                    >
-                      <div className="absolute top-5 right-5 sm:top-auto sm:left-4 z-10">
-                        <input
-                          type="checkbox"
-                          className="appearance-none w-5 h-5 rounded-lg border border-teal-200 bg-white checked:bg-teal-500 checked:border-teal-500 focus:outline-none focus:ring-4 focus:ring-teal-500/10 cursor-pointer transition-all relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-[10px] checked:after:font-black checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center"
-                          checked={selectedDosen.includes(dosen.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) setSelectedDosen([...selectedDosen, dosen.id]);
-                            else setSelectedDosen(selectedDosen.filter(id => id !== dosen.id));
-                          }}
-                        />
-                      </div>
-                      <div className="flex items-center gap-5 sm:ml-6 mt-4 sm:mt-0">
-                        <div className="w-16 h-16 rounded-[1.25rem] bg-teal-50 overflow-hidden border border-teal-100 shadow-inner group-hover:scale-110 transition-transform">
-                          {dosen.foto ? (
-                            <img
-                              src={dosen.foto || undefined}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Users className="w-8 h-8 text-teal-200" />
+                  {reports.map((dosen, i) => {
+                    const isEditing = dosenForm.id === dosen.id;
+                    return (
+                      <motion.div
+                        key={dosen.id}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: i * 0.05 }}
+                        className={cn(
+                          "bg-white p-6 rounded-[2.5rem] border shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_40px_-15px_rgba(79,70,229,0.15)] transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between group relative",
+                          selectedDosen.includes(dosen.id)
+                            ? "border-teal-400 bg-teal-50/30"
+                            : isEditing
+                            ? "border-teal-500 bg-teal-50/50 ring-2 ring-teal-500/20"
+                            : "border-teal-50 hover:border-teal-100"
+                        )}
+                      >
+                        <div className="absolute top-5 right-5 sm:top-auto sm:left-4 z-10">
+                          <input
+                            type="checkbox"
+                            className="appearance-none w-5 h-5 rounded-lg border border-teal-200 bg-white checked:bg-teal-500 checked:border-teal-500 focus:outline-none focus:ring-4 focus:ring-teal-500/10 cursor-pointer transition-all relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-[10px] checked:after:font-black checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center"
+                            checked={selectedDosen.includes(dosen.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) setSelectedDosen([...selectedDosen, dosen.id]);
+                              else setSelectedDosen(selectedDosen.filter(id => id !== dosen.id));
+                            }}
+                          />
+                        </div>
+                        <div className="flex items-center gap-5 sm:ml-6 mt-4 sm:mt-0">
+                          <div className="w-16 h-16 rounded-[1.25rem] bg-teal-50 overflow-hidden border border-teal-100 shadow-inner group-hover:scale-110 transition-transform">
+                            {dosen.foto ? (
+                              <img
+                                src={dosen.foto || undefined}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Users className="w-8 h-8 text-teal-200" />
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="font-extrabold text-teal-950 leading-tight text-lg">
+                                {dosen.nama}
+                              </p>
+                              {isEditing && (
+                                <span className="px-2 py-0.5 bg-teal-500 text-white text-[9px] font-black rounded-md tracking-wider uppercase">
+                                  Sedang Diedit
+                                </span>
+                              )}
                             </div>
-                          )}
+                            <span className="text-[9px] font-black uppercase text-teal-800/50 tracking-widest bg-teal-50/50 px-2 py-0.5 rounded-md">
+                              {t("label_nip")}: {dosen.nip}
+                            </span>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-extrabold text-teal-950 leading-tight text-lg mb-1">
-                            {dosen.nama}
-                          </p>
-                          <span className="text-[9px] font-black uppercase text-teal-800/50 tracking-widest bg-teal-50/50 px-2 py-0.5 rounded-md">
-                            {t("label_nip")}: {dosen.nip}
-                          </span>
+                        <div className="flex flex-wrap gap-2 transition-opacity justify-end w-full sm:w-auto mt-4 sm:mt-0">
+                          <button
+                            type="button"
+                            title="Edit Dosen Ini"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setDosenForm({
+                                id: dosen.id,
+                                nama: dosen.nama,
+                                nip: dosen.nip,
+                                kuotaMax: dosen.kuotaMax,
+                                foto: dosen.foto || "",
+                                keahlian: dosen.keahlian || "",
+                                bio: dosen.bio || "",
+                                kontak: dosen.kontak || "",
+                                password: "",
+                              });
+                              // Scroll smoothly to the edit form on the left
+                              const formEl = document.getElementById("form-dosen-card");
+                              if (formEl) {
+                                formEl.scrollIntoView({ behavior: "smooth", block: "center" });
+                              }
+                              // Focus on the name input
+                              const nameInput = document.getElementById("dosen-nama-input") as HTMLInputElement;
+                              if (nameInput) {
+                                setTimeout(() => nameInput.focus(), 300);
+                              }
+                            }}
+                            className={cn(
+                              "p-2.5 rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer",
+                              isEditing
+                                ? "bg-teal-500 text-white border border-teal-600 shadow-md shadow-teal-500/20"
+                                : "bg-teal-50 text-teal-600 hover:bg-teal-500 hover:text-white border border-teal-100"
+                            )}
+                          >
+                            <Edit className="w-4 h-4" />
+                            {isEditing && (
+                              <span className="text-[10px] font-bold">Aktif</span>
+                            )}
+                          </button>
                         </div>
-                      </div>
-                      <div className="flex flex-wrap gap-2 transition-opacity justify-end w-full sm:w-auto mt-4 sm:mt-0">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setDosenForm({
-                              id: dosen.id,
-                              nama: dosen.nama,
-                              nip: dosen.nip,
-                              kuotaMax: dosen.kuotaMax,
-                              foto: dosen.foto || "",
-                              keahlian: dosen.keahlian || "",
-                              bio: dosen.bio || "",
-                              kontak: dosen.kontak || "",
-                              password: "",
-                            });
-                          }}
-                          className="p-2.5 bg-teal-50 text-teal-600 hover:bg-teal-500 hover:text-white border border-teal-100 rounded-xl transition-all shadow-sm"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))}
+                      </motion.div>
+                    );
+                  })}
                 </div>
               </div>
             </motion.div>

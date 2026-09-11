@@ -1,0 +1,173 @@
+#EXTM3U
+# ============================================================
+# 📺 Free-to-Air & Official Public TV Streams
+# Semua channel di bawah ini 100% legal & gratis
+# Bisa langsung diputar di VLC / media player apapun
+# Last Update: 19 Agustus 2026
+# ============================================================
+
+# ==================== 🇮🇩 INDONESIA ====================
+
+#EXTINF:-1 tvg-id="TVRI" tvg-name="TVRI Nasional" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/TVRI_logo_2019.svg/1200px-TVRI_logo_2019.svg.png" group-title="🇮🇩 Indonesia",TVRI Nasional
+https://ott-balancer.tvri.go.id/live/eds/Nasional/hls/Nasional.m3u8
+
+#EXTINF:-1 tvg-id="TVRIWorld" tvg-name="TVRI World" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/TVRI_logo_2019.svg/1200px-TVRI_logo_2019.svg.png" group-title="🇮🇩 Indonesia",TVRI World
+https://ott-balancer.tvri.go.id/live/eds/TVRIWorld/hls/TVRIWorld.m3u8
+
+#EXTINF:-1 tvg-id="CNNIndonesia" tvg-name="CNN Indonesia" tvg-logo="https://i.imgur.com/bhEdi5R.png" group-title="🇮🇩 Indonesia",CNN Indonesia
+https://live.cnnindonesia.com/livecnn/smil:cnntv.smil/chunklist_kamiselaluada_b384000_sleng.m3u8
+
+#EXTINF:-1 tvg-id="CNBCIndonesia" tvg-name="CNBC Indonesia" tvg-logo="https://i.imgur.com/pNY3Dkf.png" group-title="🇮🇩 Indonesia",CNBC Indonesia
+https://live.cnbcindonesia.com/livecnbc/smil:cnbctv.smil/index.m3u8
+
+#EXTINF:-1 tvg-id="MetroTV" tvg-name="Metro TV" tvg-logo="https://upload.wikimedia.org/wikipedia/id/thumb/2/25/MetroTV_logo_2010.svg/1200px-MetroTV_logo_2010.svg.png" group-title="🇮🇩 Indonesia",Metro TV
+https://edge.medcom.id/live-edge/smil:metro.smil/playlist.m3u8
+
+#EXTINF:-1 tvg-id="MagnaChannel" tvg-name="Magna Channel" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Logo_Magna_Channel.svg/1200px-Logo_Magna_Channel.svg.png" group-title="🇮🇩 Indonesia",Magna Channel
+https://edge.medcom.id/live-edge/smil:magna.smil/playlist.m3u8
+
+#EXTINF:-1 tvg-id="InspiraTV" tvg-name="Inspira TV" tvg-logo="https://inspiratv.com/images/logo-inspira.png" group-title="🇮🇩 Indonesia",Inspira TV
+https://inspiratv.siar.us/inspiratv/live/playlist.m3u8
+
+#EXTINF:-1 tvg-id="NusantaraTV" tvg-name="Nusantara TV" tvg-logo="https://i.imgur.com/lZO4muM.png" group-title="🇮🇩 Indonesia",Nusantara TV
+https://nusantaratv.siar.us/nusantaratv/live/playlist.m3u8
+
+#EXTINF:-1 tvg-id="DAAITV" tvg-name="DAAI TV" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Logo_Da_Ai_TV.svg/1200px-Logo_Da_Ai_TV.svg.png" group-title="🇮🇩 Indonesia",DAAI TV
+https://pull.daaiplus.com/live-DAAIPLUS/live-DAAIPLUS_HD.m3u8
+
+#EXTINF:-1 tvg-id="ElshintaTV" tvg-name="Elshinta TV" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Elshinta_TV_logo.svg/1200px-Elshinta_TV_logo.svg.png" group-title="🇮🇩 Indonesia",Elshinta TV
+https://ams.juraganstreaming.com:5443/LiveApp/streams/elshintatv.m3u8
+
+#EXTINF:-1 tvg-id="DetikTV" tvg-name="Detik TV" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Detikcom_Logo.svg/1200px-Detikcom_Logo.svg.png" group-title="🇮🇩 Indonesia",Detik TV (Event Only)
+https://video.detik.com/20detik/smil:20detik-live.smil/playlist.m3u8
+
+#EXTINF:-1 tvg-id="JITV" tvg-name="JITV Jogja" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Logo_JITV.svg/1200px-Logo_JITV.svg.png" group-title="🇮🇩 Indonesia (Lokal)",JITV Jogja
+https://mam.jogjaprov.go.id:1937/tv/jitv_720p/chunklist_w850229424.m3u8
+
+#EXTINF:-1 tvg-id="DhohoTV" tvg-name="Dhoho TV" tvg-logo="" group-title="🇮🇩 Indonesia (Lokal)",Dhoho TV Kediri
+https://dhohotv.siar.us/dhohotv/live/playlist.m3u8
+
+#EXTINF:-1 tvg-id="BanjarTV" tvg-name="Banjar TV" tvg-logo="" group-title="🇮🇩 Indonesia (Lokal)",Banjar TV
+https://banjartv.siar.us/banjartv/live/playlist.m3u8
+
+#EXTINF:-1 tvg-id="SaktiTV" tvg-name="Sakti TV" tvg-logo="" group-title="🇮🇩 Indonesia (Lokal)",Sakti TV
+https://saktitv.siar.us/saktitv/live/playlist.m3u8
+
+#EXTINF:-1 tvg-id="TATV" tvg-name="TATV" tvg-logo="" group-title="🇮🇩 Indonesia (Lokal)",TATV Solo
+https://tatv.siar.us/tatv/live.sdp/playlist.m3u8
+
+#EXTINF:-1 tvg-id="BantenTV" tvg-name="Banten TV" tvg-logo="" group-title="🇮🇩 Indonesia (Lokal)",Banten TV
+https://5bf7b725107e5.streamlock.net/bantentv/bantentv/playlist.m3u8
+
+#EXTINF:-1 tvg-id="BMSTV" tvg-name="BMS TV" tvg-logo="" group-title="🇮🇩 Indonesia (Lokal)",BMS TV
+https://5bf7b725107e5.streamlock.net/bmstv/bmstv/playlist.m3u8
+
+#EXTINF:-1 tvg-id="TVKesehatan" tvg-name="TV Kesehatan" tvg-logo="" group-title="🇮🇩 Indonesia (Lokal)",TV Kesehatan
+https://5bf7b725107e5.streamlock.net/tvkesehatan/tvkesehatan/playlist.m3u8
+
+#EXTINF:-1 tvg-id="GarudaTV" tvg-name="Garuda TV" tvg-logo="https://i.imgur.com/aKmRvdb.png" group-title="🇮🇩 Indonesia",Garuda TV
+https://hgmtv.com:19360/garudatvlivestreaming/1080p.m3u8
+
+# ==================== 🌍 NEWS INTERNASIONAL ====================
+
+#EXTINF:-1 tvg-id="DWEnglish" tvg-name="DW English" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Deutsche_Welle_Logo.svg/1200px-Deutsche_Welle_Logo.svg.png" group-title="🌍 News Internasional",DW English
+https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/master.m3u8
+
+#EXTINF:-1 tvg-id="DWArabic" tvg-name="DW Arabic" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Deutsche_Welle_Logo.svg/1200px-Deutsche_Welle_Logo.svg.png" group-title="🌍 News Internasional",DW Arabic
+https://dwamdstream103.akamaized.net/hls/live/2015526/dwstream103/master.m3u8
+
+#EXTINF:-1 tvg-id="DWEspanol" tvg-name="DW Español" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Deutsche_Welle_Logo.svg/1200px-Deutsche_Welle_Logo.svg.png" group-title="🌍 News Internasional",DW Español
+https://dwamdstream104.akamaized.net/hls/live/2015530/dwstream104/master.m3u8
+
+#EXTINF:-1 tvg-id="NHKWorld" tvg-name="NHK World Japan" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/NHK_World-Japan_Logo.svg/1200px-NHK_World-Japan_Logo.svg.png" group-title="🌍 News Internasional",NHK World Japan
+https://media-osa.hls.nhkworld.jp/hls/w/live/master.m3u8
+
+#EXTINF:-1 tvg-id="AlJazeeraArabic" tvg-name="Al Jazeera Arabic" tvg-logo="https://upload.wikimedia.org/wikipedia/en/thumb/f/f2/Aljazeera.svg/1200px-Aljazeera.svg.png" group-title="🌍 News Internasional",Al Jazeera Arabic
+https://live-hls-web-aja.getaj.net/AJA/index.m3u8
+
+#EXTINF:-1 tvg-id="CBSNews" tvg-name="CBS News" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/CBS_News.svg/1200px-CBS_News.svg.png" group-title="🌍 News Internasional",CBS News
+https://cbsn-us.cbsnstream.cbsnews.com/out/v1/55a8648e8f134e82a470f83d562deeca/master.m3u8
+
+#EXTINF:-1 tvg-id="Bloomberg" tvg-name="Bloomberg TV" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Bloomberg_logo.svg/1200px-Bloomberg_logo.svg.png" group-title="🌍 News Internasional",Bloomberg TV
+https://liveprodusphoenixeast.global.ssl.fastly.net/USPhx-HD/Channel-TX-USPhx-AWS-virginia-1/Source-USPhx-16k-1-s6lk2-BP-07-02-81ykIWnsMsg_live.m3u8
+
+#EXTINF:-1 tvg-id="SkyNews" tvg-name="Sky News" tvg-logo="https://upload.wikimedia.org/wikipedia/en/thumb/f/fc/Sky_News_logo.svg/1200px-Sky_News_logo.svg.png" group-title="🌍 News Internasional",Sky News Australia
+https://amg00663-skynews-skynewsau-samsungau-r7n40.amagi.tv/playlist1080p.m3u8
+
+#EXTINF:-1 tvg-id="SkyNewsArabia" tvg-name="Sky News Arabia" tvg-logo="" group-title="🌍 News Internasional",Sky News Arabia
+https://stream.skynewsarabia.com/hls/sna_720.m3u8
+
+#EXTINF:-1 tvg-id="RT" tvg-name="RT News" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Russia-today-logo.svg/1200px-Russia-today-logo.svg.png" group-title="🌍 News Internasional",RT News
+https://rt-glb.rttv.com/dvr/rtnews/playlist.m3u8
+
+#EXTINF:-1 tvg-id="CNA" tvg-name="Channel News Asia" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/CNA_new_logo.svg/1200px-CNA_new_logo.svg.png" group-title="🌍 News Internasional",Channel News Asia
+https://d2e1asnsl7br7b.cloudfront.net/7782e205e72f43aeb4a48ec97f66ebbe/index.m3u8
+
+#EXTINF:-1 tvg-id="France24EN" tvg-name="France 24 English" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/France_24_logo.svg/1200px-France_24_logo.svg.png" group-title="🌍 News Internasional",France 24 English
+https://live-hls-fre-tls.getaj.net/F24_EN/index.m3u8
+
+#EXTINF:-1 tvg-id="IndiaToday" tvg-name="India Today" tvg-logo="" group-title="🌍 News Internasional",India Today
+https://indiatodaylive.akamaized.net/hls/live/2014320/indiatoday/indiatodaylive/playlist.m3u8
+
+#EXTINF:-1 tvg-id="NDTV" tvg-name="NDTV 24x7" tvg-logo="" group-title="🌍 News Internasional",NDTV 24x7
+https://ndtv24x7elemarchana.akamaized.net/hls/live/2003678-b/ndtv24x7/master.m3u8
+
+#EXTINF:-1 tvg-id="VOA" tvg-name="Voice of America" tvg-logo="" group-title="🌍 News Internasional",Voice of America
+https://voa-ingest.akamaized.net/hls/live/2033874/tvmc06/playlist_1080.m3u8
+
+#EXTINF:-1 tvg-id="Africa24" tvg-name="Africa 24" tvg-logo="" group-title="🌍 News Internasional",Africa 24
+https://edge12.vedge.infomaniak.com/livecast/ik:africa24/manifest.m3u8
+
+# ==================== 🏎️ SPORTS & LIFESTYLE ====================
+
+#EXTINF:-1 tvg-id="RedbullTV" tvg-name="Redbull TV" tvg-logo="https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/Redbull.svg/1200px-Redbull.svg.png" group-title="🏎️ Sports & Lifestyle",Redbull TV
+https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8
+
+# ==================== 🇰🇷 KOREA ====================
+
+#EXTINF:-1 tvg-id="ArirangTV" tvg-name="Arirang TV Korea" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Arirang_TV_logo.svg/1200px-Arirang_TV_logo.svg.png" group-title="🇰🇷 Korea",Arirang TV Korea (Direct HLS)
+https://amdlive-ch01-ctnd-com.akamaized.net/arirang_1ch/smil:arirang_1ch.smil/playlist.m3u8
+
+#EXTINF:-1 tvg-id="YTNNews" tvg-name="YTN News Korea" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/YTN_logo.svg/1200px-YTN_logo.svg.png" group-title="🇰🇷 Korea",YTN 24시간 뉴스 (Direct HLS)
+https://manifest.googlevideo.com/api/manifest/hls_variant/expire/1787148672/ei/IGWFaoy0Kty-4t4P25iV0Qg/ip/182.8.105.252/id/aZyD6EPl6KU.2/source/yt_live_broadcast/requiressl/yes/xpc/EgVo2aDSNQ%3D%3D/hfr/1/maxh/4320/playlist_duration/30/manifest_duration/30/maudio/1/ss/1/siu/1/bui/AR3QkAn2ajhEyRXL0ZWSOiZE0EwV6W8QJ6pcds8yyStWyJ9nTFLVXCV6DfHaqPFQYvDx5uZWPA/spc/KBGBcp17g2B0UXJdVDaMZ--bVPR1wq7HQoABq1E7hLlH-D3B5BvonSmCPg/vprv/1/go/1/ns/B53BL5xY90VK5HpRmBDhbi0X/rqh/5/reg/0/pacing/0/nvgoi/1/ncsapi/1/keepalive/yes/fexp/51565116%2C51946838%2C51973818/dover/11/n/ufAgKVIBfKGb6lR/itag/0/playlist_type/DVR/sparams/expire%2Cei%2Cip%2Cid%2Csource%2Crequiressl%2Cxpc%2Chfr%2Cmaxh%2Cplaylist_duration%2Cmanifest_duration%2Cmaudio%2Css%2Csiu%2Cbui%2Cspc%2Cvprv%2Cgo%2Cns%2Crqh%2Creg%2Citag%2Cplaylist_type/sig/AE0s2JYwRgIhAP6OXFZlWMYqB9lDwl6JHOdrJUUrPruXmrSZc-fOvQGKAiEAp_G2-pBQNLwX5m1MwbVfiK_LtDSHfhEp1g4iuWFAg5M%3D/file/index.m3u8
+
+# ==================== 🎬 MOVIES (FREE/FAST) ====================
+
+#EXTINF:-1 tvg-id="ActionHollywood" tvg-name="Action Hollywood Movies" tvg-logo="" group-title="🎬 Movies (Free)",Action Hollywood Movies
+https://cdn-apse1-prod.tsv2.amagi.tv/linear/amg01076-lightningintern-actionhollywood-samsungnz/playlist.m3u8
+
+#EXTINF:-1 tvg-id="AsianCrush" tvg-name="Asian Crush" tvg-logo="" group-title="🎬 Movies (Free)",Asian Crush
+https://amg01201-cinedigmenterta-asiancrush-cineverse-x701o.amagi.tv/playlist/amg01201-cinedigmenterta-asiancrush-cineverse/playlist.m3u8
+
+#EXTINF:-1 tvg-id="GBNews" tvg-name="GB News" tvg-logo="" group-title="🌍 News Internasional",GB News
+https://cdn-apse1-prod.tsv2.amagi.tv/linear/amg01076-lightningintern-gbnewsnz-samsungnz/playlist.m3u8
+
+#EXTINF:-1 tvg-id="IFCFilms" tvg-name="IFC Films Picks" tvg-logo="" group-title="🎬 Movies (Free)",IFC Films Picks
+https://423a4f21fb8d45a4a7e4bd304a14e2f0.mediatailor.us-east-1.amazonaws.com/v1/master/44f73ba4d03e9607dcd9bebdcb8494d86964f1d8/Plex_IFCFilmsPicks/playlist.m3u8
+
+#EXTINF:-1 tvg-id="MBCBollywood" tvg-name="MBC Bollywood" tvg-logo="" group-title="🎬 Movies (Free)",MBC Bollywood
+https://shd-gcp-live.edgenextcdn.net/live/bitmovin-mbc-bollywood/546eb40d7dcf9a209255dd2496903764/index.m3u8
+
+#EXTINF:-1 tvg-id="MoviesAction" tvg-name="Movies Action" tvg-logo="" group-title="🎬 Movies (Free)",Movies Action HD
+https://shls-live-enc.edgenextcdn.net/out/v1/46079e838e65490c8299f902a7731168/index.m3u8
+
+#EXTINF:-1 tvg-id="MoviesThriller" tvg-name="Movies Thriller" tvg-logo="" group-title="🎬 Movies (Free)",Movies Thriller HD
+https://shls-live-enc.edgenextcdn.net/out/v1/f6d718e841f8442f8374de47f18c93a7/index.m3u8
+
+#EXTINF:-1 tvg-id="RunTimeFilms" tvg-name="RunTime Films" tvg-logo="" group-title="🎬 Movies (Free)",RunTime Films
+https://stream.ads.ottera.tv/playlist.m3u8?network_id=2153
+
+#EXTINF:-1 tvg-id="RunTimeEnglish" tvg-name="RunTime English" tvg-logo="" group-title="🎬 Movies (Free)",RunTime English
+https://stream.ads.ottera.tv/playlist.m3u8?network_id=2648
+
+#EXTINF:-1 tvg-id="RunTimeAction" tvg-name="RunTime Acción" tvg-logo="" group-title="🎬 Movies (Free)",RunTime Acción
+https://stream.ads.ottera.tv/playlist.m3u8?network_id=2550
+
+#EXTINF:-1 tvg-id="RunTimeTerror" tvg-name="RunTime Terror" tvg-logo="" group-title="🎬 Movies (Free)",RunTime Terror
+https://stream.ads.ottera.tv/playlist.m3u8?network_id=3529
+
+#EXTINF:-1 tvg-id="AVAFamily" tvg-name="AVA Family" tvg-logo="" group-title="🎬 Movies (Free)",AVA Family
+https://familyhls.avatv.live/hls/stream.m3u8
+
+#EXTINF:-1 tvg-id="MovieFone" tvg-name="MovieFone" tvg-logo="" group-title="🎬 Movies (Free)",MovieFone
+https://connection3-ent-br.tcl.wurl.tv/playlist.m3u8

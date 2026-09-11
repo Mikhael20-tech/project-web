@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { socket } from "@/src/lib/socket";
+import { getApiUrl } from "@/src/lib/config";
 import { useLanguage } from "@/src/lib/LanguageContext";
 import Logo from "@/src/components/Logo";
 
@@ -89,7 +90,7 @@ const LandingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { lang, setLang, t } = useLanguage();
-  const [onlineCount, setOnlineCount] = useState(0);
+  const [onlineCount, setOnlineCount] = useState<number>(1);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [isLangOpen, setIsLangOpen] = useState(false);
 
@@ -112,8 +113,37 @@ const LandingPage = () => {
   ];
 
   useEffect(() => {
-    socket.on("online_count", (count) => setOnlineCount(count));
-    return () => { socket.off("online_count"); };
+    // 1. Fetch initial count from API immediately
+    fetch(getApiUrl("/api/online-count"))
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && typeof data.online === "number" && data.online > 0) {
+          setOnlineCount(data.online);
+        }
+      })
+      .catch(() => {});
+
+    // 2. Real-time updates via socket
+    const handleCount = (count: number) => {
+      if (typeof count === "number" && count > 0) {
+        setOnlineCount(count);
+      }
+    };
+
+    socket.on("online_count", handleCount);
+
+    // If socket is already connected or reconnects, request fresh count
+    if (socket.connected) {
+      socket.emit("get_online_count");
+    } else {
+      socket.once("connect", () => {
+        socket.emit("get_online_count");
+      });
+    }
+
+    return () => {
+      socket.off("online_count", handleCount);
+    };
   }, []);
 
   const faqs = [
