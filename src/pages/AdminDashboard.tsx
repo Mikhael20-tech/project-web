@@ -1886,14 +1886,31 @@ const AdminDashboard = ({
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-6 md:p-10">
                   <div className="lg:col-span-2 bg-white border border-teal-50 rounded-[2.5rem] p-8 shadow-sm">
                     <div className="flex items-center justify-between mb-8">
-                      <h4 className="text-sm font-black text-teal-900 uppercase tracking-widest flex items-center gap-2">
-                        <Zap className="w-4 h-4 text-teal-500" /> {t("dash_admin_occupancy_per_dosen")}
-                      </h4>
+                      <div>
+                        <h4 className="text-sm font-black text-teal-900 uppercase tracking-widest flex items-center gap-2">
+                          <Zap className="w-4 h-4 text-teal-500" /> {t("dash_admin_occupancy_per_dosen")}
+                        </h4>
+                        {filterAngkatan !== "All" && (
+                          <span className="text-[10px] font-bold text-teal-600 mt-1 block">
+                            Menampilkan khusus Angkatan {filterAngkatan}
+                          </span>
+                        )}
+                      </div>
                       <span className="text-[10px] font-black text-teal-300 uppercase tracking-widest">{t("dash_admin_top_10")}</span>
-                    </div>                     <div className="h-[300px] w-full min-w-0">
+                    </div>                     
+                    <div className="h-[300px] w-full min-w-0">
                       {isChartReady && (
                         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                          <BarChart data={reports.slice(0, 10).map(d => ({ name: d.nama.split(" ")[0], terisi: d.mahasiswa.length, kuota: d.kuotaMax }))}>
+                          <BarChart data={reports.slice(0, 10).map(d => {
+                            const activeMhs = filterAngkatan === "All" 
+                              ? d.mahasiswa 
+                              : d.mahasiswa.filter((m: any) => m.angkatan === filterAngkatan);
+                            return { 
+                              name: d.nama.split(" ")[0], 
+                              terisi: activeMhs.length, 
+                              kuota: d.kuotaMax 
+                            };
+                          })}>
                             <defs>
                               <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0%" stopColor="#14B8A6" stopOpacity={1} />
@@ -1914,9 +1931,14 @@ const AdminDashboard = ({
                               formatter={(value: any) => [value, t("label_filled")]}
                             />
                             <Bar dataKey="terisi" name={t("label_filled")} radius={[8, 8, 0, 0]} animationDuration={1500}>
-                              {reports.slice(0, 10).map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.mahasiswa.length >= entry.kuotaMax ? "url(#fullGradient)" : "url(#barGradient)"} />
-                              ))}
+                              {reports.slice(0, 10).map((entry, index) => {
+                                const activeMhsCount = filterAngkatan === "All" 
+                                  ? entry.mahasiswa.length 
+                                  : entry.mahasiswa.filter((m: any) => m.angkatan === filterAngkatan).length;
+                                return (
+                                  <Cell key={`cell-${index}`} fill={activeMhsCount >= entry.kuotaMax ? "url(#fullGradient)" : "url(#barGradient)"} />
+                                );
+                              })}
                             </Bar>
                           </BarChart>
                         </ResponsiveContainer>
@@ -1929,11 +1951,16 @@ const AdminDashboard = ({
                     
                     <h4 className="text-[10px] font-black text-teal-800/40 uppercase tracking-widest mb-6 flex items-center gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-                      {t("dash_admin_total_progress")}
+                      {t("dash_admin_total_progress")} {filterAngkatan !== "All" && `(${filterAngkatan})`}
                     </h4>
 
                     {(() => {
-                      const totalFilled = reports.reduce((acc, d) => acc + d.mahasiswa.length, 0);
+                      const totalFilled = reports.reduce((acc, d) => {
+                        const mhs = filterAngkatan === "All" 
+                          ? d.mahasiswa 
+                          : d.mahasiswa.filter((m: any) => m.angkatan === filterAngkatan);
+                        return acc + mhs.length;
+                      }, 0);
                       const totalQuota = reports.reduce((acc, d) => acc + d.kuotaMax, 0);
                       const percentage = Math.round((totalFilled / (totalQuota || 1)) * 100);
 
@@ -1979,24 +2006,27 @@ const AdminDashboard = ({
                                     <Cell fill="#F0FAF8" />
                                   </Pie>
                                   <Tooltip 
-                                    contentStyle={{ borderRadius: "1.25rem", border: "none", boxShadow: "0 10px 30px rgba(0,0,0,0.05)" }}
+                                    contentStyle={{ borderRadius: "1.5rem", border: "none", boxShadow: "0 10px 30px rgba(0,0,0,0.1)", padding: "1rem" }}
+                                    itemStyle={{ fontSize: "11px", fontWeight: "bold" }}
                                   />
                                 </PieChart>
                               </ResponsiveContainer>
                             )}
                             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                <Users className="w-6 h-6 text-teal-100 mb-1" />
-                                <span className="text-[10px] font-black text-teal-800/20 uppercase tracking-[0.2em]">LIVE</span>
+                              <span className="text-2xl font-black text-teal-950">{percentage}%</span>
+                              <span className="text-[8px] font-black text-teal-400 uppercase tracking-widest">LIVE</span>
                             </div>
                           </div>
 
-                          <div className="mt-8 space-y-4 pt-6 border-t border-teal-50/50">
-                            <div className="flex justify-between items-center bg-teal-50/30 p-4 rounded-2xl border border-teal-50/50">
+                          <div className="space-y-3 mt-6">
+                            <div className="flex justify-between items-center bg-teal-50/50 p-4 rounded-2xl border border-teal-100/50">
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm text-teal-500">
+                                <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm text-teal-600">
                                   <CheckCircle2 className="w-4 h-4" />
                                 </div>
-                                <span className="text-xs font-bold text-teal-800/60 uppercase tracking-wide">{t("dash_admin_total_students")}</span>
+                                <span className="text-xs font-bold text-teal-800/60 uppercase tracking-wide">
+                                  {filterAngkatan === "All" ? t("dash_admin_filled_students") : `Mahasiswa ${filterAngkatan}:`}
+                                </span>
                               </div>
                               <span className="text-lg font-black text-teal-950">{totalFilled}</span>
                             </div>
@@ -2025,61 +2055,76 @@ const AdminDashboard = ({
                     </h3>
                     
                     <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar relative z-10 mt-6 max-h-[480px]">
-                      {activities.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center py-10 text-teal-300/50">
-                          <Zap className="w-8 h-8 text-orange-400 animate-pulse mb-3" />
-                          <p className="text-[10px] font-black uppercase tracking-widest">{t("dash_admin_activity_waiting")}</p>
-                        </div>
-                      ) : (
-                        <AnimatePresence initial={false}>
-                          {activities.map((act) => (
-                            <motion.div
-                              key={act.id}
-                              initial={{ opacity: 0, x: 20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              className="bg-white/5 border border-white/5 p-4 rounded-2xl"
-                            >
-                              <div className="flex items-center justify-between">
-                                <p className="text-[9px] font-bold text-teal-200/80 leading-relaxed">
-                                  {act.actionType === "SWAP" ? (
-                                    <span>
-                                      <span className="text-teal-400">{act.studentName}</span> ({act.lecturerName?.split(" ⇄ ")[0]}) {t("dash_admin_activity_swap")} <span className="text-teal-400">{act.studentName2}</span> ({act.lecturerName?.split(" ⇄ ")[1] || "-"})
-                                    </span>
-                                  ) : act.actionType === "CANCEL" ? (
-                                    <span>
-                                      <span className="text-teal-400">{act.studentName}</span> ({act.studentNim}): {t("dash_admin_activity_cancel")} ({act.lecturerName})
-                                    </span>
-                                  ) : act.actionType === "ASSIGN" ? (
-                                    <span>
-                                      <span className="text-teal-400">{act.studentName}</span> ({act.studentNim}) {t("dash_admin_activity_assign")} <span className="text-white">{act.lecturerName}</span>
-                                    </span>
-                                  ) : act.actionType === "RESET" ? (
-                                    <span>
-                                      Admin {t("dash_admin_activity_reset")} <span className="text-teal-400">{act.studentNim || "-"}</span>
-                                    </span>
-                                  ) : (
-                                    <>
-                                      <span className="text-teal-400">{act.studentName || t("dash_admin_activity_prefix")}</span>{act.studentNim ? ` (${act.studentNim})` : ""} {t("dash_admin_activity_suffix")} <span className="text-white">{act.lecturerName}</span>
-                                    </>
-                                  )}
-                                </p>
-                                {act.status && act.actionType !== "RESET" && act.actionType !== "CANCEL" && (
-                                  <span className={`text-[7px] font-black uppercase px-2 py-0.5 rounded-full ${
-                                    act.status === "APPROVED" ? "bg-emerald-500/20 text-emerald-400" :
-                                    act.status === "REJECTED" ? "bg-red-500/20 text-red-400" :
-                                    "bg-yellow-500/20 text-yellow-400"
-                                  }`}>
-                                    {act.status}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-[7px] font-black text-teal-500 mt-2 uppercase tracking-widest">
-                                {new Date(act.timestamp).toLocaleString()}
+                      {(() => {
+                        const filteredActivities = activities.filter(act => {
+                          if (filterAngkatan === "All") return true;
+                          if (!act.studentNim) return true;
+                          const prefix = filterAngkatan.slice(-2);
+                          return String(act.studentNim).startsWith(prefix);
+                        });
+
+                        if (filteredActivities.length === 0) {
+                          return (
+                            <div className="h-full flex flex-col items-center justify-center py-10 text-teal-300/50">
+                              <Zap className="w-8 h-8 text-orange-400 animate-pulse mb-3" />
+                              <p className="text-[10px] font-black uppercase tracking-widest">
+                                {filterAngkatan === "All" ? t("dash_admin_activity_waiting") : `Belum ada aktivitas Angkatan ${filterAngkatan}`}
                               </p>
-                            </motion.div>
-                          ))}
-                        </AnimatePresence>
-                      )}
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <AnimatePresence initial={false}>
+                            {filteredActivities.map((act) => (
+                              <motion.div
+                                key={act.id}
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="bg-white/5 border border-white/5 p-4 rounded-2xl"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <p className="text-[9px] font-bold text-teal-200/80 leading-relaxed">
+                                    {act.actionType === "SWAP" ? (
+                                      <span>
+                                        <span className="text-teal-400">{act.studentName}</span> ({act.lecturerName?.split(" ⇄ ")[0]}) {t("dash_admin_activity_swap")} <span className="text-teal-400">{act.studentName2}</span> ({act.lecturerName?.split(" ⇄ ")[1] || "-"})
+                                      </span>
+                                    ) : act.actionType === "CANCEL" ? (
+                                      <span>
+                                        <span className="text-teal-400">{act.studentName}</span> ({act.studentNim}): {t("dash_admin_activity_cancel")} ({act.lecturerName})
+                                      </span>
+                                    ) : act.actionType === "ASSIGN" ? (
+                                      <span>
+                                        <span className="text-teal-400">{act.studentName}</span> ({act.studentNim}) {t("dash_admin_activity_assign")} <span className="text-white">{act.lecturerName}</span>
+                                      </span>
+                                    ) : act.actionType === "RESET" ? (
+                                      <span>
+                                        Admin {t("dash_admin_activity_reset")} <span className="text-teal-400">{act.studentNim || "-"}</span>
+                                      </span>
+                                    ) : (
+                                      <>
+                                        <span className="text-teal-400">{act.studentName || t("dash_admin_activity_prefix")}</span>{act.studentNim ? ` (${act.studentNim})` : ""} {t("dash_admin_activity_suffix")} <span className="text-white">{act.lecturerName}</span>
+                                      </>
+                                    )}
+                                  </p>
+                                  {act.status && act.actionType !== "RESET" && act.actionType !== "CANCEL" && (
+                                    <span className={`text-[7px] font-black uppercase px-2 py-0.5 rounded-full ${
+                                      act.status === "APPROVED" ? "bg-emerald-500/20 text-emerald-400" :
+                                      act.status === "REJECTED" ? "bg-red-500/20 text-red-400" :
+                                      "bg-yellow-500/20 text-yellow-400"
+                                    }`}>
+                                      {act.status}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-[7px] font-black text-teal-500 mt-2 uppercase tracking-widest">
+                                  {new Date(act.timestamp).toLocaleString()}
+                                </p>
+                              </motion.div>
+                            ))}
+                          </AnimatePresence>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -2211,24 +2256,33 @@ const AdminDashboard = ({
 
                         {/* Okupansi Section */}
                         <div className="col-span-2 flex flex-col justify-center items-start lg:items-center mt-2 lg:mt-0">
-                          <span className="text-[10px] font-black uppercase text-teal-800/40 lg:hidden mb-2">{t("dash_admin_occupancy")}</span>
-                          <span className="text-sm font-mono font-black mb-2 text-teal-800">
-                            {dosen.mahasiswa.length} / {dosen.kuotaMax}
-                          </span>
-                          <div className="w-full max-w-[200px] lg:w-32 h-2.5 bg-teal-50 rounded-full overflow-hidden shadow-inner p-0.5">
-                            <div
-                              className={cn(
-                                "h-full rounded-full transition-all duration-1000 ease-out",
-                                dosen.mahasiswa.length / dosen.kuotaMax >= 1
-                                  ? "bg-rose-500"
-                                  : "bg-teal-500",
-                                )}
-                                style={{
-                                  width: `${Math.min((dosen.mahasiswa.length / dosen.kuotaMax) * 100, 100)}%`,
-                                }}
-                              />
-                            </div>
-                          </div>
+                          {(() => {
+                            const count = filterAngkatan === "All" 
+                              ? (dosen.mahasiswa?.length || 0) 
+                              : (dosen.mahasiswa?.filter((m: any) => m.angkatan === filterAngkatan).length || 0);
+                            return (
+                              <>
+                                <span className="text-[10px] font-black uppercase text-teal-800/40 lg:hidden mb-2">{t("dash_admin_occupancy")}</span>
+                                <span className="text-sm font-mono font-black mb-2 text-teal-800">
+                                  {count} / {dosen.kuotaMax}
+                                </span>
+                                <div className="w-full max-w-[200px] lg:w-32 h-2.5 bg-teal-50 rounded-full overflow-hidden shadow-inner p-0.5">
+                                  <div
+                                    className={cn(
+                                      "h-full rounded-full transition-all duration-1000 ease-out",
+                                      count / dosen.kuotaMax >= 1
+                                        ? "bg-rose-500"
+                                        : "bg-teal-500",
+                                      )}
+                                      style={{
+                                        width: `${Math.min((count / dosen.kuotaMax) * 100, 100)}%`,
+                                      }}
+                                    />
+                                </div>
+                              </>
+                            );
+                          })()}
+                        </div>
   
                           {/* Mahasiswa Section */}
                           <div className="col-span-6 flex flex-col justify-center mt-4 lg:mt-0 relative">

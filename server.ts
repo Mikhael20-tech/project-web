@@ -235,6 +235,32 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
+// Helper to fetch lecturers with quota counted specifically for active war targetAngkatan
+async function fetchDosenWithActiveQuota() {
+  const config = await prisma.warConfig.findUnique({ where: { id: "global_config" } });
+  const targetAngkatan = config?.targetAngkatan;
+  const allowed = (targetAngkatan && targetAngkatan !== "All")
+    ? targetAngkatan.split(",").map(s => s.trim()).filter(Boolean)
+    : null;
+
+  const lecturers = await prisma.dosen.findMany({
+    include: { 
+      mahasiswa: allowed && allowed.length > 0 
+        ? { where: { angkatan: { in: allowed } } } 
+        : true,
+      penelitian: true 
+    },
+    orderBy: { nama: "asc" }
+  });
+
+  return lecturers.map(l => ({
+    ...l,
+    _count: {
+      mahasiswa: l.mahasiswa.length
+    }
+  }));
+}
+
 // Debounced Socket.io Broadcast Helper for Lecturer Quota Updates (Max once per 1 second)
 let broadcastTimeout: NodeJS.Timeout | null = null;
 const triggerQuotaUpdate = () => {
@@ -242,12 +268,7 @@ const triggerQuotaUpdate = () => {
   broadcastTimeout = setTimeout(async () => {
     broadcastTimeout = null;
     try {
-      const allLecturers = await prisma.dosen.findMany({
-        include: { 
-          _count: { select: { mahasiswa: true } },
-          penelitian: true
-        },
-      });
+      const allLecturers = await fetchDosenWithActiveQuota();
       io.emit("quota_update", allLecturers);
     } catch (err) {
       console.error("Failed to broadcast debounced quota update:", err);
@@ -753,7 +774,9 @@ app.post("/api/war/select", authenticate, rateLimitSelection, async (req: any, r
       WHERE "id" = ${student.id}
         AND "dosenId" IS NULL
         AND (
-          SELECT COUNT(*)::integer FROM "Mahasiswa" WHERE "dosenId" = ${dosenId}
+          SELECT COUNT(*)::integer FROM "Mahasiswa" 
+          WHERE "dosenId" = ${dosenId}
+            AND ("angkatan" = ${student.angkatan} OR ${student.angkatan} IS NULL OR "angkatan" IS NULL)
         ) < (
           SELECT "kuotaMax" FROM "Dosen" WHERE id = ${dosenId}
         )
@@ -767,12 +790,17 @@ app.post("/api/war/select", authenticate, rateLimitSelection, async (req: any, r
       }
       const lecturer = await prisma.dosen.findUnique({
         where: { id: dosenId },
-        include: { _count: { select: { mahasiswa: true } } },
       });
       if (!lecturer) {
         throw new Error("Data dosen tidak ditemukan dalam sistem.");
       }
-      if (lecturer._count.mahasiswa >= lecturer.kuotaMax) {
+      const batchCount = await prisma.mahasiswa.count({
+        where: {
+          dosenId: dosenId,
+          ...(student.angkatan ? { angkatan: student.angkatan } : {})
+        }
+      });
+      if (batchCount >= lecturer.kuotaMax) {
         throw new Error(`Maaf, kuota untuk ${lecturer.nama} sudah penuh.`);
       }
       throw new Error("Pilihan gagal dilakukan. Silakan coba kembali.");
@@ -1316,14 +1344,7 @@ app.delete("/api/admin/dosen/:id", authenticate, isAdmin, async (req, res) => {
     await prisma.dosen.delete({ where: { id } });
     
     // Broadcast update to all clients
-    const updatedDosenList = await prisma.dosen.findMany({
-      include: {
-        _count: {
-          select: { mahasiswa: true }
-        }
-      }
-    });
-    io.emit("quota_update", updatedDosenList);
+    io.emit("quota_update", await fetchDosenWithActiveQuota());
     
     res.json({ success: true });
   } catch (err: any) {
@@ -1347,10 +1368,7 @@ app.post("/api/admin/dosen/bulk-delete", authenticate, isAdmin, async (req, res)
       await prisma.user.deleteMany({ where: { id: { in: userIds } } });
     }
     
-    const updatedDosenList = await prisma.dosen.findMany({
-      include: { _count: { select: { mahasiswa: true } } }
-    });
-    io.emit("quota_update", updatedDosenList);
+    io.emit("quota_update", await fetchDosenWithActiveQuota());
     res.json({ success: true });
   } catch (err: any) {
     console.error("Bulk delete dosen error:", err);
@@ -1368,10 +1386,7 @@ app.delete("/api/admin/dosen/all", authenticate, isAdmin, async (req, res) => {
       await prisma.user.deleteMany({ where: { id: { in: userIds } } });
     }
     
-    const updatedDosenList = await prisma.dosen.findMany({
-      include: { _count: { select: { mahasiswa: true } } }
-    });
-    io.emit("quota_update", updatedDosenList);
+    io.emit("quota_update", await fetchDosenWithActiveQuota());
     res.json({ success: true });
   } catch (err: any) {
     console.error("Delete all dosen error:", err);
@@ -1741,14 +1756,7 @@ app.delete("/api/admin/mahasiswa/:id", authenticate, isAdmin, async (req, res) =
       await prisma.user.delete({ where: { id: student.userId } });
 
       // Broadcast update to all clients
-      const updatedDosenList = await prisma.dosen.findMany({
-        include: {
-          _count: {
-            select: { mahasiswa: true }
-          }
-        }
-      });
-      io.emit("quota_update", updatedDosenList);
+      io.emit("quota_update", await fetchDosenWithActiveQuota());
     }
     res.json({ success: true });
   } catch (err: any) {
@@ -1769,10 +1777,7 @@ app.post("/api/admin/mahasiswa/bulk-delete", authenticate, isAdmin, async (req, 
     await prisma.mahasiswa.deleteMany({ where: { id: { in: ids } } });
     await prisma.user.deleteMany({ where: { id: { in: userIds } } });
     
-    const updatedDosenList = await prisma.dosen.findMany({
-      include: { _count: { select: { mahasiswa: true } } }
-    });
-    io.emit("quota_update", updatedDosenList);
+    io.emit("quota_update", await fetchDosenWithActiveQuota());
     res.json({ success: true });
   } catch (err: any) {
     console.error("Bulk delete mahasiswa error:", err);
@@ -1788,10 +1793,7 @@ app.delete("/api/admin/mahasiswa/all", authenticate, isAdmin, async (req, res) =
     await prisma.mahasiswa.deleteMany();
     await prisma.user.deleteMany({ where: { id: { in: userIds } } });
     
-    const updatedDosenList = await prisma.dosen.findMany({
-      include: { _count: { select: { mahasiswa: true } } }
-    });
-    io.emit("quota_update", updatedDosenList);
+    io.emit("quota_update", await fetchDosenWithActiveQuota());
     res.json({ success: true });
   } catch (err: any) {
     console.error("Delete all mahasiswa error:", err);
@@ -1880,6 +1882,7 @@ app.put("/api/admin/war-config", authenticate, isAdmin, async (req, res) => {
           }
         });
         io.emit("config_update", config);
+        triggerQuotaUpdate();
         res.json(config);
     } catch (err: any) {
         if (err.message.includes("category") || err.code === 'P2025' || err.message.includes("column")) {
@@ -1906,6 +1909,8 @@ app.put("/api/admin/war-config", authenticate, isAdmin, async (req, res) => {
               },
               select: safeSelection
             });
+            io.emit("config_update", config);
+            triggerQuotaUpdate();
             return res.json(config);
         }
         console.error("Upsert WarConfig Error:", err);
@@ -1927,7 +1932,7 @@ app.post("/api/admin/reset-angkatan", authenticate, isAdmin, async (req, res) =>
       data: { dosenId: null, statusBimbingan: "PENDING", selectedAt: null }
     });
     
-    io.emit("quota_update", await prisma.dosen.findMany({ include: { _count: { select: { mahasiswa: true } }, penelitian: true } }));
+    io.emit("quota_update", await fetchDosenWithActiveQuota());
     io.emit("student_update", { angkatan: angkatan });
 
     await logActivity(
@@ -1968,7 +1973,7 @@ app.delete("/api/admin/mahasiswa/dummy", authenticate, isAdmin, async (req, res)
       await tx.user.deleteMany({ where: { id: { in: userIds } } });
     });
 
-    io.emit("quota_update", await prisma.dosen.findMany({ include: { _count: { select: { mahasiswa: true } }, penelitian: true } }));
+    io.emit("quota_update", await fetchDosenWithActiveQuota());
 
     res.json({ success: true, deletedCount: dummyStudents.length, message: `Berhasil menghapus ${dummyStudents.length} mahasiswa dummy.` });
   } catch (err: any) {
@@ -2335,12 +2340,7 @@ app.put("/api/student/password", authenticate, async (req: any, res) => {
 // --- GLOBAL DATA ---
 app.get("/api/dosen", async (req, res) => {
   try {
-    const lecturers = await prisma.dosen.findMany({
-      include: { 
-        _count: { select: { mahasiswa: true } },
-        penelitian: true
-      },
-    });
+    const lecturers = await fetchDosenWithActiveQuota();
     res.json(lecturers);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch dosen" });

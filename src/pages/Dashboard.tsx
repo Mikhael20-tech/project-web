@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Users,
+  User,
+  KeyRound,
   Edit,
   Zap,
   CheckCircle2,
@@ -19,6 +21,23 @@ import {
   XCircle,
   Camera,
   Save,
+  Lock,
+  Calendar,
+  Clock,
+  Download,
+  ExternalLink,
+  MessageSquare,
+  FileText,
+  Check,
+  ShieldCheck,
+  Sparkles,
+  Award,
+  Umbrella,
+  History,
+  Printer,
+  FileCode,
+  FileSpreadsheet,
+  Headphones,
 } from "lucide-react";
 import { socket } from "@/src/lib/socket";
 import { cn } from "@/src/lib/utils";
@@ -217,20 +236,6 @@ const Dashboard = ({
 
     return () => clearInterval(timer);
   }, [config]);
-
-  useEffect(() => {
-    if (confirmingDosen || isProfileModalOpen) {
-      document.body.style.overflow = "hidden";
-      document.body.classList.add("modal-open");
-    } else {
-      document.body.style.overflow = "";
-      document.body.classList.remove("modal-open");
-    }
-    return () => {
-      document.body.style.overflow = "";
-      document.body.classList.remove("modal-open");
-    };
-  }, [confirmingDosen, isProfileModalOpen]);
 
   const isBatchAllowed = () => {
     if (!config?.targetAngkatan || config.targetAngkatan === "All") return true;
@@ -504,329 +509,432 @@ const Dashboard = ({
     }
   })();
 
+
+
   return (
     <>
       <AnimatePresence>
         {loading && <LoadingOverlay />}
       </AnimatePresence>
-      <div className="min-h-screen bg-[#F0FAF8] pt-32 pb-12 px-6">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Student Profile & Quick Stats Card */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-stretch">
-          {/* Main User Card */}
-          <div className="xl:col-span-1 bg-white border border-teal-50 rounded-[2.5rem] p-8 shadow-sm relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute top-0 right-0 p-6 opacity-[0.03] text-teal-950">
-              <Users className="w-32 h-32" />
-            </div>
-            <div className="relative z-10 flex flex-col items-center text-center">
-              <div className="relative mb-4 group">
-                <div className="w-24 h-24 rounded-[2rem] bg-teal-50 border-4 border-white shadow-xl overflow-hidden ring-1 ring-teal-100">
-                  <img
-                    src={
-                      studentData?.foto ||
-                      "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&h=200&fit=crop"
-                    }
-                    className="w-full h-full object-cover"
-                    alt={studentData?.nama}
-                  />
-                </div>
-                <button
-                  onClick={() => setIsProfileModalOpen(true)}
-                  className="absolute -bottom-1 -right-1 p-2 bg-teal-500 text-white rounded-xl shadow-lg hover:bg-teal-950 transition-all"
-                >
-                  <Edit className="w-3 h-3" />
-                </button>
-              </div>
-              <h2 className="text-xl font-black text-teal-950 tracking-tighter uppercase leading-tight mb-2">
-                {studentData?.nama || "Mahasiswa"}
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 mt-8 pt-8 border-t border-teal-50">
-              <div className="text-center">
-                <p className="text-[8px] font-black text-teal-800/50 uppercase tracking-widest mb-1">
-                  {t("dash_student_nim_label")}
-                </p>
-                <p className="text-xl font-mono font-black text-teal-950">
-                  {studentData?.nim || "-----"}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Main Info */}
-          <div className="xl:col-span-2 bg-white border border-teal-50 rounded-[2.5rem] p-10 shadow-sm flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500 via-orange-400 to-teal-500"></div>
-
-            <div className="space-y-1 relative z-10">
-              <h2 className={cn(
-                "text-[10px] font-black uppercase tracking-[0.3em] mb-2 flex items-center gap-2",
-                config?.category === "MAGANG" ? "text-indigo-500" :
-                "text-emerald-500"
-              )}>
-                <div className={cn(
-                  "w-2 h-2 rounded-full animate-ping",
-                  config?.category === "MAGANG" ? "bg-indigo-500" :
-                  "bg-emerald-500"
-                )} />
-                {config?.category ? t(`cat_${config.category.toLowerCase()}`) : "Live War System"}
-              </h2>
-              <h1 className="text-5xl font-black text-teal-950 tracking-tighter leading-none mb-2">
-                Dosen <span className="text-teal-500 italic">War</span>
-              </h1>
-              <p className="text-teal-800/60 text-sm font-medium pr-12">
-                {t("dash_student_hero_desc")}
-              </p>
-              <div className="flex items-center gap-2 mt-4 text-[9px] font-black text-teal-400 uppercase tracking-widest bg-teal-50/50 w-fit px-3 py-1.5 rounded-full border border-teal-100">
-                <Zap className="w-3 h-3 fill-teal-400" />
-                Scale-Ready Architecture
-              </div>
-            </div>
-
-            <div className="h-20 w-px bg-teal-50 hidden md:block"></div>
-
-            <div className="text-center md:text-right relative z-10">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-teal-800/50 mb-2 font-black">
-                Server Countdown
-              </p>
-              <span
-                className={cn(
-                  "text-5xl font-mono font-black tabular-nums tracking-tighter block leading-none",
-                  !isWarActive && timeLeft > 0
-                    ? "text-teal-500"
-                    : "text-emerald-500",
-                )}
-              >
-                {timeLeft === -1
-                  ? "OVER"
-                  : formatCountdown(timeLeft)}
-              </span>
-              <div className="flex items-center gap-2 justify-center md:justify-end mt-4">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
-                <span className="text-[10px] font-bold text-emerald-600 font-mono tracking-widest uppercase">
-                  System Online
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="xl:col-span-1 bg-teal-500 rounded-[2.5rem] p-8 shadow-xl shadow-teal-100 text-white flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute -bottom-8 -right-8 opacity-10">
-              <Info className="w-32 h-32" />
-            </div>
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-teal-200">
-                {t("dash_student_quick_guide_title")}
-              </h4>
-              <div className="space-y-4">
-                <div className="flex gap-3">
-                  <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-black">
-                    1
-                  </div>
-                  <p className="text-xs font-bold leading-tight">
-                    {t("dash_student_quick_step1")}
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-black">
-                    2
-                  </div>
-                  <p className="text-xs font-bold leading-tight">
-                    {t("dash_student_quick_step2")}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <button
-              onClick={() => setIsProfileModalOpen(true)}
-              className="w-full mt-6 py-3 bg-white text-teal-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all shadow-lg"
-            >
-              {t("nav_settings")}
-            </button>
-            <button
-              onClick={() => navigate("/portfolio")}
-              className="w-full mt-3 py-3 bg-teal-600 text-white border border-teal-400 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 hover:border-slate-900 transition-all shadow-lg"
-            >
-              {t("nav_portfolio")}
-            </button>
-          </div>
-        </div>
-
-        {/* Batch-specific Announcement Banner */}
-        {config?.announcement && (
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-          >
-            <Alert status="warning">
-              <Alert.Indicator />
-              <Alert.Content>
-                <Alert.Title>{t("dash_student_info_important")}</Alert.Title>
-                <Alert.Description>{config.announcement}</Alert.Description>
-              </Alert.Content>
-            </Alert>
-          </motion.div>
-        )}
-
-        {/* Selected Lecturer Status */}
-        {studentData?.dosen && (
-          <div className="bg-gradient-to-br from-[#061814] via-[#0b2b24] to-[#04120f] rounded-[2.5rem] p-10 shadow-2xl shadow-teal-950/40 text-white border border-teal-500/20 relative overflow-hidden">
-            {/* Glowing mesh gradient background accents */}
-            <div className="absolute top-0 right-1/4 w-80 h-80 bg-teal-500/10 rounded-full blur-[100px] pointer-events-none" />
-            <div className="absolute bottom-0 left-10 w-60 h-60 bg-emerald-500/5 rounded-full blur-[80px] pointer-events-none" />
-
-            <div className="relative z-10 flex flex-col xl:flex-row justify-between items-stretch gap-8">
-
-              {/* LEFT — Dosen Card with photo */}
-              <div className="flex-1 flex flex-col justify-between">
-                <div className="flex items-center gap-2.5 mb-5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_12px_rgba(52,211,153,0.8)]" />
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-teal-400">{t("dash_student_status")}</h3>
-                </div>
-
-                <div className="bg-white/[0.02] backdrop-blur-xl border border-white/5 rounded-[2rem] p-6 shadow-inner flex-1 flex flex-col justify-center">
-                  <p className="text-[9px] font-black uppercase text-teal-500/50 mb-5 tracking-[0.2em]">{labels.dosenChoice}</p>
-
-                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-                    {/* Dosen Photo */}
-                    <div className="relative shrink-0">
-                      <div className="w-24 h-24 rounded-[1.75rem] overflow-hidden bg-teal-950 border border-teal-500/30 p-1 shadow-2xl ring-1 ring-white/10">
-                        {studentData.dosen.foto ? (
-                          <img src={studentData.dosen.foto} alt={studentData.dosen.nama} className="w-full h-full object-cover rounded-[1.5rem]" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-teal-900 rounded-[1.5rem]">
-                            <GraduationCap className="w-10 h-10 text-teal-400" />
-                          </div>
-                        )}
-                      </div>
-                      {/* Online indicator */}
-                      <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border border-teal-950 flex items-center justify-center shadow-lg shadow-emerald-950/50">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-                      </div>
+      <div className="min-h-screen bg-[#F0FAF8] pt-28 pb-16 px-4 md:px-8">
+        <div className="max-w-[1600px] mx-auto space-y-8">
+          {studentData?.dosen ? (
+            /* ========================================================================= */
+            /* POST-WAR VIEW: DOSEN BERHASIL TERPILIH (PURE WAR RESULT DASHBOARD)        */
+            /* ========================================================================= */
+            <div className="flex flex-col w-full gap-6">
+              {/* 1. Header Banner: Status Pemilihan Sukses */}
+              <div className="bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-950 rounded-[2.5rem] p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-teal-800">
+                <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div>
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-black uppercase tracking-wider mb-3">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                      WAR SELESAI • SLOT KUOTA TERKUNCI
                     </div>
-
-                    {/* Dosen Info */}
-                    <div className="flex flex-col items-center sm:items-start text-center sm:text-left gap-1 min-w-0">
-                      <div className="inline-flex items-center px-2 py-0.5 bg-teal-500/10 text-teal-300 border border-teal-500/20 rounded-full text-[8px] font-black uppercase tracking-widest mb-1">
-                        {labels.selected}
-                      </div>
-                      <span className="text-xl font-black text-white tracking-tight leading-tight mb-0.5">{studentData.dosen.nama}</span>
-                      <span className="text-[11px] font-semibold text-teal-400/80 font-mono">{t("label_nip_prefix")} {studentData.dosen.nip}</span>
-                      {studentData.dosen.keahlian && (
-                        <span className="text-[10px] font-bold text-teal-500 uppercase tracking-wider mt-1">
-                          <DynamicText text={studentData.dosen.keahlian} />
-                        </span>
-                      )}
-                      
-                      <button
-                        onClick={() => {
-                          if (studentData.dosen.kontak) {
-                            let cleaned = studentData.dosen.kontak.replace(/\D/g, "");
-                            if (cleaned.startsWith("0")) {
-                              cleaned = "62" + cleaned.slice(1);
-                            } else if (cleaned.startsWith("8")) {
-                              cleaned = "62" + cleaned;
-                            }
-                            window.open(`https://wa.me/${cleaned}`, "_blank", "noopener,noreferrer");
-                          } else {
-                            toast({
-                              title: "KONTAK TIDAK TERSEDIA",
-                              description: "Dosen yang bersangkutan belum melengkapi nomor kontak WhatsApp di profil mereka.",
-                              variant: "error",
-                            });
-                          }
-                        }}
-                        className="flex items-center gap-2 mt-4 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-300 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 group cursor-pointer shadow-lg shadow-emerald-950/20"
-                      >
-                        <Smartphone className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
-                        <span>{studentData.dosen.kontak ? t("dash_contact_dosen") : t("dash_contact_dosen_none")}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Divider */}
-              <div className="flex items-center gap-4 py-4 w-full xl:w-auto xl:flex-col xl:h-auto xl:justify-center">
-                <div className="h-px bg-gradient-to-r from-transparent via-teal-800 to-transparent flex-1 xl:w-px xl:h-20"></div>
-                <span className="text-[9px] font-black uppercase text-teal-500/30 tracking-[0.6em] xl:rotate-90 py-2">STATUS</span>
-                <div className="h-px bg-gradient-to-r from-transparent via-teal-800 to-transparent flex-1 xl:w-px xl:h-20"></div>
-              </div>
-
-              {/* RIGHT — Status & Milestone Timeline */}
-              <div className="flex-1 w-full flex flex-col justify-between">
-                <div className="flex items-center justify-between gap-4 mb-5">
-                  <div className="flex flex-col gap-0.5">
-                    <p className="text-[9px] font-black uppercase text-teal-500/50 tracking-[0.2em]">{labels.guidanceStatus}</p>
-                    <div className={cn(
-                      "inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-black text-[9px] uppercase tracking-widest border mt-1",
-                      studentData.statusBimbingan === "APPROVED"
-                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
-                        : "bg-orange-500/10 text-orange-400 border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.1)]"
-                    )}>
-                      {(studentData.statusBimbingan === "APPROVED" || studentData.dosenId) ? <CheckCircle2 className="w-3 h-3" /> : <RefreshCcw className="w-3 h-3 animate-spin" />}
-                      {(studentData.statusBimbingan === "APPROVED" || studentData.dosenId) ? t("status_registered") : t("status_pending")}
-                    </div>
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
+                      Selamat, Pembimbing Anda Telah Ditetapkan!
+                    </h1>
+                    <p className="text-teal-200/80 text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed">
+                      Alokasi kuota pembimbing Anda berhasil dikunci secara permanen di sistem <strong>WarDosPem</strong> periode {config?.periode || "2025/2026"}. Silakan menghubungi dosen pembimbing untuk koordinasi awal.
+                    </p>
                   </div>
 
-                  <div className="text-right">
-                    <p className="text-[9px] font-black uppercase text-teal-500/50 tracking-[0.2em]">{t("dash_student_angkatan")}</p>
-                    <span className="inline-block mt-1 px-3 py-1 bg-white/[0.03] border border-white/5 rounded-lg text-xs font-black text-teal-200 font-mono tracking-tight">
-                      <DynamicText text={studentData.periode || config?.periode || "-"} />
+                  <div className="shrink-0 bg-white/10 backdrop-blur-md px-5 py-3.5 rounded-2xl border border-white/15 text-center md:text-right">
+                    <span className="text-[10px] uppercase font-black tracking-wider text-teal-300 block">
+                      Status Penetapan
+                    </span>
+                    <span className="text-emerald-400 font-mono text-xl sm:text-2xl font-black flex items-center justify-center md:justify-end gap-1.5 mt-0.5">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                      RESMI TERKUNCI
+                    </span>
+                    <span className="text-[10px] text-teal-200/70 block mt-0.5">
+                      Cluster PTI • UNESA
                     </span>
                   </div>
                 </div>
+              </div>
 
-                {/* Milestone Stepper / Timeline - Fills the empty space beautifully */}
-                <div className="bg-white/[0.02] backdrop-blur-xl border border-white/5 rounded-[2rem] p-6 shadow-inner flex-1 flex flex-col justify-center gap-4">
-                  <p className="text-[9px] font-black uppercase text-teal-500/50 tracking-[0.2em] mb-1">{labels.timelineLabel}</p>
-                  
-                  <div className="relative pl-6 space-y-5">
-                    {/* Vertical line connecting steps */}
-                    <div className="absolute left-[7px] top-1.5 bottom-1.5 w-[2px] bg-teal-950/80 border-l border-dashed border-teal-500/30" />
-
-                    {/* Step 1: Registrasi Akun */}
-                    <div className="relative flex items-start gap-4">
-                      <div className="absolute -left-[23px] w-4 h-4 rounded-full bg-emerald-500/20 border border-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.3)]">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              {/* 2. Dua Kartu Berdampingan: Dosen Pembimbing & Ringkasan Usulan */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                {/* 2.1 Kartu Dosen Pembimbing Terpilih (Col 1-7) */}
+                <div className="lg:col-span-7 bg-white border border-teal-100 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-teal-600 animate-pulse" />
+                        <span className="text-[10px] uppercase tracking-wider text-slate-500 font-black">
+                          Dosen Pembimbing Terpilih
+                        </span>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-[11px] font-black text-white uppercase tracking-wider leading-none mb-1">{t("dash_step1_title")}</p>
-                        <p className="text-[10px] font-bold text-teal-400/60 leading-tight">{t("dash_step1_desc")}</p>
+                      <span className="px-3 py-1 rounded-full text-[10px] font-black bg-teal-50 text-teal-700 border border-teal-200 flex items-center gap-1">
+                        <Lock className="w-3 h-3" />
+                        KUOTA TERKUNCI
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-start gap-5 mt-6">
+                      <div className="relative shrink-0 mx-auto sm:mx-0">
+                        <div className="w-28 h-28 rounded-2xl overflow-hidden bg-slate-100 shadow-md border-2 border-teal-100">
+                          {studentData.dosen.foto ? (
+                            <img
+                              className="w-full h-full object-cover"
+                              src={studentData.dosen.foto}
+                              alt={studentData.dosen.nama}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-teal-900 text-teal-200">
+                              <GraduationCap className="w-12 h-12" />
+                            </div>
+                          )}
+                        </div>
+                        <span className="absolute -bottom-2 -right-2 w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-md border-2 border-white">
+                          <Check className="w-4 h-4" />
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col min-w-0 flex-1 text-center sm:text-left">
+                        <span className="px-2.5 py-0.5 rounded text-[10px] font-black bg-teal-100 text-teal-800 w-fit mx-auto sm:mx-0">
+                          PEMBIMBING UTAMA
+                        </span>
+                        <h2 className="text-xl font-black text-slate-900 mt-1.5 leading-snug">
+                          {studentData.dosen.nama}
+                        </h2>
+                        <span className="font-mono text-xs font-bold text-slate-500 mt-0.5">
+                          NIP: {studentData.dosen.nip}
+                        </span>
+
+                        {/* Bidang Keahlian */}
+                        <div className="flex items-center gap-1.5 mt-3 flex-wrap justify-center sm:justify-start">
+                          {studentData.dosen.keahlian ? (
+                            studentData.dosen.keahlian.split(",").map((k: string, idx: number) => (
+                              <span
+                                key={idx}
+                                className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200"
+                              >
+                                {k.trim()}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                              Dosen Pembimbing S1 PTI
+                            </span>
+                          )}
+                        </div>
+
+                        {studentData.dosen.moto && (
+                          <p className="text-xs text-slate-500 italic mt-3 border-l-2 border-teal-500 pl-3 py-0.5">
+                            &ldquo;{studentData.dosen.moto}&rdquo;
+                          </p>
+                        )}
                       </div>
                     </div>
 
-                    {/* Step 2: Rencana Judul Tugas Akhir */}
-                    <div className="relative flex items-start gap-4">
-                      <div className="absolute -left-[23px] w-4 h-4 rounded-full bg-emerald-500/20 border border-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.3)]">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    {/* Kuota Kapasitas */}
+                    <div className="mt-6 pt-5 border-t border-slate-100">
+                      {(() => {
+                        const currentDosenInList = dosenList.find((d: any) => d.id === studentData.dosen.id);
+                        const occupied = currentDosenInList?._count?.mahasiswa ?? studentData.dosen._count?.mahasiswa ?? 1;
+                        const maxQ = studentData.dosen.kuotaMax || 12;
+                        const pct = Math.min(100, Math.round((occupied / maxQ) * 100));
+                        const isFull = pct >= 100;
+                        return (
+                          <div>
+                            <div className="flex items-center justify-between text-xs mb-1.5 font-bold">
+                              <span className="text-slate-500">
+                                Kapasitas Kuota Bimbingan Angkatan {studentData.angkatan || config?.targetAngkatan || "2023"}
+                              </span>
+                              <span className={cn("font-mono font-black", isFull ? "text-rose-600" : "text-teal-700")}>
+                                {occupied} / {maxQ} Kursi ({isFull ? "Penuh 100%" : `${pct}% Terisi`})
+                              </span>
+                            </div>
+                            <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
+                              <div
+                                className={cn("h-full rounded-full transition-all duration-500", isFull ? "bg-rose-500" : "bg-teal-600")}
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Tombol Hubungi Dosen */}
+                  <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
+                    <a
+                      className="flex-1 py-3 px-5 rounded-2xl bg-teal-700 text-white text-xs font-bold hover:bg-teal-800 transition-all shadow-md flex items-center justify-center gap-2 text-center"
+                      href={(() => {
+                        if (studentData.dosen.kontak && studentData.dosen.kontak.trim()) {
+                          let cleaned = studentData.dosen.kontak.replace(/\D/g, "");
+                          if (cleaned.startsWith("0")) cleaned = "62" + cleaned.slice(1);
+                          else if (cleaned.startsWith("8")) cleaned = "62" + cleaned;
+                          return `https://wa.me/${cleaned}`;
+                        }
+                        const pesan = encodeURIComponent(
+                          `Halo BAAK / Admin Prodi PTI UNESA, saya ${studentData.nama} (NIM: ${studentData.nim}) mahasiswa bimbingan ${studentData.dosen.nama}. Mohon informasi kontak WhatsApp resmi atau jadwal bimbingan dosen pembimbing saya.`
+                        );
+                        return `https://wa.me/628112345987?text=${pesan}`;
+                      })()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => {
+                        if (!studentData.dosen.kontak || !studentData.dosen.kontak.trim()) {
+                          toast({
+                            title: "MENGHUBUNGI HELPDESK PRODI",
+                            description: "Kontak langsung dosen belum tersedia. Mengarahkan Anda ke WhatsApp Helpdesk BAAK/Prodi PTI.",
+                            variant: "info",
+                          });
+                        }
+                      }}
+                    >
+                      <Smartphone className="w-4 h-4" />
+                      <span>{studentData.dosen.kontak ? "Hubungi Pembimbing (WhatsApp)" : "Hubungi via Helpdesk Prodi (WA)"}</span>
+                    </a>
+                    <button
+                      onClick={() => navigate("/portfolio")}
+                      className="py-3 px-5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all flex items-center justify-center gap-2"
+                      type="button"
+                    >
+                      <BookOpen className="w-4 h-4 text-slate-600" />
+                      <span>Portofolio Riset Dosen</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2.2 Kartu Data Mahasiswa & Rencana Judul (Col 8-12) */}
+                <div className="lg:col-span-5 bg-white border border-teal-100 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-teal-600" />
+                        <span className="text-[10px] uppercase tracking-wider text-slate-500 font-black">
+                          Biodata Mahasiswa
+                        </span>
+                      </div>
+                      <span className="px-3 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        ANGKATAN {studentData.angkatan || config?.targetAngkatan || "2023"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-4 mt-5 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                      <div className="w-16 h-16 rounded-2xl overflow-hidden bg-teal-50 border border-teal-100 shrink-0">
+                        <img
+                          className="w-full h-full object-cover"
+                          src={
+                            studentData?.foto ||
+                            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop"
+                          }
+                          alt={studentData?.nama || "Mahasiswa"}
+                        />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[11px] font-black text-white uppercase tracking-wider leading-none mb-1">{labels.step2Title}</p>
-                        <p className="text-[10px] font-bold text-teal-400/60 leading-tight truncate max-w-[280px]" title={profileStatus.title || "Belum diisi"}>
-                          {labels.step2Desc}
+                        <h3 className="text-base font-black text-slate-900 truncate">
+                          {studentData.nama}
+                        </h3>
+                        <p className="font-mono text-xs font-bold text-slate-500">
+                          NIM: {studentData.nim}
+                        </p>
+                        <p className="text-[11px] text-teal-700 font-semibold mt-0.5">
+                          S1 Pendidikan Teknologi Informasi • UNESA
                         </p>
                       </div>
                     </div>
 
-                    {/* Step 3: Pilihan Dosen */}
-                    <div className="relative flex items-start gap-4">
-                      <div className="absolute -left-[23px] w-4 h-4 rounded-full bg-emerald-500/20 border border-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.3)]">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                    {/* Judul yang Diajukan */}
+                    <div className="mt-5 p-4 rounded-2xl bg-teal-50/50 border border-teal-100">
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <FileText className="w-4 h-4 text-teal-700" />
+                        <span className="text-[10px] font-black uppercase text-teal-800 tracking-wider">
+                          {config?.category === "MAGANG" ? "Posisi & Mitra Magang" : "Rencana Usulan Judul Skripsi"}
+                        </span>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-[11px] font-black text-emerald-400 uppercase tracking-wider leading-none mb-1">{labels.step3Title}</p>
-                        <p className="text-[10px] font-bold text-teal-400/60 leading-tight">{labels.step3Desc}</p>
-                      </div>
+                      <p className="text-xs sm:text-sm font-bold text-slate-900 leading-relaxed">
+                        &ldquo;{studentData.rencanaJudul || (config?.category === "MAGANG" ? `${studentData.magangPosisi || "Software Engineer Intern"} di ${studentData.magangTempat || "Mitra Industri"}` : "Topik usulan skripsi telah dikunci saat pemilihan kuota dosen.")}&rdquo;
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col gap-2">
+                    <button
+                      onClick={() => setIsProfileModalOpen(true)}
+                      className="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all flex items-center justify-center gap-2"
+                      type="button"
+                    >
+                      <Edit className="w-4 h-4 text-slate-600" />
+                      <span>Pengaturan Akun &amp; Kontak</span>
+                    </button>
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-2 text-slate-500 text-[11px]">
+                      <Info className="w-4 h-4 text-teal-600 shrink-0" />
+                      <span>Pemilihan dosen telah final dan tercatat resmi di pangkalan data BAAK.</span>
                     </div>
                   </div>
                 </div>
               </div>
-
             </div>
-            
-          </div>
-        )}
+          ) : (
+            /* ========================================================================= */
+            /* PRE-WAR / LIVE-WAR PICKING VIEW (NO DOSEN ALLOCATED YET)                  */
+            /* ========================================================================= */
+            <>
+              {/* Student Profile & Quick Stats Card */}
+              <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-stretch">
+                {/* Main User Card */}
+                <div className="xl:col-span-1 bg-white border border-teal-50 rounded-[2.5rem] p-8 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                  <div className="absolute top-0 right-0 p-6 opacity-[0.03] text-teal-950">
+                    <Users className="w-32 h-32" />
+                  </div>
+                  <div className="relative z-10 flex flex-col items-center text-center">
+                    <div className="relative mb-4 group">
+                      <div className="w-24 h-24 rounded-[2rem] bg-teal-50 border-4 border-white shadow-xl overflow-hidden ring-1 ring-teal-100">
+                        <img
+                          src={
+                            studentData?.foto ||
+                            "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&h=200&fit=crop"
+                          }
+                          className="w-full h-full object-cover"
+                          alt={studentData?.nama}
+                        />
+                      </div>
+                      <button
+                        onClick={() => setIsProfileModalOpen(true)}
+                        className="absolute -bottom-1 -right-1 p-2 bg-teal-500 text-white rounded-xl shadow-lg hover:bg-teal-950 transition-all"
+                      >
+                        <Edit className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <h2 className="text-xl font-black text-teal-950 tracking-tighter uppercase leading-tight mb-2">
+                      {studentData?.nama || "Mahasiswa"}
+                    </h2>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 mt-8 pt-8 border-t border-teal-50">
+                    <div className="text-center">
+                      <p className="text-[8px] font-black text-teal-800/50 uppercase tracking-widest mb-1">
+                        {t("dash_student_nim_label")}
+                      </p>
+                      <p className="text-xl font-mono font-black text-teal-950">
+                        {studentData?.nim || "-----"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Main Info */}
+                <div className="xl:col-span-2 bg-white border border-teal-50 rounded-[2.5rem] p-10 shadow-sm flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500 via-orange-400 to-teal-500"></div>
+
+                  <div className="space-y-1 relative z-10">
+                    <h2 className={cn(
+                      "text-[10px] font-black uppercase tracking-[0.3em] mb-2 flex items-center gap-2",
+                      config?.category === "MAGANG" ? "text-indigo-500" :
+                      "text-emerald-500"
+                    )}>
+                      <div className={cn(
+                        "w-2 h-2 rounded-full animate-ping",
+                        config?.category === "MAGANG" ? "bg-indigo-500" :
+                        "bg-emerald-500"
+                      )} />
+                      {config?.category ? t(`cat_${config.category.toLowerCase()}`) : "Live War System"}
+                    </h2>
+                    <h1 className="text-5xl font-black text-teal-950 tracking-tighter leading-none mb-2">
+                      Dosen <span className="text-teal-500 italic">War</span>
+                    </h1>
+                    <p className="text-teal-800/60 text-sm font-medium pr-12">
+                      {t("dash_student_hero_desc")}
+                    </p>
+                    <div className="flex items-center gap-2 mt-4 text-[9px] font-black text-teal-400 uppercase tracking-widest bg-teal-50/50 w-fit px-3 py-1.5 rounded-full border border-teal-100">
+                      <Zap className="w-3 h-3 fill-teal-400" />
+                      Scale-Ready Architecture
+                    </div>
+                  </div>
+
+                  <div className="h-20 w-px bg-teal-50 hidden md:block"></div>
+
+                  <div className="text-center md:text-right relative z-10">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-teal-800/50 mb-2 font-black">
+                      Server Countdown
+                    </p>
+                    <span
+                      className={cn(
+                        "text-5xl font-mono font-black tabular-nums tracking-tighter block leading-none",
+                        !isWarActive && timeLeft > 0
+                          ? "text-teal-500"
+                          : "text-emerald-500",
+                      )}
+                    >
+                      {timeLeft === -1
+                        ? "OVER"
+                        : formatCountdown(timeLeft)}
+                    </span>
+                    <div className="flex items-center gap-2 justify-center md:justify-end mt-4">
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+                      <span className="text-[10px] font-bold text-emerald-600 font-mono tracking-widest uppercase">
+                        System Online
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="xl:col-span-1 bg-teal-500 rounded-[2.5rem] p-8 shadow-xl shadow-teal-100 text-white flex flex-col justify-between relative overflow-hidden">
+                  <div className="absolute -bottom-8 -right-8 opacity-10">
+                    <Info className="w-32 h-32" />
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-teal-200">
+                      {t("dash_student_quick_guide_title")}
+                    </h4>
+                    <div className="space-y-4">
+                      <div className="flex gap-3">
+                        <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-black">
+                          1
+                        </div>
+                        <p className="text-xs font-bold leading-tight">
+                          {t("dash_student_quick_step1")}
+                        </p>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-black">
+                          2
+                        </div>
+                        <p className="text-xs font-bold leading-tight">
+                          {t("dash_student_quick_step2")}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsProfileModalOpen(true)}
+                    className="w-full mt-6 py-3 bg-white text-teal-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all shadow-lg"
+                  >
+                    {t("nav_settings")}
+                  </button>
+                  <button
+                    onClick={() => navigate("/portfolio")}
+                    className="w-full mt-3 py-3 bg-teal-600 text-white border border-teal-400 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 hover:border-slate-900 transition-all shadow-lg"
+                  >
+                    {t("nav_portfolio")}
+                  </button>
+                </div>
+              </div>
+
+              {/* Batch-specific Announcement Banner */}
+              {config?.announcement && (
+                <motion.div 
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                >
+                  <Alert status="warning">
+                    <Alert.Indicator />
+                    <Alert.Content>
+                      <Alert.Title>{t("dash_student_info_important")}</Alert.Title>
+                      <Alert.Description>{config.announcement}</Alert.Description>
+                    </Alert.Content>
+                  </Alert>
+                </motion.div>
+              )}
+            </>
+          )}
 
         {/* Search Bar & Lecturers Grid */}
         {!studentData?.dosen && (
@@ -1018,8 +1126,9 @@ const Dashboard = ({
              </div>
            )}
 
+
            {isProfileModalOpen && (
-             <div className="fixed inset-0 z-[9999] overflow-y-auto">
+              <div className="fixed inset-0 z-[9999] overflow-y-auto">
                 <motion.div 
                   initial={{ opacity: 0 }} 
                   animate={{ opacity: 1 }} 
@@ -1029,109 +1138,282 @@ const Dashboard = ({
                       setIsProfileModalOpen(false);
                     }
                   }} 
-                  className="fixed inset-0 bg-teal-950/60 backdrop-blur-md" 
+                  className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm" 
                 />
-                <div className="min-h-full flex items-center justify-center p-4 sm:p-6 pt-24 pb-12 sm:pt-28 relative z-10 pointer-events-none">
-                  <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="pointer-events-auto relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
-                    <div className="flex justify-between items-center p-10 pb-4 shrink-0">
-                      <h2 className="text-2xl font-black text-teal-950">{t("dash_student_profile_custom")}</h2>
+                <div className="min-h-full flex items-center justify-center p-4 sm:p-6 relative z-10 pointer-events-none">
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95, y: 15 }} 
+                    animate={{ opacity: 1, scale: 1, y: 0 }} 
+                    exit={{ opacity: 0, scale: 0.95, y: 15 }} 
+                    className="pointer-events-auto relative w-full max-w-3xl bg-white rounded-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-100"
+                  >
+                    {/* Header Modal */}
+                    <div className="flex items-center justify-between px-6 sm:px-8 py-5 border-b border-slate-100 bg-slate-50/60 shrink-0">
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-10 h-10 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-700 shadow-sm shrink-0">
+                          <User className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h2 className="text-lg sm:text-xl font-black text-slate-900 leading-tight tracking-tight">
+                            {t("dash_student_profile_custom")}
+                          </h2>
+                          <p className="text-xs font-medium text-slate-500 mt-0.5">
+                            Perbarui identitas akademik, kontak WhatsApp, dan preferensi akun Anda.
+                          </p>
+                        </div>
+                      </div>
                       {!isProfileIncomplete && (
-                        <button onClick={() => setIsProfileModalOpen(false)} className="p-2 hover:bg-teal-50 rounded-xl transition-all"><XCircle className="w-6 h-6 text-teal-200" /></button>
+                        <button 
+                          type="button"
+                          onClick={() => setIsProfileModalOpen(false)} 
+                          className="w-9 h-9 rounded-full bg-white hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-all shadow-sm shrink-0"
+                          aria-label="Tutup"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       )}
                     </div>
 
-                    <div className="flex-1 overflow-y-auto px-10 pb-10 pt-2 custom-scrollbar">
-                      <form onSubmit={handleUpdateProfile} className="space-y-6">
-                        <div className="flex flex-col items-center gap-4 py-6 bg-teal-50/50 border border-dashed border-teal-100 rounded-[2rem]">
-                           <div className="relative group">
-                             <div className="w-24 h-24 rounded-3xl bg-white border-2 border-teal-50 overflow-hidden shadow-inner">
-                               <img src={profileForm.foto || "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&h=200&fit=crop"} className="w-full h-full object-cover" alt="Preview" />
-                             </div>
-                             <label htmlFor="photo-upload" className="absolute inset-0 flex items-center justify-center bg-teal-950/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-3xl"><Camera className="w-6 h-6 text-white" /></label>
-                             <input id="photo-upload" type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-                           </div>
-                           <p className="text-[10px] font-black uppercase text-teal-500 tracking-widest">{t("dash_student_change_photo")}</p>
-                        </div>
-
-                        <div className="space-y-2">
-                             <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">{t("label_nim")}</label>
-                             <input value={profileForm.nim} disabled className="w-full bg-teal-50/50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950/40 cursor-not-allowed focus:outline-none animate-pulse-subtle" />
+                    {/* Body Form */}
+                    <form id="profile-form" onSubmit={handleUpdateProfile} className="flex flex-col flex-1 min-h-0">
+                      <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 space-y-5 custom-scrollbar">
+                        {/* 1. Baris Upload Foto Profil (Sleek Horizontal Card) */}
+                        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row items-center gap-4">
+                          <div className="relative group shrink-0">
+                            <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl bg-white border-2 border-slate-200 overflow-hidden shadow-sm">
+                              <img 
+                                src={profileForm.foto || "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&h=200&fit=crop"} 
+                                className="w-full h-full object-cover" 
+                                alt="Preview Profil" 
+                              />
+                            </div>
+                            <label 
+                              htmlFor="photo-upload" 
+                              className="absolute inset-0 flex items-center justify-center bg-slate-950/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-2xl text-white"
+                              title="Klik untuk ganti foto"
+                            >
+                              <Camera className="w-5 h-5" />
+                            </label>
+                            <input id="photo-upload" type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
                           </div>
 
-                        <div className="space-y-2">
-                           <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">{t("dash_student_fullname")}</label>
-                           <input value={profileForm.nama} onChange={(e) => setProfileForm({...profileForm, nama: e.target.value})} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" required />
+                          <div className="flex-1 text-center sm:text-left">
+                            <div className="flex items-center justify-center sm:justify-start gap-2">
+                              <h4 className="text-sm font-bold text-slate-900">Foto Profil Mahasiswa</h4>
+                              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-teal-50 text-teal-700 border border-teal-200">
+                                JPG / PNG
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">
+                              Format foto resmi atau semi-formal yang jelas (maksimal 2MB).
+                            </p>
+                            <label 
+                              htmlFor="photo-upload" 
+                              className="inline-flex items-center gap-1.5 mt-2 px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold cursor-pointer transition-all shadow-sm"
+                            >
+                              <Camera className="w-3.5 h-3.5 text-teal-600" />
+                              <span>{t("dash_student_change_photo")}</span>
+                            </label>
+                          </div>
                         </div>
 
-                        <div className="space-y-2">
-                           <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">{t("dash_student_contact")}</label>
-                           <input value={profileForm.kontak} onChange={(e) => setProfileForm({...profileForm, kontak: e.target.value})} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" placeholder="08..." />
-                        </div>
+                        {/* 2. Grid Dua Kolom */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                          {/* Kolom Kiri: Identitas & Kontak */}
+                          <div className="space-y-4">
+                            <div className="space-y-1.5">
+                              <div className="flex items-center justify-between">
+                                <label className="text-[11px] font-bold text-slate-700">
+                                  {t("label_nim")}
+                                </label>
+                                <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                                  <Lock className="w-3 h-3" /> Terkunci Sistem
+                                </span>
+                              </div>
+                              <input 
+                                value={profileForm.nim} 
+                                disabled 
+                                className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold text-slate-500 cursor-not-allowed select-none" 
+                              />
+                            </div>
 
-                        <div className="space-y-2">
-                           <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">{t("dash_student_bio")}</label>
-                           <textarea value={profileForm.bio} onChange={(e) => setProfileForm({...profileForm, bio: e.target.value})} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none min-h-[100px]" placeholder="Ceritakan sedikit tentang ketertarikan riset Anda..." />
-                        </div>
+                            <div className="space-y-1.5">
+                              <label className="text-[11px] font-bold text-slate-700">
+                                {t("dash_student_fullname")} <span className="text-rose-500">*</span>
+                              </label>
+                              <input 
+                                value={profileForm.nama} 
+                                onChange={(e) => setProfileForm({...profileForm, nama: e.target.value})} 
+                                className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all outline-none" 
+                                placeholder="Nama lengkap sesuai SIAKAD"
+                                required 
+                              />
+                            </div>
 
-                        {config?.category === "MAGANG" ? (
-                            <div className="flex flex-col md:flex-row gap-4">
-                              <div className="flex-1 space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Posisi Magang</label>
+                            <div className="space-y-1.5">
+                              <div className="flex items-center justify-between">
+                                <label className="text-[11px] font-bold text-slate-700">
+                                  {t("dash_student_contact")} <span className="text-rose-500">*</span>
+                                </label>
+                                <span className="text-[10px] text-teal-600 font-semibold">WhatsApp Aktif</span>
+                              </div>
+                              <div className="relative">
+                                <Smartphone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                                 <input 
-                                  value={profileForm.magangPosisi} 
-                                  onChange={(e) => setProfileForm({...profileForm, magangPosisi: e.target.value})} 
-                                  className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" 
-                                  placeholder="Misal: UI/UX Designer" 
-                                  required 
+                                  value={profileForm.kontak} 
+                                  onChange={(e) => setProfileForm({...profileForm, kontak: e.target.value})} 
+                                  className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3.5 py-2.5 text-xs font-bold text-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all outline-none font-mono" 
+                                  placeholder="Contoh: 081233003481" 
+                                  required
                                 />
                               </div>
-                              <div className="flex-1 space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Tempat / Instansi</label>
-                                <input 
-                                  value={profileForm.magangTempat} 
-                                  onChange={(e) => setProfileForm({...profileForm, magangTempat: e.target.value})} 
-                                  className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" 
-                                  placeholder="Misal: PT. Telkom Indonesia" 
+                              <p className="text-[10px] text-slate-400">
+                                Digunakan Dosen Pembimbing dan Koordinator Prodi untuk koordinasi.
+                              </p>
+                            </div>
+
+                            <div className="space-y-1.5">
+                              <label className="text-[11px] font-bold text-slate-700">
+                                {t("dash_student_bio")}
+                              </label>
+                              <textarea 
+                                value={profileForm.bio} 
+                                onChange={(e) => setProfileForm({...profileForm, bio: e.target.value})} 
+                                className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-medium text-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all outline-none min-h-[72px] resize-none" 
+                                placeholder="Ceritakan sedikit tentang ketertarikan riset Anda..." 
+                              />
+                            </div>
+                          </div>
+
+                          {/* Kolom Kanan: Rencana Usulan & Keamanan */}
+                          <div className="space-y-4">
+                            {config?.category === "MAGANG" ? (
+                              <>
+                                <div className="space-y-1.5">
+                                  <label className="text-[11px] font-bold text-slate-700">
+                                    Posisi Magang <span className="text-rose-500">*</span>
+                                  </label>
+                                  <input 
+                                    value={profileForm.magangPosisi} 
+                                    onChange={(e) => setProfileForm({...profileForm, magangPosisi: e.target.value})} 
+                                    className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all outline-none" 
+                                    placeholder="Misal: UI/UX Designer Intern" 
+                                    required 
+                                  />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label className="text-[11px] font-bold text-slate-700">
+                                    Tempat / Instansi Magang <span className="text-rose-500">*</span>
+                                  </label>
+                                  <input 
+                                    value={profileForm.magangTempat} 
+                                    onChange={(e) => setProfileForm({...profileForm, magangTempat: e.target.value})} 
+                                    className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all outline-none" 
+                                    placeholder="Misal: PT. Telkom Indonesia" 
+                                    required 
+                                  />
+                                </div>
+                              </>
+                            ) : (
+                              <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-[11px] font-bold text-slate-700">
+                                    Rencana Usulan Judul Skripsi <span className="text-rose-500">*</span>
+                                  </label>
+                                  <span className="text-[10px] text-teal-600 font-semibold">Bisa Diperbarui</span>
+                                </div>
+                                <textarea 
+                                  value={profileForm.rencanaJudul} 
+                                  onChange={(e) => setProfileForm({...profileForm, rencanaJudul: e.target.value})} 
+                                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-medium text-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all outline-none min-h-[96px] resize-none leading-relaxed" 
+                                  placeholder="Ketik usulan judul atau tema riset skripsi Anda..." 
                                   required 
+                                />
+                                <p className="text-[10px] text-slate-400">
+                                  Dapat disesuaikan kembali setelah sesi bimbingan bersama dosen.
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Sub-card Keamanan Akun (Ganti Password) */}
+                            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+                              <div className="flex items-center gap-2">
+                                <KeyRound className="w-4 h-4 text-slate-500" />
+                                <div>
+                                  <h4 className="text-xs font-bold text-slate-800">Ganti Kata Sandi (Opsional)</h4>
+                                  <p className="text-[10px] text-slate-400">Kosongkan jika tidak ingin mengubah kata sandi.</p>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                                <input 
+                                  type="password" 
+                                  value={newPassword} 
+                                  onChange={(e) => setNewPassword(e.target.value)} 
+                                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all outline-none" 
+                                  placeholder="Password baru (min. 6)" 
+                                />
+                                <input 
+                                  type="password" 
+                                  value={confirmPassword} 
+                                  onChange={(e) => setConfirmPassword(e.target.value)} 
+                                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all outline-none" 
+                                  placeholder="Ulangi password" 
                                 />
                               </div>
                             </div>
-                         ) : (
-                           <div className="space-y-2">
-                              <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                                Rencana Judul Riset Anda
-                              </label>
-                              <textarea 
-                                value={profileForm.rencanaJudul} 
-                                onChange={(e) => setProfileForm({...profileForm, rencanaJudul: e.target.value})} 
-                                className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none min-h-[80px]" 
-                                placeholder="Ketik disini..." 
-                                required 
-                              />
-                           </div>
-                         )}
-
-                        <div className="border-t border-teal-100/50 pt-6 space-y-4">
-                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-500">Setup / Ganti Password</p>
-                          <div className="flex flex-col md:flex-row gap-4">
-                             <div className="flex-1 space-y-2">
-                               <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Password Baru (Opsional)</label>
-                               <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" placeholder="Minimal 6 karakter" />
-                             </div>
-                             <div className="flex-1 space-y-2">
-                               <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">Konfirmasi Password</label>
-                               <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 text-sm font-bold text-teal-950 focus:ring-4 focus:ring-teal-500/10 focus:outline-none" placeholder="Ulangi password baru" />
-                             </div>
                           </div>
                         </div>
+                      </div>
 
-                        <button type="submit" disabled={loading} className="w-full py-4 bg-teal-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-950 transition-all shadow-lg">{loading ? t("dash_student_saving") : t("dash_student_save_changes")}</button>
-                      </form>
-                    </div>
+                      {/* Sticky Footer */}
+                      <div className="border-t border-slate-100 bg-slate-50/80 px-6 sm:px-8 py-4 flex items-center justify-between shrink-0">
+                        <span className="text-[11px] font-medium text-slate-500">
+                          {isProfileIncomplete ? (
+                            <span className="text-amber-600 font-semibold flex items-center gap-1.5">
+                              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                              Lengkapi data wajib untuk melanjutkan
+                            </span>
+                          ) : (
+                            <span className="text-emerald-700 font-semibold flex items-center gap-1.5">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              Data tersinkronisasi aman
+                            </span>
+                          )}
+                        </span>
+                        <div className="flex items-center gap-2.5">
+                          {!isProfileIncomplete && (
+                            <button 
+                              type="button"
+                              onClick={() => setIsProfileModalOpen(false)}
+                              className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs transition-all shadow-sm"
+                            >
+                              Batal
+                            </button>
+                          )}
+                          <button 
+                            type="submit" 
+                            disabled={loading} 
+                            className="px-6 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-black text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50"
+                          >
+                            {loading ? (
+                              <>
+                                <RefreshCcw className="w-3.5 h-3.5 animate-spin" />
+                                <span>Menyimpan...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Save className="w-3.5 h-3.5" />
+                                <span>{t("dash_student_save_changes")}</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </form>
                   </motion.div>
                 </div>
-             </div>
-           )}
+              </div>
+            )}
         </AnimatePresence>
       </div>
     </div>
