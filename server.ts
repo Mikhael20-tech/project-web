@@ -1168,7 +1168,7 @@ app.post("/api/admin/war/swap", authenticate, isAdmin, async (req: any, res) => 
   }
 });
 
-// Photo Upload (To Supabase Storage)
+// Photo Upload (To Supabase Storage with Local Storage Fallback)
 app.post("/api/upload", authenticate, (req: any, res: any) => {
   upload.single("photo")(req, res, async (err) => {
     if (err) {
@@ -1177,43 +1177,56 @@ app.post("/api/upload", authenticate, (req: any, res: any) => {
     }
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-    try {
-      if (!supabase) {
-        return res.status(500).json({ error: "Supabase storage is not configured on this server." });
-      }
-      const bucketName = req.user?.role === 'STUDENT' ? 'mahasiswa-photos' : 'dosen-photos';
-      const fileExt = path.extname(req.file.originalname);
-      const uniqueFilename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${fileExt}`;
-      const oldUrl = req.body.oldUrl; // Pass old URL from frontend if replacing
+    const fileExt = path.extname(req.file.originalname) || ".jpg";
+    const uniqueFilename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${fileExt}`;
 
-      // 1. Delete old photo if replacing
-      if (oldUrl && oldUrl.includes("supabase.co/storage")) {
-        const oldFilename = oldUrl.split("/").pop();
-        if (oldFilename) {
-          await supabase.storage.from(bucketName).remove([oldFilename]);
-          console.log(`Deleted old photo: ${oldFilename} from bucket: ${bucketName}`);
+    // 1. Try uploading to Supabase if configured
+    if (supabase) {
+      try {
+        const bucketName = req.user?.role === 'STUDENT' ? 'mahasiswa-photos' : 'dosen-photos';
+        const oldUrl = req.body.oldUrl; // Pass old URL from frontend if replacing
+
+        // Delete old photo if replacing
+        if (oldUrl && oldUrl.includes("supabase.co/storage")) {
+          const oldFilename = oldUrl.split("/").pop();
+          if (oldFilename) {
+            await supabase.storage.from(bucketName).remove([oldFilename]).catch(() => {});
+          }
         }
+
+        // Upload new photo to Supabase
+        const { data, error } = await supabase.storage
+          .from(bucketName)
+          .upload(uniqueFilename, req.file.buffer, {
+            contentType: req.file.mimetype,
+            upsert: true
+          });
+
+        if (!error && data) {
+          const { data: { publicUrl } } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(data.path);
+
+          return res.json({ url: publicUrl });
+        }
+        console.warn("Supabase upload failed, using local storage fallback:", error?.message);
+      } catch (sErr: any) {
+        console.warn("Supabase upload exception, using local storage fallback:", sErr.message);
       }
+    }
 
-      // 2. Upload new photo to Supabase
-      const { data, error } = await supabase.storage
-        .from(bucketName)
-        .upload(uniqueFilename, req.file.buffer, {
-          contentType: req.file.mimetype,
-          upsert: true
-        });
-
-      if (error) throw error;
-
-      // 3. Get Public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucketName)
-        .getPublicUrl(data.path);
-
-      res.json({ url: publicUrl });
-    } catch (uploadErr: any) {
-      console.error("Supabase Upload Error:", uploadErr);
-      res.status(500).json({ error: uploadErr.message || "Gagal mengunggah foto ke Supabase" });
+    // 2. Local Storage Fallback
+    try {
+      const uploadsDir = path.join(process.cwd(), "uploads");
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      fs.writeFileSync(path.join(uploadsDir, uniqueFilename), req.file.buffer);
+      console.log(`Saved photo locally: ${uniqueFilename}`);
+      return res.json({ url: `/uploads/${uniqueFilename}` });
+    } catch (localErr: any) {
+      console.error("Local Upload Error:", localErr);
+      return res.status(500).json({ error: "Gagal mengunggah foto." });
     }
   });
 });

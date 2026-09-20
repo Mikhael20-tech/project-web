@@ -88,7 +88,7 @@ const Dashboard = ({
   const [searchDosen, setSearchDosen] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const isProfileIncomplete = !studentData?.kontak || !studentData?.foto || studentData?.foto.includes("unsplash.com");
+  const isProfileIncomplete = !studentData?.kontak || !studentData?.kontak.trim();
 
   const fetchStudentData = async () => {
     try {
@@ -119,7 +119,7 @@ const Dashboard = ({
           magangTempat: data.magangTempat || "",
         });
 
-        const isIncomplete = !data.kontak || !data.foto || data.foto.includes("unsplash.com");
+        const isIncomplete = !data.kontak || !data.kontak.trim();
         if (isIncomplete) {
           setIsProfileModalOpen(true);
         }
@@ -331,34 +331,14 @@ const Dashboard = ({
       payload = { ...basePayload, rencanaJudul: profileForm.rencanaJudul };
     }
 
-    if (isProfileIncomplete) {
-      if (!profileForm.foto || profileForm.foto.includes("unsplash.com")) {
-        toast({
-          title: "FOTO PROFIL WAJIB",
-          description: "Silakan unggah foto profil Anda terlebih dahulu.",
-          variant: "error",
-        });
-        setLoading(false);
-        return;
-      }
-      if (!profileForm.kontak || !profileForm.kontak.trim()) {
-        toast({
-          title: "NOMOR WHATSAPP WAJIB",
-          description: "Silakan isi nomor WhatsApp Anda terlebih dahulu.",
-          variant: "error",
-        });
-        setLoading(false);
-        return;
-      }
-      if (!newPassword) {
-        toast({
-          title: "PASSWORD WAJIB",
-          description: "Silakan atur password baru Anda terlebih dahulu.",
-          variant: "error",
-        });
-        setLoading(false);
-        return;
-      }
+    if (!profileForm.kontak || !profileForm.kontak.trim()) {
+      toast({
+        title: "NOMOR WHATSAPP WAJIB",
+        description: "Silakan isi nomor WhatsApp Anda terlebih dahulu.",
+        variant: "error",
+      });
+      setLoading(false);
+      return;
     }
 
     try {
@@ -1162,16 +1142,14 @@ const Dashboard = ({
                           </p>
                         </div>
                       </div>
-                      {!isProfileIncomplete && (
-                        <button 
-                          type="button"
-                          onClick={() => setIsProfileModalOpen(false)} 
-                          className="w-9 h-9 rounded-full bg-white hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-all shadow-sm shrink-0"
-                          aria-label="Tutup"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      )}
+                      <button 
+                        type="button"
+                        onClick={() => setIsProfileModalOpen(false)} 
+                        className="w-9 h-9 rounded-full bg-white hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-all shadow-sm shrink-0"
+                        aria-label="Tutup"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
 
                     {/* Body Form */}
@@ -1381,15 +1359,13 @@ const Dashboard = ({
                           )}
                         </span>
                         <div className="flex items-center gap-2.5">
-                          {!isProfileIncomplete && (
-                            <button 
-                              type="button"
-                              onClick={() => setIsProfileModalOpen(false)}
-                              className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs transition-all shadow-sm"
-                            >
-                              Batal
-                            </button>
-                          )}
+                          <button 
+                            type="button"
+                            onClick={() => setIsProfileModalOpen(false)}
+                            className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs transition-all shadow-sm"
+                          >
+                            Batal
+                          </button>
                           <button 
                             type="submit" 
                             disabled={loading} 
