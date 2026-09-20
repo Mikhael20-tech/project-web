@@ -431,8 +431,28 @@ export const LecturersTab = ({
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: i * 0.05 }}
+                        onClick={(e) => {
+                          if ((e.target as HTMLElement).closest('input[type="checkbox"]')) return;
+                          setEditModal({
+                            isOpen: true,
+                            dosen: {
+                              id: dosen.id,
+                              nama: dosen.nama || "",
+                              nip: dosen.nip || "",
+                              kuotaMax: dosen.kuotaMax ?? 3,
+                              foto: dosen.foto || "",
+                              keahlian: dosen.keahlian || "",
+                              bio: dosen.bio || "",
+                              kontak: dosen.kontak || "",
+                              password: "",
+                            },
+                            loading: false,
+                            uploading: false,
+                            error: null,
+                          });
+                        }}
                         className={cn(
-                          "bg-white p-6 rounded-[2.5rem] border shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_40px_-15px_rgba(79,70,229,0.15)] transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between group relative",
+                          "bg-white p-6 rounded-[2.5rem] border shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_40px_-15px_rgba(79,70,229,0.15)] transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between group relative cursor-pointer hover:border-teal-300",
                           selectedDosen.includes(dosen.id)
                             ? "border-teal-400 bg-teal-50/30"
                             : isEditing
@@ -440,7 +460,7 @@ export const LecturersTab = ({
                             : "border-teal-50 hover:border-teal-100"
                         )}
                       >
-                        <div className="absolute top-5 right-5 sm:top-auto sm:left-4 z-10">
+                        <div className="absolute top-5 right-5 sm:top-auto sm:left-4 z-10" onClick={(e) => e.stopPropagation()}>
                           <input
                             type="checkbox"
                             className="appearance-none w-5 h-5 rounded-lg border border-teal-200 bg-white checked:bg-teal-500 checked:border-teal-500 focus:outline-none focus:ring-4 focus:ring-teal-500/10 cursor-pointer transition-all relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-[10px] checked:after:font-black checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center"
@@ -480,7 +500,7 @@ export const LecturersTab = ({
                             </span>
                           </div>
                         </div>
-                        <div className="flex flex-wrap gap-2 transition-opacity justify-end w-full sm:w-auto mt-4 sm:mt-0">
+                        <div className="flex flex-wrap gap-2 transition-opacity justify-end w-full sm:w-auto mt-4 sm:mt-0 relative z-20">
                           <button
                             type="button"
                             title="Edit Dosen Ini"
