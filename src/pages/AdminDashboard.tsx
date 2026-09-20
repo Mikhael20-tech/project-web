@@ -2373,6 +2373,9 @@ const AdminDashboard = ({
           {activeTab === "dosen" && (
             <LecturersTab 
               t={t}
+              token={token}
+              fetchData={fetchData}
+              setMessage={setMessage}
               dosenForm={dosenForm}
               setDosenForm={setDosenForm}
               handleDosenSubmit={handleDosenSubmit}

@@ -6,6 +6,9 @@ import DynamicText from '@/src/components/DynamicText';
 
 export const LecturersTab = ({
   t,
+  token,
+  fetchData,
+  setMessage,
   dosenForm,
   setDosenForm,
   handleDosenSubmit,
@@ -21,6 +24,79 @@ export const LecturersTab = ({
   uploadLoading
 }: any) => {
   const [searchDosen, setSearchDosen] = useState("");
+  const [editModal, setEditModal] = useState<{
+    isOpen: boolean;
+    dosen: any;
+    loading: boolean;
+    uploading: boolean;
+    error: string | null;
+  }>({
+    isOpen: false,
+    dosen: null,
+    loading: false,
+    uploading: false,
+    error: null,
+  });
+
+  const handleModalPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setEditModal((prev) => ({ ...prev, uploading: true, error: null }));
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal mengunggah foto.");
+      setEditModal((prev) => ({
+        ...prev,
+        dosen: { ...prev.dosen, foto: data.url },
+        uploading: false,
+      }));
+    } catch (err: any) {
+      setEditModal((prev) => ({
+        ...prev,
+        uploading: false,
+        error: err.message || "Gagal mengunggah foto.",
+      }));
+    }
+  };
+
+  const handleModalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editModal.dosen) return;
+    setEditModal((prev) => ({ ...prev, loading: true, error: null }));
+    try {
+      const res = await fetch(`/api/admin/dosen/${editModal.dosen.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(editModal.dosen),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal memperbarui data dosen.");
+
+      if (setMessage) {
+        setMessage({ type: "success", text: `Data dosen ${editModal.dosen.nama} berhasil diperbarui!` });
+      }
+      setEditModal({ isOpen: false, dosen: null, loading: false, uploading: false, error: null });
+      if (fetchData) {
+        await fetchData();
+      }
+    } catch (err: any) {
+      setEditModal((prev) => ({
+        ...prev,
+        loading: false,
+        error: err.message || "Gagal menyimpan perubahan dosen.",
+      }));
+    }
+  };
 
   return (
             <motion.div
@@ -348,7 +424,7 @@ export const LecturersTab = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {reports.map((dosen, i) => {
-                    const isEditing = dosenForm.id === dosen.id;
+                    const isEditing = dosenForm.id === dosen.id || (editModal.isOpen && editModal.dosen?.id === dosen.id);
                     return (
                       <motion.div
                         key={dosen.id}
@@ -411,39 +487,33 @@ export const LecturersTab = ({
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              setDosenForm({
-                                id: dosen.id,
-                                nama: dosen.nama,
-                                nip: dosen.nip,
-                                kuotaMax: dosen.kuotaMax,
-                                foto: dosen.foto || "",
-                                keahlian: dosen.keahlian || "",
-                                bio: dosen.bio || "",
-                                kontak: dosen.kontak || "",
-                                password: "",
+                              setEditModal({
+                                isOpen: true,
+                                dosen: {
+                                  id: dosen.id,
+                                  nama: dosen.nama || "",
+                                  nip: dosen.nip || "",
+                                  kuotaMax: dosen.kuotaMax ?? 3,
+                                  foto: dosen.foto || "",
+                                  keahlian: dosen.keahlian || "",
+                                  bio: dosen.bio || "",
+                                  kontak: dosen.kontak || "",
+                                  password: "",
+                                },
+                                loading: false,
+                                uploading: false,
+                                error: null,
                               });
-                              // Scroll smoothly to the edit form on the left
-                              const formEl = document.getElementById("form-dosen-card");
-                              if (formEl) {
-                                formEl.scrollIntoView({ behavior: "smooth", block: "center" });
-                              }
-                              // Focus on the name input
-                              const nameInput = document.getElementById("dosen-nama-input") as HTMLInputElement;
-                              if (nameInput) {
-                                setTimeout(() => nameInput.focus(), 300);
-                              }
                             }}
                             className={cn(
-                              "p-2.5 rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer",
+                              "px-3.5 py-2 rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer font-bold text-xs group/btn",
                               isEditing
                                 ? "bg-teal-500 text-white border border-teal-600 shadow-md shadow-teal-500/20"
-                                : "bg-teal-50 text-teal-600 hover:bg-teal-500 hover:text-white border border-teal-100"
+                                : "bg-teal-50 text-teal-700 hover:bg-teal-500 hover:text-white border border-teal-100"
                             )}
                           >
-                            <Edit className="w-4 h-4" />
-                            {isEditing && (
-                              <span className="text-[10px] font-bold">Aktif</span>
-                            )}
+                            <Edit className="w-3.5 h-3.5 group-hover/btn:rotate-12 transition-transform" />
+                            <span>Edit</span>
                           </button>
                         </div>
                       </motion.div>
@@ -451,6 +521,300 @@ export const LecturersTab = ({
                   })}
                 </div>
               </div>
+
+              {/* DEDICATED EDIT DOSEN MODAL */}
+              <AnimatePresence>
+                {editModal.isOpen && editModal.dosen && (
+                  <div className="fixed inset-0 z-[9999] overflow-y-auto">
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="fixed inset-0 bg-teal-950/60 backdrop-blur-md"
+                      onClick={() => {
+                        if (!editModal.loading && !editModal.uploading) {
+                          setEditModal({ isOpen: false, dosen: null, loading: false, uploading: false, error: null });
+                        }
+                      }}
+                    />
+                    <div className="min-h-full flex items-center justify-center p-4 sm:p-6 pt-16 pb-12 relative z-10 pointer-events-none">
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                        className="pointer-events-auto bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl relative z-10 overflow-hidden flex flex-col max-h-[90vh] border border-teal-100"
+                      >
+                        {/* Header */}
+                        <div className="p-6 md:p-8 border-b border-teal-50 bg-[#f8fdfc] flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-teal-500 text-white shadow-md shadow-teal-500/20 rounded-2xl flex items-center justify-center shrink-0">
+                              <Edit className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <h3 className="text-xl font-black text-teal-950">Edit Data Dosen</h3>
+                              <p className="text-xs font-bold text-teal-800/60 tracking-wider mt-0.5 truncate max-w-xs sm:max-w-sm">
+                                NIP: {editModal.dosen.nip} • {editModal.dosen.nama}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!editModal.loading && !editModal.uploading) {
+                                setEditModal({ isOpen: false, dosen: null, loading: false, uploading: false, error: null });
+                              }
+                            }}
+                            className="w-10 h-10 rounded-xl bg-teal-50 hover:bg-rose-50 text-teal-700 hover:text-rose-600 flex items-center justify-center transition-colors cursor-pointer"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+
+                        {/* Form Body (Scrollable) */}
+                        <form onSubmit={handleModalSubmit} className="flex-1 overflow-y-auto p-6 md:p-8 space-y-5">
+                          {editModal.error && (
+                            <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs font-bold text-rose-700 flex items-center gap-2">
+                              <span>⚠️</span>
+                              <span>{editModal.error}</span>
+                            </div>
+                          )}
+
+                          {/* Foto Profil */}
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                              Foto Profil Dosen
+                            </label>
+                            <div className="flex items-center gap-4">
+                              <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-teal-100 shadow-sm shrink-0 bg-teal-50">
+                                {editModal.dosen.foto ? (
+                                  <img src={editModal.dosen.foto} alt="Preview" className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-teal-300">
+                                    <Users className="w-8 h-8" />
+                                  </div>
+                                )}
+                                {editModal.dosen.foto && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditModal((prev) => ({ ...prev, dosen: { ...prev.dosen, foto: "" } }))}
+                                    className="absolute inset-0 bg-rose-600/80 backdrop-blur-sm text-white flex flex-col items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                    <span className="text-[8px] font-bold uppercase mt-1">Hapus</span>
+                                  </button>
+                                )}
+                              </div>
+                              <div className="flex-1 space-y-2">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  id="modal-dosen-photo-upload"
+                                  className="hidden"
+                                  onChange={handleModalPhotoUpload}
+                                  disabled={editModal.uploading}
+                                />
+                                <label
+                                  htmlFor="modal-dosen-photo-upload"
+                                  className={cn(
+                                    "flex items-center justify-center gap-2 w-full p-3 border-2 border-dashed rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer transition-all",
+                                    editModal.uploading
+                                      ? "bg-teal-50/50 border-teal-100 text-teal-800/30"
+                                      : "bg-teal-50/50 border-teal-200 text-teal-600 hover:bg-teal-100"
+                                  )}
+                                >
+                                  {editModal.uploading ? (
+                                    <span>Mengunggah foto...</span>
+                                  ) : (
+                                    <>
+                                      <Camera className="w-4 h-4" />
+                                      <span>{editModal.dosen.foto ? "Ganti Foto dari Perangkat" : "Pilih Foto dari Perangkat"}</span>
+                                    </>
+                                  )}
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Atau tempel link URL foto (https://...)"
+                                  value={editModal.dosen.foto}
+                                  onChange={(e) =>
+                                    setEditModal((prev) => ({
+                                      ...prev,
+                                      dosen: { ...prev.dosen, foto: e.target.value },
+                                    }))
+                                  }
+                                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-[10px] font-mono focus:outline-none focus:ring-2 focus:ring-teal-400"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Nama Lengkap */}
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                              Nama Lengkap & Gelar *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={editModal.dosen.nama}
+                              onChange={(e) =>
+                                setEditModal((prev) => ({
+                                  ...prev,
+                                  dosen: { ...prev.dosen, nama: e.target.value },
+                                }))
+                              }
+                              className="w-full p-3.5 bg-teal-50 border border-teal-100 rounded-xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-teal-400 shadow-inner"
+                            />
+                          </div>
+
+                          {/* Grid 2 Cols: NIP & Kuota */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                                NIP *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                value={editModal.dosen.nip}
+                                onChange={(e) =>
+                                  setEditModal((prev) => ({
+                                    ...prev,
+                                    dosen: { ...prev.dosen, nip: e.target.value },
+                                  }))
+                                }
+                                className="w-full p-3.5 bg-teal-50 border border-teal-100 rounded-xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-teal-400 shadow-inner"
+                              />
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                                Kuota Bimbingan Maksimal *
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                required
+                                value={editModal.dosen.kuotaMax}
+                                onChange={(e) =>
+                                  setEditModal((prev) => ({
+                                    ...prev,
+                                    dosen: { ...prev.dosen, kuotaMax: parseInt(e.target.value) || 0 },
+                                  }))
+                                }
+                                className="w-full p-3.5 bg-teal-50 border border-teal-100 rounded-xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-teal-400 shadow-inner"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Kontak / WA */}
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                              Nomor HP / WhatsApp Aktif
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="08123xxxx"
+                              value={editModal.dosen.kontak}
+                              onChange={(e) =>
+                                setEditModal((prev) => ({
+                                  ...prev,
+                                  dosen: { ...prev.dosen, kontak: e.target.value },
+                                }))
+                              }
+                              className="w-full p-3.5 bg-teal-50 border border-teal-100 rounded-xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-teal-400 shadow-inner"
+                            />
+                          </div>
+
+                          {/* Keahlian Utama */}
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                              Bidang Keahlian Utama
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Misal: AI, Rekayasa Perangkat Lunak, Jaringan"
+                              value={editModal.dosen.keahlian}
+                              onChange={(e) =>
+                                setEditModal((prev) => ({
+                                  ...prev,
+                                  dosen: { ...prev.dosen, keahlian: e.target.value },
+                                }))
+                              }
+                              className="w-full p-3.5 bg-teal-50 border border-teal-100 rounded-xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-teal-400 shadow-inner"
+                            />
+                          </div>
+
+                          {/* Bio Singkat */}
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                              Bio Singkat
+                            </label>
+                            <textarea
+                              rows={3}
+                              placeholder="Deskripsi singkat mengenai profil dan fokus pengajaran dosen..."
+                              value={editModal.dosen.bio}
+                              onChange={(e) =>
+                                setEditModal((prev) => ({
+                                  ...prev,
+                                  dosen: { ...prev.dosen, bio: e.target.value },
+                                }))
+                              }
+                              className="w-full p-3.5 bg-teal-50 border border-teal-100 rounded-xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-teal-400 shadow-inner"
+                            />
+                          </div>
+
+                          {/* Password Baru Akun Dosen */}
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                              Password Akun Dosen (Kosongi jika tidak diubah)
+                            </label>
+                            <input
+                              type="password"
+                              placeholder="Ketik password baru jika ingin mereset sandi dosen..."
+                              value={editModal.dosen.password}
+                              onChange={(e) =>
+                                setEditModal((prev) => ({
+                                  ...prev,
+                                  dosen: { ...prev.dosen, password: e.target.value },
+                                }))
+                              }
+                              className="w-full p-3.5 bg-teal-50 border border-teal-100 rounded-xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-teal-400 shadow-inner"
+                            />
+                          </div>
+
+                          {/* Modal Actions */}
+                          <div className="pt-4 border-t border-teal-50 flex items-center justify-end gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setEditModal({ isOpen: false, dosen: null, loading: false, uploading: false, error: null })}
+                              className="px-5 py-3 rounded-xl text-teal-800/60 hover:text-teal-950 text-xs font-black uppercase tracking-wider transition-colors cursor-pointer"
+                              disabled={editModal.loading || editModal.uploading}
+                            >
+                              Batal
+                            </button>
+                            <button
+                              type="submit"
+                              disabled={editModal.loading || editModal.uploading}
+                              className="px-6 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-teal-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                            >
+                              {editModal.loading ? (
+                                <>
+                                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                  <span>Menyimpan...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Save className="w-4 h-4" />
+                                  <span>Simpan Perubahan</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </form>
+                      </motion.div>
+                    </div>
+                  </div>
+                )}
+              </AnimatePresence>
             </motion.div>
   );
 };
