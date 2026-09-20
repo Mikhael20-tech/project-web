@@ -1049,6 +1049,7 @@ const Dashboard = ({
                         </div>
                         <div className="space-y-2">
                           <ProgressBar
+                            aria-label={`Kapasitas kuota ${dosen.nama}`}
                             value={(dosen._count.mahasiswa / dosen.kuotaMax) * 100}
                             color={dosen.kuotaMax - dosen._count.mahasiswa > 0 ? "accent" : "danger"}
                             size="md"

@@ -2924,7 +2924,12 @@ async function startServer() {
     console.error("Migration error:", mErr);
   }
 
-  if (process.env.NODE_ENV !== "production") {
+  const distPath = path.join(process.cwd(), "dist");
+  const isDevCommand = process.env.npm_lifecycle_event === "dev" || process.env.NODE_ENV === "development";
+  const hasDist = fs.existsSync(path.join(distPath, "index.html"));
+  const isProduction = process.env.NODE_ENV === "production" || (!isDevCommand && hasDist);
+
+  if (!isProduction) {
     const vite = await createViteServer({
       server: { 
         middlewareMode: true,
@@ -2949,7 +2954,7 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), "dist");
+    console.log("🚀 Running in PRODUCTION mode: Serving static build from dist/");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
