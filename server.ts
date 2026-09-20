@@ -716,6 +716,25 @@ app.post("/api/profile", authenticate, async (req: any, res) => {
   }
 });
 
+// Student Password Update Endpoint
+app.put("/api/student/password", authenticate, async (req: any, res) => {
+  const { newPassword } = req.body;
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ error: "Password baru minimal 6 karakter." });
+  }
+  try {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { password: hashedPassword }
+    });
+    res.json({ success: true, message: "Password berhasil diperbarui." });
+  } catch (err: any) {
+    console.error("Student password update error:", err);
+    res.status(500).json({ error: "Gagal memperbarui password." });
+  }
+});
+
 
 // --- THE CRITICAL WAR LOGIC: SELECT DOSEN ---
 app.post("/api/war/select", authenticate, rateLimitSelection, async (req: any, res) => {

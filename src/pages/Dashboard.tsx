@@ -88,7 +88,7 @@ const Dashboard = ({
   const [searchDosen, setSearchDosen] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const isProfileIncomplete = !studentData?.kontak || !studentData?.kontak.trim();
+  const isProfileIncomplete = !studentData?.kontak || !studentData?.foto || studentData?.foto.includes("unsplash.com");
 
   const fetchStudentData = async () => {
     try {
@@ -119,7 +119,7 @@ const Dashboard = ({
           magangTempat: data.magangTempat || "",
         });
 
-        const isIncomplete = !data.kontak || !data.kontak.trim();
+        const isIncomplete = !data.kontak || !data.foto || data.foto.includes("unsplash.com");
         if (isIncomplete) {
           setIsProfileModalOpen(true);
         }
@@ -331,14 +331,58 @@ const Dashboard = ({
       payload = { ...basePayload, rencanaJudul: profileForm.rencanaJudul };
     }
 
-    if (!profileForm.kontak || !profileForm.kontak.trim()) {
+    // Foto Profil WAJIB
+    if (!profileForm.foto || profileForm.foto.includes("unsplash.com")) {
       toast({
-        title: "NOMOR WHATSAPP WAJIB",
-        description: "Silakan isi nomor WhatsApp Anda terlebih dahulu.",
+        title: "FOTO PROFIL WAJIB",
+        description: "Silakan unggah foto profil resmi Anda terlebih dahulu.",
         variant: "error",
       });
       setLoading(false);
       return;
+    }
+
+    // Nomor WhatsApp WAJIB
+    if (!profileForm.kontak || !profileForm.kontak.trim()) {
+      toast({
+        title: "NOMOR WHATSAPP WAJIB",
+        description: "Silakan isi nomor WhatsApp aktif Anda terlebih dahulu.",
+        variant: "error",
+      });
+      setLoading(false);
+      return;
+    }
+
+    // Password WAJIB saat profil belum lengkap
+    if (isProfileIncomplete && !newPassword) {
+      toast({
+        title: "KATA SANDI WAJIB",
+        description: "Silakan atur kata sandi baru Anda terlebih dahulu.",
+        variant: "error",
+      });
+      setLoading(false);
+      return;
+    }
+
+    if (newPassword) {
+      if (newPassword.length < 6) {
+        toast({
+          title: "PASSWORD TERLALU PENDEK",
+          description: "Password baru minimal 6 karakter.",
+          variant: "error",
+        });
+        setLoading(false);
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        toast({
+          title: "KONFIRMASI PASSWORD TIDAK COCOK",
+          description: "Konfirmasi password tidak cocok.",
+          variant: "error",
+        });
+        setLoading(false);
+        return;
+      }
     }
 
     try {
@@ -1142,14 +1186,16 @@ const Dashboard = ({
                           </p>
                         </div>
                       </div>
-                      <button 
-                        type="button"
-                        onClick={() => setIsProfileModalOpen(false)} 
-                        className="w-9 h-9 rounded-full bg-white hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-all shadow-sm shrink-0"
-                        aria-label="Tutup"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                      {!isProfileIncomplete && (
+                        <button 
+                          type="button"
+                          onClick={() => setIsProfileModalOpen(false)} 
+                          className="w-9 h-9 rounded-full bg-white hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-all shadow-sm shrink-0"
+                          aria-label="Tutup"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
 
                     {/* Body Form */}
@@ -1178,19 +1224,28 @@ const Dashboard = ({
                           <div className="flex-1 text-center sm:text-left">
                             <div className="flex items-center justify-center sm:justify-start gap-2">
                               <h4 className="text-sm font-bold text-slate-900">Foto Profil Mahasiswa</h4>
-                              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-teal-50 text-teal-700 border border-teal-200">
-                                JPG / PNG
+                              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 border border-rose-200">
+                                * WAJIB
                               </span>
+                              {profileForm.foto && !profileForm.foto.includes("unsplash.com") ? (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  Foto Terunggah ✓
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                                  Belum Diunggah
+                                </span>
+                              )}
                             </div>
                             <p className="text-xs text-slate-500 mt-1">
                               Format foto resmi atau semi-formal yang jelas (maksimal 2MB).
                             </p>
                             <label 
                               htmlFor="photo-upload" 
-                              className="inline-flex items-center gap-1.5 mt-2 px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold cursor-pointer transition-all shadow-sm"
+                              className="inline-flex items-center gap-1.5 mt-2 px-3.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold cursor-pointer transition-all shadow-sm"
                             >
-                              <Camera className="w-3.5 h-3.5 text-teal-600" />
-                              <span>{t("dash_student_change_photo")}</span>
+                              <Camera className="w-3.5 h-3.5" />
+                              <span>{profileForm.foto && !profileForm.foto.includes("unsplash.com") ? "Ganti Foto Profil" : "Unggah Foto Profil (Wajib)"}</span>
                             </label>
                           </div>
                         </div>
@@ -1318,8 +1373,23 @@ const Dashboard = ({
                               <div className="flex items-center gap-2">
                                 <KeyRound className="w-4 h-4 text-slate-500" />
                                 <div>
-                                  <h4 className="text-xs font-bold text-slate-800">Ganti Kata Sandi (Opsional)</h4>
-                                  <p className="text-[10px] text-slate-400">Kosongkan jika tidak ingin mengubah kata sandi.</p>
+                                  <h4 className="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                    <span>{isProfileIncomplete ? "Atur Kata Sandi Baru" : "Ganti Kata Sandi"}</span>
+                                    {isProfileIncomplete ? (
+                                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 border border-rose-200">
+                                        * WAJIB
+                                      </span>
+                                    ) : (
+                                      <span className="text-[10px] font-medium text-slate-400">
+                                        (Opsional)
+                                      </span>
+                                    )}
+                                  </h4>
+                                  <p className="text-[10px] text-slate-500">
+                                    {isProfileIncomplete 
+                                      ? "Kata sandi baru wajib diatur (minimal 6 karakter) untuk keamanan akun Anda." 
+                                      : "Kosongkan jika tidak ingin mengubah kata sandi."}
+                                  </p>
                                 </div>
                               </div>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
@@ -1327,15 +1397,17 @@ const Dashboard = ({
                                   type="password" 
                                   value={newPassword} 
                                   onChange={(e) => setNewPassword(e.target.value)} 
+                                  required={isProfileIncomplete}
                                   className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all outline-none" 
-                                  placeholder="Password baru (min. 6)" 
+                                  placeholder={isProfileIncomplete ? "Password baru (min. 6) *" : "Password baru (min. 6)"} 
                                 />
                                 <input 
                                   type="password" 
                                   value={confirmPassword} 
                                   onChange={(e) => setConfirmPassword(e.target.value)} 
+                                  required={isProfileIncomplete}
                                   className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all outline-none" 
-                                  placeholder="Ulangi password" 
+                                  placeholder={isProfileIncomplete ? "Ulangi password *" : "Ulangi password"} 
                                 />
                               </div>
                             </div>
@@ -1359,13 +1431,15 @@ const Dashboard = ({
                           )}
                         </span>
                         <div className="flex items-center gap-2.5">
-                          <button 
-                            type="button"
-                            onClick={() => setIsProfileModalOpen(false)}
-                            className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs transition-all shadow-sm"
-                          >
-                            Batal
-                          </button>
+                          {!isProfileIncomplete && (
+                            <button 
+                              type="button"
+                              onClick={() => setIsProfileModalOpen(false)}
+                              className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs transition-all shadow-sm"
+                            >
+                              Batal
+                            </button>
+                          )}
                           <button 
                             type="submit" 
                             disabled={loading} 
