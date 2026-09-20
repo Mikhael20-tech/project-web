@@ -1,0 +1,3 @@
+wardospem.com, www.wardospem.com, wardospem.tech, www.wardospem.tech {
+    reverse_proxy WarDosPem-app:3000
+}

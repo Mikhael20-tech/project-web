@@ -1,5 +1,3 @@
-﻿version: '3.8'
-
 services:
   WarDosPem-app:
     image: ghcr.io/mikhael20-tech/project-web:latest
@@ -22,8 +20,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    command: caddy reverse-proxy --from wardospem.tech --to WarDosPem-app:3000
     volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
