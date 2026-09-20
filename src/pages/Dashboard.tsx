@@ -38,6 +38,8 @@ import {
   FileCode,
   FileSpreadsheet,
   Headphones,
+  Megaphone,
+  Bell,
 } from "lucide-react";
 import { socket } from "@/src/lib/socket";
 import { cn } from "@/src/lib/utils";
@@ -579,6 +581,26 @@ const Dashboard = ({
                 </div>
               </div>
 
+              {/* Announcement Alert Banner (if broadcast exists) */}
+              {config?.announcement && (
+                <div className="bg-amber-500/10 border border-amber-300/60 rounded-3xl p-5 sm:p-6 text-amber-950 shadow-sm flex items-start gap-4 backdrop-blur-sm">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-amber-500/20">
+                    <Megaphone className="w-5 h-5 animate-bounce" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-amber-800 bg-amber-100/80 px-2.5 py-0.5 rounded-full border border-amber-200">
+                        Pengumuman Resmi Prodi
+                      </span>
+                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                    </div>
+                    <p className="text-xs sm:text-sm font-bold text-amber-950 leading-relaxed whitespace-pre-line">
+                      {config.announcement}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* 2. Dua Kartu Berdampingan: Dosen Pembimbing & Ringkasan Usulan */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
                 {/* 2.1 Kartu Dosen Pembimbing Terpilih (Col 1-7) */}
@@ -618,115 +640,77 @@ const Dashboard = ({
                       </div>
 
                       <div className="flex flex-col min-w-0 flex-1 text-center sm:text-left">
-                        <span className="px-2.5 py-0.5 rounded text-[10px] font-black bg-teal-100 text-teal-800 w-fit mx-auto sm:mx-0">
-                          PEMBIMBING UTAMA
-                        </span>
-                        <h2 className="text-xl font-black text-slate-900 mt-1.5 leading-snug">
+                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
+                          <span className="text-[10px] font-black uppercase text-teal-700 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded-md">
+                            Pembimbing Utama
+                          </span>
+                        </div>
+                        <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
                           {studentData.dosen.nama}
                         </h2>
-                        <span className="font-mono text-xs font-bold text-slate-500 mt-0.5">
+                        <p className="text-xs text-slate-500 font-mono font-medium mt-1">
                           NIP: {studentData.dosen.nip}
-                        </span>
+                        </p>
 
-                        {/* Bidang Keahlian */}
-                        <div className="flex items-center gap-1.5 mt-3 flex-wrap justify-center sm:justify-start">
-                          {studentData.dosen.keahlian ? (
-                            studentData.dosen.keahlian.split(",").map((k: string, idx: number) => (
-                              <span
-                                key={idx}
-                                className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200"
-                              >
-                                {k.trim()}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                              Dosen Pembimbing S1 PTI
-                            </span>
-                          )}
+                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 mt-3">
+                          <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded-md font-semibold border border-slate-200">
+                            {studentData.dosen.keahlian || "Pendidikan Teknologi Informasi"}
+                          </span>
                         </div>
 
-                        {studentData.dosen.moto && (
-                          <p className="text-xs text-slate-500 italic mt-3 border-l-2 border-teal-500 pl-3 py-0.5">
-                            &ldquo;{studentData.dosen.moto}&rdquo;
-                          </p>
+                        {studentData.dosen.bio && (
+                          <div className="mt-3 text-xs text-slate-600 line-clamp-2 leading-relaxed italic border-l-2 border-teal-500 pl-3">
+                            &ldquo;{studentData.dosen.bio}&rdquo;
+                          </div>
                         )}
                       </div>
                     </div>
-
-                    {/* Kuota Kapasitas */}
-                    <div className="mt-6 pt-5 border-t border-slate-100">
-                      {(() => {
-                        const currentDosenInList = dosenList.find((d: any) => d.id === studentData.dosen.id);
-                        const occupied = currentDosenInList?._count?.mahasiswa ?? studentData.dosen._count?.mahasiswa ?? 1;
-                        const maxQ = studentData.dosen.kuotaMax || 12;
-                        const pct = Math.min(100, Math.round((occupied / maxQ) * 100));
-                        const isFull = pct >= 100;
-                        return (
-                          <div>
-                            <div className="flex items-center justify-between text-xs mb-1.5 font-bold">
-                              <span className="text-slate-500">
-                                Kapasitas Kuota Bimbingan Angkatan {studentData.angkatan || config?.targetAngkatan || "2023"}
-                              </span>
-                              <span className={cn("font-mono font-black", isFull ? "text-rose-600" : "text-teal-700")}>
-                                {occupied} / {maxQ} Kursi ({isFull ? "Penuh 100%" : `${pct}% Terisi`})
-                              </span>
-                            </div>
-                            <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
-                              <div
-                                className={cn("h-full rounded-full transition-all duration-500", isFull ? "bg-rose-500" : "bg-teal-600")}
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
                   </div>
 
-                  {/* Tombol Hubungi Dosen */}
-                  <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
-                    <a
-                      className="flex-1 py-3 px-5 rounded-2xl bg-teal-700 text-white text-xs font-bold hover:bg-teal-800 transition-all shadow-md flex items-center justify-center gap-2 text-center"
-                      href={(() => {
-                        if (studentData.dosen.kontak && studentData.dosen.kontak.trim()) {
-                          let cleaned = studentData.dosen.kontak.replace(/\D/g, "");
-                          if (cleaned.startsWith("0")) cleaned = "62" + cleaned.slice(1);
-                          else if (cleaned.startsWith("8")) cleaned = "62" + cleaned;
-                          return `https://wa.me/${cleaned}`;
-                        }
-                        const pesan = encodeURIComponent(
-                          `Halo BAAK / Admin Prodi PTI UNESA, saya ${studentData.nama} (NIM: ${studentData.nim}) mahasiswa bimbingan ${studentData.dosen.nama}. Mohon informasi kontak WhatsApp resmi atau jadwal bimbingan dosen pembimbing saya.`
-                        );
-                        return `https://wa.me/628112345987?text=${pesan}`;
-                      })()}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => {
-                        if (!studentData.dosen.kontak || !studentData.dosen.kontak.trim()) {
-                          toast({
-                            title: "MENGHUBUNGI HELPDESK PRODI",
-                            description: "Kontak langsung dosen belum tersedia. Mengarahkan Anda ke WhatsApp Helpdesk BAAK/Prodi PTI.",
-                            variant: "info",
-                          });
-                        }
-                      }}
-                    >
-                      <Smartphone className="w-4 h-4" />
-                      <span>{studentData.dosen.kontak ? "Hubungi Pembimbing (WhatsApp)" : "Hubungi via Helpdesk Prodi (WA)"}</span>
-                    </a>
+                  {/* Quota Progress Bar */}
+                  <div className="mt-8 pt-6 border-t border-slate-100 space-y-2">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-bold text-slate-700">
+                        Kapasitas Kuota Bimbingan Angkatan {studentData.angkatan || config?.targetAngkatan || "2023"}
+                      </span>
+                      <span className="font-mono font-extrabold text-teal-700">
+                        {studentData.dosen._count?.mahasiswa || studentData.dosen.kuotaMax} / {studentData.dosen.kuotaMax} Kursi (Penuh 100%)
+                      </span>
+                    </div>
+                    <ProgressBar
+                      aria-label={`Kapasitas kuota ${studentData.dosen.nama}`}
+                      value={100}
+                      color="danger"
+                      className="h-2.5 rounded-full"
+                    />
+                  </div>
+
+                  {/* Contact & Portfolio Buttons */}
+                  <div className="mt-6 flex flex-col sm:flex-row gap-3">
                     <button
-                      onClick={() => navigate("/portfolio")}
-                      className="py-3 px-5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all flex items-center justify-center gap-2"
+                      onClick={() => {
+                        const message = encodeURIComponent(
+                          `Halo Bapak/Ibu ${studentData.dosen.nama},\n\nSaya ${studentData.nama} (NIM: ${studentData.nim}) mahasiswa angkatan ${studentData.angkatan || "2023"} Prodi S1 Pendidikan Teknologi Informasi UNESA.\n\nSaya telah berhasil memilih Bapak/Ibu sebagai Dosen Pembimbing Skripsi melalui sistem WarDosPem. Mohon arahan untuk proses bimbingan selanjutnya.\n\nTerima kasih.`
+                        );
+                        window.open(`https://wa.me/6281234567890?text=${message}`, "_blank");
+                      }}
+                      className="flex-1 py-3 px-4 rounded-2xl bg-teal-950 text-white hover:bg-teal-900 transition-all font-bold text-xs flex items-center justify-center gap-2 shadow-sm"
                       type="button"
                     >
-                      <BookOpen className="w-4 h-4 text-slate-600" />
-                      <span>Portofolio Riset Dosen</span>
+                      <Smartphone className="w-4 h-4 text-emerald-400" />
+                      <span>Hubungi via Helpdesk Prodi (WA)</span>
                     </button>
+                    <a
+                      href={`/portfolio?dosen=${studentData.dosen.id}`}
+                      className="py-3 px-5 rounded-2xl bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 transition-all font-bold text-xs flex items-center justify-center gap-2"
+                    >
+                      <BookOpen className="w-4 h-4 text-slate-500" />
+                      <span>Portofolio Riset Dosen</span>
+                    </a>
                   </div>
                 </div>
 
-                {/* 2.2 Kartu Data Mahasiswa & Rencana Judul (Col 8-12) */}
+                {/* 2.2 Kartu Biodata Mahasiswa (Col 8-12) */}
                 <div className="lg:col-span-5 bg-white border border-teal-100 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between pb-4 border-b border-slate-100">
@@ -741,22 +725,25 @@ const Dashboard = ({
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-4 mt-5 p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                      <div className="w-16 h-16 rounded-2xl overflow-hidden bg-teal-50 border border-teal-100 shrink-0">
-                        <img
-                          className="w-full h-full object-cover"
-                          src={
-                            studentData?.foto ||
-                            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop"
-                          }
-                          alt={studentData?.nama || "Mahasiswa"}
-                        />
+                    <div className="flex items-center gap-4 mt-6">
+                      <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
+                        {studentData.foto ? (
+                          <img
+                            src={studentData.foto}
+                            alt={studentData.nama}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-400">
+                            <User className="w-8 h-8" />
+                          </div>
+                        )}
                       </div>
-                      <div className="min-w-0">
-                        <h3 className="text-base font-black text-slate-900 truncate">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-extrabold text-slate-900 text-lg truncate">
                           {studentData.nama}
                         </h3>
-                        <p className="font-mono text-xs font-bold text-slate-500">
+                        <p className="text-xs text-slate-500 font-mono font-medium">
                           NIM: {studentData.nim}
                         </p>
                         <p className="text-[11px] text-teal-700 font-semibold mt-0.5">
@@ -765,15 +752,12 @@ const Dashboard = ({
                       </div>
                     </div>
 
-                    {/* Judul yang Diajukan */}
-                    <div className="mt-5 p-4 rounded-2xl bg-teal-50/50 border border-teal-100">
-                      <div className="flex items-center gap-1.5 mb-1.5">
-                        <FileText className="w-4 h-4 text-teal-700" />
-                        <span className="text-[10px] font-black uppercase text-teal-800 tracking-wider">
-                          {config?.category === "MAGANG" ? "Posisi & Mitra Magang" : "Rencana Usulan Judul Skripsi"}
-                        </span>
-                      </div>
-                      <p className="text-xs sm:text-sm font-bold text-slate-900 leading-relaxed">
+                    <div className="mt-6 p-4 rounded-2xl bg-[#F0FAF8] border border-teal-100/60">
+                      <span className="text-[10px] uppercase font-black tracking-wider text-teal-800/70 block mb-1 flex items-center gap-1.5">
+                        <FileText className="w-3.5 h-3.5 text-teal-600" />
+                        {config?.category === "MAGANG" ? "Posisi & Mitra Magang" : "Rencana Usulan Judul Skripsi"}
+                      </span>
+                      <p className="text-xs font-bold text-slate-800 italic">
                         &ldquo;{studentData.rencanaJudul || (config?.category === "MAGANG" ? `${studentData.magangPosisi || "Software Engineer Intern"} di ${studentData.magangTempat || "Mitra Industri"}` : "Topik usulan skripsi telah dikunci saat pemilihan kuota dosen.")}&rdquo;
                       </p>
                     </div>
@@ -791,6 +775,117 @@ const Dashboard = ({
                     <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-2 text-slate-500 text-[11px]">
                       <Info className="w-4 h-4 text-teal-600 shrink-0" />
                       <span>Pemilihan dosen telah final dan tercatat resmi di pangkalan data BAAK.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Pusat Pengumuman & Alur Tahapan Pembimbingan */}
+              <div className="bg-white border border-teal-100/80 rounded-[2.5rem] p-6 sm:p-8 shadow-sm space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-teal-50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-teal-500/10 text-teal-700 flex items-center justify-center shrink-0 border border-teal-200/50">
+                      <Megaphone className="w-6 h-6 text-teal-600" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg sm:text-xl font-black text-teal-950">
+                          Pusat Pengumuman &amp; Alur Bimbingan
+                        </h3>
+                        <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black bg-teal-50 text-teal-700 border border-teal-200 uppercase tracking-wider">
+                          Resmi Prodi
+                        </span>
+                      </div>
+                      <p className="text-xs text-teal-800/60 font-medium mt-0.5">
+                        Panduan dan informasi penting setelah penetapan alokasi dosen pembimbing.
+                      </p>
+                    </div>
+                  </div>
+                  {config?.announcement && (
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200 shrink-0">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      Ada Pengumuman Baru
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* Kartu Kiri: Isi Pengumuman Terkini */}
+                  <div className="lg:col-span-7 bg-gradient-to-br from-teal-50/60 to-emerald-50/40 border border-teal-100 rounded-3xl p-6 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-teal-800/60 mb-3">
+                        <Bell className="w-3.5 h-3.5 text-teal-600" />
+                        <span>Pengumuman Koordinator Skripsi &amp; Magang</span>
+                      </div>
+                      {config?.announcement ? (
+                        <div className="p-5 bg-white/90 rounded-2xl border border-teal-100/80 shadow-inner">
+                          <p className="text-sm font-semibold text-teal-950 leading-relaxed whitespace-pre-line">
+                            {config.announcement}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="p-5 bg-white/80 rounded-2xl border border-teal-100/60 text-center py-8">
+                          <Info className="w-8 h-8 text-teal-400 mx-auto mb-2 opacity-60" />
+                          <p className="text-xs font-bold text-teal-900">
+                            Belum Ada Pengumuman Tambahan Khusus Hari Ini
+                          </p>
+                          <p className="text-[11px] text-teal-700/60 mt-1 max-w-md mx-auto">
+                            Seluruh alokasi kuota telah resmi dikunci. Ikuti alur tahapan bimbingan di samping untuk proses selanjutnya.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-5 pt-4 border-t border-teal-100/60 flex items-center justify-between text-[11px] text-teal-800/60">
+                      <span>Periode: <strong className="text-teal-950">{config?.periode || "Ganjil 2025/2026"}</strong></span>
+                      <span className="text-[10px] font-mono">Cluster S1 PTI UNESA</span>
+                    </div>
+                  </div>
+
+                  {/* Kartu Kanan: Tahapan Bimbingan Selanjutnya (Checklist) */}
+                  <div className="lg:col-span-5 bg-slate-50/80 border border-slate-200/80 rounded-3xl p-6 flex flex-col justify-between">
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4 block">
+                        Langkah Selanjutnya (Next Steps)
+                      </span>
+                      <div className="space-y-3.5">
+                        <div className="flex items-start gap-3 p-3 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                          <div className="w-6 h-6 rounded-lg bg-teal-500 text-white flex items-center justify-center text-xs font-black shrink-0 mt-0.5">
+                            1
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-slate-800">Koordinasi Dosen Pembimbing</p>
+                            <p className="text-[11px] text-slate-500 mt-0.5">Hubungi via WhatsApp/Helpdesk dengan format salam sopan &amp; sertakan rencana topik.</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3 p-3 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                          <div className="w-6 h-6 rounded-lg bg-teal-500 text-white flex items-center justify-center text-xs font-black shrink-0 mt-0.5">
+                            2
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-slate-800">Penyusunan Berkas &amp; Proposal</p>
+                            <p className="text-[11px] text-slate-500 mt-0.5">Unduh template dokumen resmi di menu Panduan untuk persiapan bimbingan perdana.</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3 p-3 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                          <div className="w-6 h-6 rounded-lg bg-teal-500 text-white flex items-center justify-center text-xs font-black shrink-0 mt-0.5">
+                            3
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-slate-800">Pengesahan BAAK / Jurusan</p>
+                            <p className="text-[11px] text-slate-500 mt-0.5">Data kuota Anda telah tersimpan otomatis di database prodi untuk proses SK Dosen.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 pt-4 border-t border-slate-200/60 flex items-center gap-3">
+                      <a
+                        href="/panduan"
+                        className="flex-1 py-2.5 px-3 bg-teal-50 hover:bg-teal-100 text-teal-700 text-center rounded-xl text-xs font-bold transition-colors"
+                      >
+                        Buka Panduan &amp; Format Dokumen
+                      </a>
                     </div>
                   </div>
                 </div>
