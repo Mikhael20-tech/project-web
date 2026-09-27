@@ -1936,16 +1936,28 @@ const AdminDashboard = ({
                       <span className="text-[10px] font-black text-teal-300 uppercase tracking-widest">{t("dash_admin_top_10")}</span>
                     </div>                     
                     <div className="h-[300px] w-full min-w-0" style={{ minHeight: 300 }}>
-                      {isChartReady && (
-                        <ResponsiveContainer width="100%" height={280} minWidth={100} debounce={50}>
+                      {reports.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-teal-800/40 gap-2">
+                          <div className="w-6 h-6 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin" />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Memuat data grafik...</span>
+                        </div>
+                      ) : (
+                        <ResponsiveContainer 
+                          key={`barchart-${reports.length}-${filterAngkatan}`} 
+                          width="100%" 
+                          height={280} 
+                          minWidth={0} 
+                          minHeight={0}
+                        >
                           <BarChart data={reports.slice(0, 10).map(d => {
+                            const mhsList = Array.isArray(d.mahasiswa) ? d.mahasiswa : [];
                             const activeMhs = filterAngkatan === "All" 
-                              ? d.mahasiswa 
-                              : d.mahasiswa.filter((m: any) => m.angkatan === filterAngkatan);
+                              ? mhsList 
+                              : mhsList.filter((m: any) => m.angkatan === filterAngkatan);
                             return { 
-                              name: d.nama.split(" ")[0], 
+                              name: (d.nama || "Dosen").split(" ")[0], 
                               terisi: activeMhs.length, 
-                              kuota: d.kuotaMax 
+                              kuota: d.kuotaMax || 1 
                             };
                           })}>
                             <defs>
@@ -1967,13 +1979,14 @@ const AdminDashboard = ({
                               itemStyle={{ fontSize: "11px", fontWeight: "bold" }}
                               formatter={(value: any) => [value, t("label_filled")]}
                             />
-                            <Bar dataKey="terisi" name={t("label_filled")} radius={[8, 8, 0, 0]} animationDuration={1500}>
+                            <Bar dataKey="terisi" name={t("label_filled")} radius={[8, 8, 0, 0]} animationDuration={1000}>
                               {reports.slice(0, 10).map((entry, index) => {
+                                const mhsList = Array.isArray(entry.mahasiswa) ? entry.mahasiswa : [];
                                 const activeMhsCount = filterAngkatan === "All" 
-                                  ? entry.mahasiswa.length 
-                                  : entry.mahasiswa.filter((m: any) => m.angkatan === filterAngkatan).length;
+                                  ? mhsList.length 
+                                  : mhsList.filter((m: any) => m.angkatan === filterAngkatan).length;
                                 return (
-                                  <Cell key={`cell-${index}`} fill={activeMhsCount >= entry.kuotaMax ? "url(#fullGradient)" : "url(#barGradient)"} />
+                                  <Cell key={`cell-${index}`} fill={activeMhsCount >= (entry.kuotaMax || 1) ? "url(#fullGradient)" : "url(#barGradient)"} />
                                 );
                               })}
                             </Bar>
@@ -1994,11 +2007,11 @@ const AdminDashboard = ({
                     {(() => {
                       const totalFilled = reports.reduce((acc, d) => {
                         const mhs = filterAngkatan === "All" 
-                          ? d.mahasiswa 
-                          : d.mahasiswa.filter((m: any) => m.angkatan === filterAngkatan);
+                          ? (d.mahasiswa || []) 
+                          : (d.mahasiswa || []).filter((m: any) => m.angkatan === filterAngkatan);
                         return acc + mhs.length;
                       }, 0);
-                      const totalQuota = reports.reduce((acc, d) => acc + d.kuotaMax, 0);
+                      const totalQuota = reports.reduce((acc, d) => acc + (d.kuotaMax || 0), 0);
                       const percentage = Math.round((totalFilled / (totalQuota || 1)) * 100);
 
                       return (
@@ -2016,39 +2029,37 @@ const AdminDashboard = ({
                               {t("dash_admin_filled")}
                             </span>
                           </div>
-                           <div className="h-[220px] w-full relative mt-4 min-w-0" style={{ minHeight: 220 }}>
-                            {isChartReady && (
-                              <ResponsiveContainer width="100%" height={200} minWidth={100} debounce={50}>
-                                <PieChart>
-                                  <defs>
-                                    <linearGradient id="pieGradient" x1="0" y1="0" x2="0" y2="1">
-                                      <stop offset="0%" stopColor="#14B8A6" />
-                                      <stop offset="100%" stopColor="#0D9488" />
-                                    </linearGradient>
-                                  </defs>
-                                  <Pie
-                                    data={[
-                                      { name: t("label_filled"), value: totalFilled },
-                                      { name: t("label_empty"), value: Math.max(0, totalQuota - totalFilled) }
-                                    ]}
-                                    innerRadius={70}
-                                    outerRadius={90}
-                                    paddingAngle={8}
-                                    dataKey="value"
-                                    stroke="none"
-                                    startAngle={90}
-                                    endAngle={450}
-                                  >
-                                    <Cell fill="url(#pieGradient)" />
-                                    <Cell fill="#F0FAF8" />
-                                  </Pie>
-                                  <Tooltip 
-                                    contentStyle={{ borderRadius: "1.5rem", border: "none", boxShadow: "0 10px 30px rgba(0,0,0,0.1)", padding: "1rem" }}
-                                    itemStyle={{ fontSize: "11px", fontWeight: "bold" }}
-                                  />
-                                </PieChart>
-                              </ResponsiveContainer>
-                            )}
+                          <div className="h-[220px] w-full relative mt-4 min-w-0 flex items-center justify-center">
+                            <PieChart width={220} height={200}>
+                              <defs>
+                                <linearGradient id="pieGradient" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor="#14B8A6" />
+                                  <stop offset="100%" stopColor="#0D9488" />
+                                </linearGradient>
+                              </defs>
+                              <Pie
+                                data={[
+                                  { name: t("label_filled"), value: Math.max(0.01, totalFilled) },
+                                  { name: t("label_empty"), value: Math.max(0, totalQuota - totalFilled) }
+                                ]}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={65}
+                                outerRadius={88}
+                                paddingAngle={totalQuota - totalFilled > 0 ? 6 : 0}
+                                dataKey="value"
+                                stroke="none"
+                                startAngle={90}
+                                endAngle={-270}
+                              >
+                                <Cell fill="url(#pieGradient)" />
+                                <Cell fill="#F0FAF8" />
+                              </Pie>
+                              <Tooltip 
+                                contentStyle={{ borderRadius: "1.5rem", border: "none", boxShadow: "0 10px 30px rgba(0,0,0,0.1)", padding: "1rem" }}
+                                itemStyle={{ fontSize: "11px", fontWeight: "bold" }}
+                              />
+                            </PieChart>
                             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                               <span className="text-2xl font-black text-teal-950">{percentage}%</span>
                               <span className="text-[8px] font-black text-teal-400 uppercase tracking-widest">LIVE</span>
@@ -2062,7 +2073,7 @@ const AdminDashboard = ({
                                   <CheckCircle2 className="w-4 h-4" />
                                 </div>
                                 <span className="text-xs font-bold text-teal-800/60 uppercase tracking-wide">
-                                  {filterAngkatan === "All" ? t("dash_admin_filled_students") : `Mahasiswa ${filterAngkatan}:`}
+                                  {filterAngkatan === "All" ? (t("dash_admin_filled_students") || "Total Mahasiswa:") : `Mahasiswa ${filterAngkatan}:`}
                                 </span>
                               </div>
                               <span className="text-lg font-black text-teal-950">{totalFilled}</span>

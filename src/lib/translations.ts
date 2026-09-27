@@ -98,6 +98,7 @@ export const translations: any = {
     dash_admin_export_all: 'Export Semua',
     dash_admin_export_not_picked: 'Belum Memilih',
     dash_admin_filled: 'Terisi',
+    dash_admin_filled_students: 'Total Mahasiswa:',
     dash_admin_filter: 'Filter:',
     dash_admin_filter_batch: 'Filter Angkatan:',
     dash_admin_force_close: 'Tutup paksa akses war dosen seketika',
