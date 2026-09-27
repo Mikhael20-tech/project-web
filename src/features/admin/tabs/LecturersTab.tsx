@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Edit, Trash2, CheckCircle2, FileText, ArrowLeftRight, ChevronDown, Download, Bot, Zap, GraduationCap, Camera, Save, Users, Search, X } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
@@ -37,6 +38,20 @@ export const LecturersTab = ({
     uploading: false,
     error: null,
   });
+
+  useEffect(() => {
+    if (editModal.isOpen) {
+      document.body.style.overflow = "hidden";
+      document.body.classList.add("modal-open");
+    } else {
+      document.body.style.overflow = "";
+      document.body.classList.remove("modal-open");
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.body.classList.remove("modal-open");
+    };
+  }, [editModal.isOpen]);
 
   const handleModalPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -602,52 +617,53 @@ export const LecturersTab = ({
               </div>
 
               {/* DEDICATED EDIT DOSEN MODAL */}
-              <AnimatePresence>
-                {editModal.isOpen && editModal.dosen && (
-                  <div className="fixed inset-0 z-[9999] overflow-y-auto">
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="fixed inset-0 bg-teal-950/60 backdrop-blur-md"
-                      onClick={() => {
-                        if (!editModal.loading && !editModal.uploading) {
-                          setEditModal({ isOpen: false, dosen: null, loading: false, uploading: false, error: null });
-                        }
-                      }}
-                    />
-                    <div className="min-h-full flex items-center justify-center p-4 sm:p-6 pt-16 pb-12 relative z-10 pointer-events-none">
+              {typeof document !== "undefined" && createPortal(
+                <AnimatePresence>
+                  {editModal.isOpen && editModal.dosen && (
+                    <div className="fixed inset-0 z-[99999] overflow-y-auto">
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="pointer-events-auto bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl relative z-10 overflow-hidden flex flex-col max-h-[90vh] border border-teal-100"
-                      >
-                        {/* Header */}
-                        <div className="p-6 md:p-8 border-b border-teal-50 bg-[#f8fdfc] flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-teal-500 text-white shadow-md shadow-teal-500/20 rounded-2xl flex items-center justify-center shrink-0">
-                              <Edit className="w-6 h-6" />
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-teal-950/70 backdrop-blur-md"
+                        onClick={() => {
+                          if (!editModal.loading && !editModal.uploading) {
+                            setEditModal({ isOpen: false, dosen: null, loading: false, uploading: false, error: null });
+                          }
+                        }}
+                      />
+                      <div className="min-h-full flex items-center justify-center p-4 sm:p-6 py-8 relative z-10 pointer-events-none">
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                          className="pointer-events-auto bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl relative z-10 overflow-hidden flex flex-col max-h-[90vh] border border-teal-100"
+                        >
+                          {/* Header */}
+                          <div className="p-6 md:p-8 border-b border-teal-50 bg-[#f8fdfc] flex items-center justify-between shrink-0">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-teal-500 text-white shadow-md shadow-teal-500/20 rounded-2xl flex items-center justify-center shrink-0">
+                                <Edit className="w-6 h-6" />
+                              </div>
+                              <div>
+                                <h3 className="text-xl font-black text-teal-950">Edit Data Dosen</h3>
+                                <p className="text-xs font-bold text-teal-800/60 tracking-wider mt-0.5 truncate max-w-xs sm:max-w-sm">
+                                  NIP: {editModal.dosen.nip} • {editModal.dosen.nama}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <h3 className="text-xl font-black text-teal-950">Edit Data Dosen</h3>
-                              <p className="text-xs font-bold text-teal-800/60 tracking-wider mt-0.5 truncate max-w-xs sm:max-w-sm">
-                                NIP: {editModal.dosen.nip} • {editModal.dosen.nama}
-                              </p>
-                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!editModal.loading && !editModal.uploading) {
+                                  setEditModal({ isOpen: false, dosen: null, loading: false, uploading: false, error: null });
+                                }
+                              }}
+                              className="w-10 h-10 rounded-xl bg-teal-50 hover:bg-rose-50 text-teal-700 hover:text-rose-600 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                            >
+                              <X className="w-5 h-5" />
+                            </button>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (!editModal.loading && !editModal.uploading) {
-                                setEditModal({ isOpen: false, dosen: null, loading: false, uploading: false, error: null });
-                              }
-                            }}
-                            className="w-10 h-10 rounded-xl bg-teal-50 hover:bg-rose-50 text-teal-700 hover:text-rose-600 flex items-center justify-center transition-colors cursor-pointer"
-                          >
-                            <X className="w-5 h-5" />
-                          </button>
-                        </div>
 
                         {/* Form Body (Scrollable) */}
                         <form onSubmit={handleModalSubmit} className="flex-1 overflow-y-auto p-6 md:p-8 space-y-5">
@@ -961,7 +977,9 @@ export const LecturersTab = ({
                     </div>
                   </div>
                 )}
-              </AnimatePresence>
+              </AnimatePresence>,
+              document.body
+            )}
             </motion.div>
   );
 };

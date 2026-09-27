@@ -22,6 +22,15 @@ body {
   @apply bg-slate-50 text-slate-900 selection:bg-indigo-100 min-h-screen relative overflow-x-hidden;
 }
 
+/* Hide floating navbar when any modal is open to prevent overlapping */
+body.modal-open nav {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  transform: translateY(-100%) !important;
+  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+}
+
 /* Fresh decorative gradients for light mode */
 body::before {
   content: "";
