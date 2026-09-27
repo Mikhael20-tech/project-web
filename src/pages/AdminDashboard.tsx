@@ -257,12 +257,14 @@ const AdminDashboard = ({
   }, [message]);
 
   useEffect(() => {
-    if (activeTab === "overview") {
+    if (activeTab === "monitoring") {
       setIsChartReady(false);
       const timer = setTimeout(() => {
         setIsChartReady(true);
-      }, 200);
+      }, 100);
       return () => clearTimeout(timer);
+    } else {
+      setIsChartReady(false);
     }
   }, [activeTab]);
 
