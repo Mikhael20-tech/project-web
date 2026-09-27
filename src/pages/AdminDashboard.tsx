@@ -257,11 +257,14 @@ const AdminDashboard = ({
   }, [message]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsChartReady(true);
-    }, 300); // 300ms delay to let layouts stabilize
-    return () => clearTimeout(timer);
-  }, []);
+    if (activeTab === "overview") {
+      setIsChartReady(false);
+      const timer = setTimeout(() => {
+        setIsChartReady(true);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (deleteData || aiImportOpen || confirmModal || resetModalOpen || assignModal || swapModal) {
@@ -1457,72 +1460,92 @@ const AdminDashboard = ({
         .join(" ");
     };
 
+    // Helper untuk membersihkan nilai sel dan format angka saintifik
+    const formatCellValue = (val: any): string => {
+      if (val === null || val === undefined) return "";
+      if (typeof val === "number") {
+        // Mencegah konversi ke scientific notation (e.g. 2.4051E+10)
+        return Number.isInteger(val) ? val.toLocaleString('fullwide', { useGrouping: false }) : val.toString();
+      }
+      return String(val).trim();
+    };
+
     const findColumnIndices = (dataRows: any[][]): { nimIdx: number; namaIdx: number } => {
+      if (!dataRows || dataRows.length === 0) return { nimIdx: 0, namaIdx: 1 };
+
+      const firstRow = dataRows[0] || [];
+      let nimIdx = -1;
+      let namaIdx = -1;
+
+      // 1. Cek secara presisi dari baris Header (Baris 1)
+      for (let c = 0; c < firstRow.length; c++) {
+        const headerText = String(firstRow[c] ?? "").trim().toLowerCase();
+        if (/^(nim|nrp|nomor\s*induk|no\s*induk|id\s*mahasiswa|student\s*id|username)$/i.test(headerText)) {
+          nimIdx = c;
+        } else if (/^(nama|nama\s*lengkap|name|nama\s*mahasiswa|student\s*name|full\s*name)$/i.test(headerText)) {
+          namaIdx = c;
+        }
+      }
+
+      // Jika kedua kolom sudah teridentifikasi dari header, langsung kembalikan
+      if (nimIdx !== -1 && namaIdx !== -1 && nimIdx !== namaIdx) {
+        return { nimIdx, namaIdx };
+      }
+
+      // 2. Jika tidak ada header yang jelas, gunakan pemindaian skor konten baris
       let nimScores: { [key: number]: number } = {};
       let namaScores: { [key: number]: number } = {};
 
-      // Scanner regex for NIM: starts with 15-29 (active cohorts), digits only, length 11 to 15 digits
-      const nimRegex = /^(1[5-9]|2[0-9])\d{9,13}$/;
-
-      for (let i = 0; i < Math.min(dataRows.length, 10); i++) {
+      const checkLimit = Math.min(dataRows.length, 15);
+      for (let i = 0; i < checkLimit; i++) {
         const row = dataRows[i];
         if (!row) continue;
 
         for (let c = 0; c < row.length; c++) {
-          const val = String(row[c] ?? "").trim();
-          if (!val) continue;
+          const raw = formatCellValue(row[c]);
+          if (!raw) continue;
+          const cleanDigits = raw.replace(/['"\s.-]/g, "");
 
-          // Check if matches NIM format (digits-only, valid cohort years)
-          if (nimRegex.test(val) && !/[a-zA-Z]/.test(val)) {
-            nimScores[c] = (nimScores[c] || 0) + 1;
-          }
-          // Check if matches Name (has letters, reasonable length, and not a header keyword)
-          else if (
-            /[a-zA-Z]/.test(val) &&
-            val.length > 2 &&
-            !/^(nim|nama|name|username|email|no|hp|phone|telepon|kontak|contact|angkatan|cohort|class|kelas|jurusan|prodi|timestamp|created_at|createdat)$/i.test(val)
+          // Deteksi NIM: deretan angka 8-20 digit
+          if (/^\d{8,20}$/.test(cleanDigits)) {
+            nimScores[c] = (nimScores[c] || 0) + 2;
+          } else if (
+            /[a-zA-Z]/.test(raw) &&
+            raw.length > 2 &&
+            !/^(nim|nama|name|username|email|no|hp|phone|telepon|kontak|contact|angkatan|cohort|class|kelas|jurusan|prodi|timestamp|created_at|createdat)$/i.test(raw)
           ) {
             namaScores[c] = (namaScores[c] || 0) + 1;
           }
         }
       }
 
-      let nimIdx = 0;
-      let namaIdx = 1;
-
-      // Find column index with highest NIM score
-      let maxNimScore = 0;
-      let bestNimIdx = -1;
-      for (const c in nimScores) {
-        const idx = parseInt(c);
-        if (nimScores[idx] > maxNimScore) {
-          maxNimScore = nimScores[idx];
-          bestNimIdx = idx;
+      // Tentukan indeks NIM dengan skor tertinggi jika belum ditemukan dari header
+      if (nimIdx === -1) {
+        let maxNimScore = 0;
+        for (const c in nimScores) {
+          const idx = parseInt(c, 10);
+          if (nimScores[idx] > maxNimScore) {
+            maxNimScore = nimScores[idx];
+            nimIdx = idx;
+          }
         }
       }
 
-      if (bestNimIdx !== -1) {
-        nimIdx = bestNimIdx;
-      }
-
-      // Find column index with highest Nama score (excluding the NIM column)
-      let maxNamaScore = 0;
-      let bestNamaIdx = -1;
-      for (const c in namaScores) {
-        const idx = parseInt(c);
-        if (idx !== nimIdx && namaScores[idx] > maxNamaScore) {
-          maxNamaScore = namaScores[idx];
-          bestNamaIdx = idx;
+      // Tentukan indeks Nama dengan skor tertinggi jika belum ditemukan dari header
+      if (namaIdx === -1) {
+        let maxNamaScore = 0;
+        for (const c in namaScores) {
+          const idx = parseInt(c, 10);
+          if (idx !== nimIdx && namaScores[idx] > maxNamaScore) {
+            maxNamaScore = namaScores[idx];
+            namaIdx = idx;
+          }
         }
       }
 
-      if (bestNamaIdx !== -1) {
-        namaIdx = bestNamaIdx;
-      } else {
-        // Fallback: choose the other column if we have exactly 2 columns
-        if (bestNimIdx === 0) namaIdx = 1;
-        else if (bestNimIdx === 1) namaIdx = 0;
-      }
+      // Fallback aman jika salah satu kolom belum ditemukan
+      if (nimIdx === -1) nimIdx = 0;
+      if (namaIdx === -1) namaIdx = nimIdx === 0 ? 1 : 0;
 
       return { nimIdx, namaIdx };
     };
@@ -1530,43 +1553,40 @@ const AdminDashboard = ({
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
-        const parsedStudents: { nim: string; nama: string; password?: string }[] = [];
+        const rawItems: { nim: string; nama: string; password?: string }[] = [];
 
         if (isExcel) {
           const data = new Uint8Array(event.target?.result as ArrayBuffer);
           const workbook = XLSX.read(data, { type: "array" });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const rows = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1 });
+          const rows = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1, raw: true });
 
-          // Detect column indices dynamically
           const { nimIdx, namaIdx } = findColumnIndices(rows);
 
           for (let i = 0; i < rows.length; i++) {
             const cols = rows[i];
             if (!cols) continue;
 
-            const nim = String(cols[nimIdx] ?? "").trim();
-            const nama = String(cols[namaIdx] ?? "").trim();
+            const rawNim = formatCellValue(cols[nimIdx]);
+            const rawNama = formatCellValue(cols[namaIdx]);
 
+            // Lewati baris header
             if (
               i === 0 &&
-              (nim.toLowerCase() === "nim" ||
-                nim.toLowerCase() === "username" ||
-                nim.toLowerCase() === "nomor induk mahasiswa" ||
-                nama.toLowerCase() === "nama" ||
-                nama.toLowerCase() === "name" ||
-                nama.toLowerCase() === "nama lengkap")
+              (rawNim.toLowerCase().includes("nim") ||
+                rawNim.toLowerCase().includes("nomor") ||
+                rawNama.toLowerCase().includes("nama") ||
+                rawNama.toLowerCase().includes("name"))
             ) {
               continue;
             }
 
-            // Clean & validate format: NIM must consist of digits and match Unesa format
-            const nimClean = nim.replace(/['"]/g, "").trim();
-            if (nimClean && nama && /^(1[5-9]|2[0-9])\d{9,13}$/.test(nimClean) && !/[a-zA-Z]/.test(nimClean)) {
-              parsedStudents.push({ 
-                nim: nimClean, 
-                nama: toTitleCase(nama),
+            const cleanNim = rawNim.replace(/['"\s.-]/g, "").trim();
+            if (cleanNim && rawNama && /^\d{8,20}$/.test(cleanNim)) {
+              rawItems.push({ 
+                nim: cleanNim, 
+                nama: toTitleCase(rawNama),
                 password: "123456"
               });
             }
@@ -1587,46 +1607,56 @@ const AdminDashboard = ({
             rawRows.push(cols);
           }
 
-          // Detect column indices dynamically
           const { nimIdx, namaIdx } = findColumnIndices(rawRows);
 
           for (let i = 0; i < rawRows.length; i++) {
             const cols = rawRows[i];
             if (!cols) continue;
 
-            const nim = String(cols[nimIdx] ?? "").trim();
-            const nama = String(cols[namaIdx] ?? "").trim();
+            const rawNim = formatCellValue(cols[nimIdx]);
+            const rawNama = formatCellValue(cols[namaIdx]);
 
             if (
               i === 0 &&
-              (nim.toLowerCase() === "nim" ||
-                nim.toLowerCase() === "username" ||
-                nim.toLowerCase() === "nomor induk mahasiswa" ||
-                nama.toLowerCase() === "nama" ||
-                nama.toLowerCase() === "name" ||
-                nama.toLowerCase() === "nama lengkap")
+              (rawNim.toLowerCase().includes("nim") ||
+                rawNim.toLowerCase().includes("nomor") ||
+                rawNama.toLowerCase().includes("nama") ||
+                rawNama.toLowerCase().includes("name"))
             ) {
               continue;
             }
 
-            // Clean & validate format
-            const nimClean = nim.replace(/['"]/g, "").trim();
-            if (nimClean && nama && /^(1[5-9]|2[0-9])\d{9,13}$/.test(nimClean) && !/[a-zA-Z]/.test(nimClean)) {
-              parsedStudents.push({ 
-                nim: nimClean, 
-                nama: toTitleCase(nama),
+            const cleanNim = rawNim.replace(/['"\s.-]/g, "").trim();
+            if (cleanNim && rawNama && /^\d{8,20}$/.test(cleanNim)) {
+              rawItems.push({ 
+                nim: cleanNim, 
+                nama: toTitleCase(rawNama),
                 password: "123456"
               });
             }
           }
         }
 
-        if (parsedStudents.length === 0) {
+        if (rawItems.length === 0) {
           throw new Error(
             isExcel
-              ? "Tidak ada data mahasiswa valid yang ditemukan dalam file Excel. Pastikan kolom NIM berisi 11-15 digit angka yang valid."
-              : "Tidak ada data mahasiswa valid yang ditemukan dalam CSV. Pastikan kolom NIM berisi 11-15 digit angka yang valid."
+              ? "Tidak ada data mahasiswa valid yang ditemukan dalam file Excel. Pastikan terdapat kolom NIM (angka 8-20 digit) dan kolom Nama."
+              : "Tidak ada data mahasiswa valid yang ditemukan dalam file CSV. Pastikan terdapat kolom NIM (angka 8-20 digit) dan kolom Nama."
           );
+        }
+
+        // Deteksi Double Data di dalam file sebelum dikirim
+        const seenNims = new Set<string>();
+        let duplicateInFileCount = 0;
+        const uniqueItems: typeof rawItems = [];
+
+        for (const item of rawItems) {
+          if (seenNims.has(item.nim)) {
+            duplicateInFileCount++;
+          } else {
+            seenNims.add(item.nim);
+            uniqueItems.push(item);
+          }
         }
 
         const res = await fetch("/api/admin/mahasiswa/import", {
@@ -1635,15 +1665,20 @@ const AdminDashboard = ({
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(parsedStudents),
+          body: JSON.stringify(uniqueItems),
         });
 
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Gagal mengimpor data.");
 
+        const successText = data.message || 
+          `Berhasil mengimpor ${data.successCount} mahasiswa baru!` + 
+          (duplicateInFileCount > 0 ? ` (${duplicateInFileCount} duplikat dalam file disaring)` : "") +
+          (data.alreadyRegisteredCount > 0 ? ` (${data.alreadyRegisteredCount} data sudah terdaftar dilewati)` : "");
+
         setMessage({
           type: "success",
-          text: `Berhasil mengimpor ${data.successCount} mahasiswa baru! (${data.skipCount} dilewati/sudah terdaftar).`,
+          text: successText,
         });
         fetchData();
       } catch (err: any) {
@@ -1898,9 +1933,9 @@ const AdminDashboard = ({
                       </div>
                       <span className="text-[10px] font-black text-teal-300 uppercase tracking-widest">{t("dash_admin_top_10")}</span>
                     </div>                     
-                    <div className="h-[300px] w-full min-w-0">
+                    <div className="h-[300px] w-full min-w-0" style={{ minHeight: 300 }}>
                       {isChartReady && (
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                        <ResponsiveContainer width="100%" height={280} minWidth={100} debounce={50}>
                           <BarChart data={reports.slice(0, 10).map(d => {
                             const activeMhs = filterAngkatan === "All" 
                               ? d.mahasiswa 
@@ -1979,9 +2014,9 @@ const AdminDashboard = ({
                               {t("dash_admin_filled")}
                             </span>
                           </div>
-                           <div className="h-[220px] w-full relative mt-4 min-w-0">
+                           <div className="h-[220px] w-full relative mt-4 min-w-0" style={{ minHeight: 220 }}>
                             {isChartReady && (
-                              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                              <ResponsiveContainer width="100%" height={200} minWidth={100} debounce={50}>
                                 <PieChart>
                                   <defs>
                                     <linearGradient id="pieGradient" x1="0" y1="0" x2="0" y2="1">
@@ -2210,6 +2245,76 @@ const AdminDashboard = ({
                         </button>
                       )}
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!reports || reports.length === 0) {
+                          alert("Belum ada data monitoring untuk diekspor.");
+                          return;
+                        }
+                        const detailedData: any[] = [];
+                        let no = 1;
+                        reports.forEach((d: any) => {
+                          const activeMhs = filterAngkatan === "All" 
+                            ? (d.mahasiswa || []) 
+                            : (d.mahasiswa || []).filter((m: any) => m.angkatan === filterAngkatan);
+                          if (activeMhs.length === 0) {
+                            detailedData.push({
+                              "No": no++,
+                              "Nama Dosen": d.nama,
+                              "NIP": d.nip,
+                              "Kuota Max": d.kuotaMax,
+                              "Terisi": 0,
+                              "Sisa Slot": d.kuotaMax,
+                              "NIM Mahasiswa": "-",
+                              "Nama Mahasiswa": "-",
+                              "Angkatan": "-",
+                              "Status": "Belum ada bimbingan",
+                              "Rencana Judul / Topik": "-"
+                            });
+                          } else {
+                            activeMhs.forEach((m: any) => {
+                              detailedData.push({
+                                "No": no++,
+                                "Nama Dosen": d.nama,
+                                "NIP": d.nip,
+                                "Kuota Max": d.kuotaMax,
+                                "Terisi": activeMhs.length,
+                                "Sisa Slot": Math.max(0, d.kuotaMax - activeMhs.length),
+                                "NIM Mahasiswa": m.nim || "-",
+                                "Nama Mahasiswa": m.nama || "-",
+                                "Angkatan": m.angkatan || "-",
+                                "Status": m.statusBimbingan || "APPROVED",
+                                "Rencana Judul / Topik": m.rencanaJudul || "-"
+                              });
+                            });
+                          }
+                        });
+
+                        const ws = XLSX.utils.json_to_sheet(detailedData);
+                        ws["!cols"] = [
+                          { wch: 6 },
+                          { wch: 30 },
+                          { wch: 20 },
+                          { wch: 12 },
+                          { wch: 10 },
+                          { wch: 10 },
+                          { wch: 18 },
+                          { wch: 30 },
+                          { wch: 12 },
+                          { wch: 16 },
+                          { wch: 45 }
+                        ];
+                        const wb = XLSX.utils.book_new();
+                        XLSX.utils.book_append_sheet(wb, ws, "Rekap Bimbingan");
+                        const dateStr = new Date().toISOString().split("T")[0];
+                        XLSX.writeFile(wb, `Rekap_Bimbingan_WarDosPem_${filterAngkatan === "All" ? "Semua" : filterAngkatan}_${dateStr}.xlsx`);
+                      }}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-300 rounded-2xl text-xs font-black uppercase tracking-wider shadow-sm transition-all ml-auto cursor-pointer group"
+                    >
+                      <Download className="w-4 h-4 text-emerald-600 group-hover:-translate-y-0.5 transition-transform" />
+                      Export Rekap Bimbingan (Excel)
+                    </button>
                   </div>
                   {/* Header (Hidden on Mobile) */}
                   <div className="hidden lg:grid lg:grid-cols-12 gap-6 bg-[#f8fdfc] border-b border-teal-50 px-6 py-6 md:px-10 text-[10px] font-black uppercase text-teal-800/40 tracking-widest">

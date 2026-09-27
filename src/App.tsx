@@ -136,9 +136,45 @@ const AppContent = ({
   );
 };
 
+const isTokenExpired = (tok: string | null): boolean => {
+  if (!tok) return true;
+  try {
+    const parts = tok.split(".");
+    if (parts.length !== 3) return true;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    const parsed = JSON.parse(jsonPayload);
+    if (parsed.exp && parsed.exp * 1000 <= Date.now()) {
+      return true;
+    }
+    return false;
+  } catch {
+    return true;
+  }
+};
+
 export default function App() {
-  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [token, setToken] = useState<string | null>(() => {
+    const savedToken = localStorage.getItem("token");
+    if (!savedToken || isTokenExpired(savedToken)) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      return null;
+    }
+    return savedToken;
+  });
+
   const [currentUser, setCurrentUser] = useState<any>(() => {
+    const savedToken = localStorage.getItem("token");
+    if (!savedToken || isTokenExpired(savedToken)) {
+      return null;
+    }
     try {
       return JSON.parse(localStorage.getItem("user") || "null");
     } catch {

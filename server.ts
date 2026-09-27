@@ -1189,14 +1189,19 @@ app.post("/api/admin/war/swap", authenticate, isAdmin, async (req: any, res) => 
 
 // Photo Upload (To Supabase Storage with Local Storage Fallback)
 app.post("/api/upload", authenticate, (req: any, res: any) => {
-  upload.single("photo")(req, res, async (err) => {
+  upload.any()(req, res, async (err) => {
     if (err) {
       console.error("Upload error:", err);
       return res.status(400).json({ error: err.message || "Gagal mengupload file." });
     }
-    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    
+    // Support file from any field name ('photo', 'file', 'image', etc.)
+    const uploadedFile = (req.files && req.files.length > 0) ? req.files[0] : req.file;
+    if (!uploadedFile) {
+      return res.status(400).json({ error: "Tidak ada file yang diunggah. Pastikan file gambar telah dipilih." });
+    }
 
-    const fileExt = path.extname(req.file.originalname) || ".jpg";
+    const fileExt = path.extname(uploadedFile.originalname) || ".jpg";
     const uniqueFilename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${fileExt}`;
 
     // 1. Try uploading to Supabase if configured
@@ -1216,8 +1221,8 @@ app.post("/api/upload", authenticate, (req: any, res: any) => {
         // Upload new photo to Supabase
         const { data, error } = await supabase.storage
           .from(bucketName)
-          .upload(uniqueFilename, req.file.buffer, {
-            contentType: req.file.mimetype,
+          .upload(uniqueFilename, uploadedFile.buffer, {
+            contentType: uploadedFile.mimetype,
             upsert: true
           });
 
@@ -1240,12 +1245,12 @@ app.post("/api/upload", authenticate, (req: any, res: any) => {
       if (!fs.existsSync(uploadsDir)) {
         fs.mkdirSync(uploadsDir, { recursive: true });
       }
-      fs.writeFileSync(path.join(uploadsDir, uniqueFilename), req.file.buffer);
+      fs.writeFileSync(path.join(uploadsDir, uniqueFilename), uploadedFile.buffer);
       console.log(`Saved photo locally: ${uniqueFilename}`);
       return res.json({ url: `/uploads/${uniqueFilename}` });
     } catch (localErr: any) {
       console.error("Local Upload Error:", localErr);
-      return res.status(500).json({ error: "Gagal mengunggah foto." });
+      return res.status(500).json({ error: "Gagal mengunggah foto ke penyimpanan server." });
     }
   });
 });
@@ -1295,8 +1300,42 @@ app.put("/api/admin/dosen/:id", authenticate, isAdmin, async (req, res) => {
     const { id } = req.params;
     const { nama, nip, kuotaMax, foto, keahlian, bio, moto, pendidikan, publikasi, kontak, password } = req.body;
     
+    if (!nama || !nip) {
+      return res.status(400).json({ error: "Nama dan NIP wajib diisi." });
+    }
+
     const currentDosen = await prisma.dosen.findUnique({ where: { id } });
-    if (currentDosen?.foto && currentDosen.foto !== foto && currentDosen.foto.startsWith('/uploads/')) {
+    if (!currentDosen) {
+      return res.status(404).json({ error: "Data dosen tidak ditemukan." });
+    }
+
+    const cleanNip = String(nip).trim();
+    const cleanNama = String(nama).trim();
+
+    // Cek apakah NIP diubah dan apakah NIP baru sudah dipakai oleh dosen lain (Deteksi Double Data)
+    if (cleanNip !== currentDosen.nip) {
+      const duplicateDosen = await prisma.dosen.findFirst({
+        where: { nip: cleanNip, NOT: { id } }
+      });
+      if (duplicateDosen) {
+        return res.status(400).json({ 
+          error: `NIP ${cleanNip} sudah digunakan oleh dosen lain (${duplicateDosen.nama}). Data NIP tidak boleh ganda.` 
+        });
+      }
+    }
+
+    // Parsing & validasi kuotaMax
+    let finalQuota = currentDosen.kuotaMax;
+    if (kuotaMax !== undefined && kuotaMax !== null && kuotaMax !== "") {
+      const parsedQuota = parseInt(String(kuotaMax), 10);
+      if (isNaN(parsedQuota) || parsedQuota < 1) {
+        return res.status(400).json({ error: "Kuota bimbingan maksimal harus berupa angka minimal 1." });
+      }
+      finalQuota = parsedQuota;
+    }
+
+    // Hapus file foto lama jika diganti dan disimpan di lokal
+    if (currentDosen.foto && currentDosen.foto !== foto && currentDosen.foto.startsWith('/uploads/')) {
       try {
         const oldPath = path.join(process.cwd(), currentDosen.foto);
         if (fs.existsSync(oldPath)) {
@@ -1307,54 +1346,89 @@ app.put("/api/admin/dosen/:id", authenticate, isAdmin, async (req, res) => {
       }
     }
 
+    // Update profil dosen dengan semua field termasuk pendidikan & publikasi
     const dosen = await prisma.dosen.update({
       where: { id },
       data: { 
-        nama, 
-        nip, 
-        kuotaMax: parseInt(String(kuotaMax)), 
-        foto: foto || null,
-        keahlian,
-        bio,
-        moto,
-        kontak
+        nama: cleanNama, 
+        nip: cleanNip, 
+        kuotaMax: finalQuota, 
+        foto: foto !== undefined ? (foto || null) : currentDosen.foto,
+        keahlian: keahlian !== undefined ? keahlian : currentDosen.keahlian,
+        bio: bio !== undefined ? bio : currentDosen.bio,
+        moto: moto !== undefined ? moto : currentDosen.moto,
+        pendidikan: pendidikan !== undefined ? pendidikan : currentDosen.pendidikan,
+        publikasi: publikasi !== undefined ? publikasi : currentDosen.publikasi,
+        kontak: kontak !== undefined ? kontak : currentDosen.kontak
       }
     });
 
-    // Sync User record if it exists
+    // Sync User record jika ada atau buat jika belum ada
     const existingUser = await prisma.user.findFirst({
       where: { 
         OR: [
           { dosen: { id: dosen.id } },
-          { username: currentDosen?.nip }
+          { username: currentDosen.nip }
         ]
       }
     });
 
     if (existingUser) {
+      // Pastikan username baru tidak bentrok dengan user lain jika NIP berubah
+      if (cleanNip !== existingUser.username) {
+        const conflictUser = await prisma.user.findFirst({
+          where: { username: cleanNip, NOT: { id: existingUser.id } }
+        });
+        if (conflictUser) {
+          return res.status(400).json({
+            error: `Username/NIP ${cleanNip} sudah digunakan oleh akun lain di sistem.`
+          });
+        }
+      }
+
+      const updateUserData: any = {
+        username: cleanNip,
+        foto: foto !== undefined ? (foto || null) : existingUser.foto
+      };
+
+      if (password && String(password).trim().length > 0) {
+        updateUserData.password = await bcrypt.hash(String(password).trim(), 10);
+      }
+
       await prisma.user.update({
         where: { id: existingUser.id },
-        data: { 
-          username: nip, // Sync with new NIP if changed
-          foto: foto || existingUser.foto 
-        }
+        data: updateUserData
       });
-    }
 
-    if (password) {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const user = await prisma.user.findUnique({ where: { username: dosen.nip } });
-      if (user) {
+      // Hubungkan userId di Dosen jika sebelumnya null
+      if (!currentDosen.userId) {
+        await prisma.dosen.update({
+          where: { id: dosen.id },
+          data: { userId: existingUser.id }
+        });
+      }
+    } else if (password && String(password).trim().length > 0) {
+      // Buat akun User dosen jika belum ada
+      const conflictUser = await prisma.user.findUnique({ where: { username: cleanNip } });
+      if (conflictUser) {
         await prisma.user.update({
-          where: { id: user.id },
-          data: { password: hashedPassword }
+          where: { id: conflictUser.id },
+          data: {
+            password: await bcrypt.hash(String(password).trim(), 10),
+            role: "DOSEN"
+          }
+        });
+        await prisma.dosen.update({
+          where: { id: dosen.id },
+          data: { userId: conflictUser.id }
         });
       } else {
-        await prisma.user.create({
+        const newUser = await prisma.user.create({
           data: {
-            username: dosen.nip,
-            password: hashedPassword,
+            username: cleanNip,
+            password: await bcrypt.hash(String(password).trim(), 10),
             role: "DOSEN",
+            foto: foto || null,
             dosen: { connect: { id } }
           }
         });
@@ -1362,9 +1436,14 @@ app.put("/api/admin/dosen/:id", authenticate, isAdmin, async (req, res) => {
     }
 
     triggerQuotaUpdate();
+    io.emit("quota_update", await fetchDosenWithActiveQuota());
     res.json(dosen);
   } catch (err: any) {
-    res.status(400).json({ error: "Gagal memperbarui data dosen." });
+    console.error("Gagal memperbarui dosen:", err);
+    if (err.code === 'P2002') {
+      return res.status(400).json({ error: "NIP atau username sudah terdaftar dalam sistem (data ganda)." });
+    }
+    res.status(400).json({ error: err.message || "Gagal memperbarui data dosen." });
   }
 });
 
@@ -1440,57 +1519,128 @@ app.get("/api/admin/mahasiswa", authenticate, isAdmin, async (req, res) => {
 
 app.post("/api/admin/mahasiswa/import", authenticate, isAdmin, async (req, res) => {
   try {
-    const students = req.body; // Array of { nim: string, nama: string }
+    const students = req.body; // Array of { nim: string, nama: string, password?: string }
     if (!Array.isArray(students)) {
       return res.status(400).json({ error: "Data harus berupa array." });
     }
 
     let successCount = 0;
-    let skipCount = 0;
+    let duplicateInPayloadCount = 0;
+    let alreadyRegisteredCount = 0;
+    let invalidCount = 0;
 
+    const seenInPayload = new Set<string>();
+    const duplicatePayloadNims: string[] = [];
+    const alreadyRegisteredNims: string[] = [];
+    const validUniqueStudents: { nim: string; nama: string; password?: string }[] = [];
+
+    // Langkah 1: Deteksi dan saring duplikasi di dalam file/payload itu sendiri
     for (const std of students) {
-      const nim = String(std.nim || "").trim();
-      const nama = String(std.nama || "").trim();
-      if (!nim || !nama) {
-        skipCount++;
+      const rawNim = String(std.nim || "").trim();
+      const rawNama = String(std.nama || "").trim();
+
+      if (!rawNim || !rawNama) {
+        invalidCount++;
         continue;
       }
 
-      // Check if user already exists
-      const existingUser = await prisma.user.findUnique({ where: { username: nim } });
-      if (existingUser) {
-        skipCount++;
+      // Bersihkan karakter aneh pada NIM
+      const cleanNim = rawNim.replace(/['"\s.-]/g, "").trim();
+      if (!cleanNim) {
+        invalidCount++;
+        continue;
+      }
+
+      if (seenInPayload.has(cleanNim)) {
+        duplicateInPayloadCount++;
+        if (!duplicatePayloadNims.includes(cleanNim)) {
+          duplicatePayloadNims.push(cleanNim);
+        }
+        continue; // Lewati duplikasi internal di dalam file
+      }
+
+      seenInPayload.add(cleanNim);
+      validUniqueStudents.push({
+        nim: cleanNim,
+        nama: toTitleCase(rawNama),
+        password: std.password
+      });
+    }
+
+    // Langkah 2: Deteksi duplikasi terhadap database
+    const allNims = validUniqueStudents.map(s => s.nim);
+    const existingUsers = await prisma.user.findMany({
+      where: { username: { in: allNims } },
+      select: { username: true }
+    });
+    const existingMahasiswas = await prisma.mahasiswa.findMany({
+      where: { nim: { in: allNims } },
+      select: { nim: true }
+    });
+
+    const registeredNimsSet = new Set([
+      ...existingUsers.map(u => u.username),
+      ...existingMahasiswas.map(m => m.nim)
+    ]);
+
+    // Langkah 3: Masukkan data yang benar-benar baru
+    for (const std of validUniqueStudents) {
+      if (registeredNimsSet.has(std.nim)) {
+        alreadyRegisteredCount++;
+        alreadyRegisteredNims.push(std.nim);
         continue;
       }
 
       const defaultPassword = std.password || "123456";
       const hashedPassword = await bcrypt.hash(defaultPassword, 10);
       let extractedAngkatan = "";
-      if (/^\d+$/.test(nim) && nim.length >= 2) {
-        extractedAngkatan = "20" + nim.substring(0, 2);
+      if (/^\d+$/.test(std.nim) && std.nim.length >= 2) {
+        extractedAngkatan = "20" + std.nim.substring(0, 2);
       }
 
-      await prisma.$transaction(async (tx) => {
-        const user = await tx.user.create({
-          data: {
-            username: nim,
-            password: hashedPassword,
-            role: "STUDENT"
-          }
+      try {
+        await prisma.$transaction(async (tx) => {
+          const user = await tx.user.create({
+            data: {
+              username: std.nim,
+              password: hashedPassword,
+              role: "STUDENT"
+            }
+          });
+          await tx.mahasiswa.create({
+            data: {
+              userId: user.id,
+              nim: std.nim,
+              nama: std.nama,
+              angkatan: extractedAngkatan || null
+            }
+          });
         });
-        await tx.mahasiswa.create({
-          data: {
-            userId: user.id,
-            nim,
-            nama,
-            angkatan: extractedAngkatan || null
-          }
-        });
-      });
-      successCount++;
+        successCount++;
+        registeredNimsSet.add(std.nim);
+      } catch (insertErr) {
+        console.error(`Gagal menyimpan mahasiswa NIM ${std.nim}:`, insertErr);
+        alreadyRegisteredCount++;
+      }
     }
 
-    res.json({ success: true, successCount, skipCount });
+    const totalSkipped = duplicateInPayloadCount + alreadyRegisteredCount + invalidCount;
+
+    res.json({ 
+      success: true, 
+      successCount, 
+      skipCount: totalSkipped,
+      inFileDataCount: students.length,
+      duplicateInPayloadCount,
+      alreadyRegisteredCount,
+      invalidCount,
+      duplicatePayloadNims: duplicatePayloadNims.slice(0, 10),
+      alreadyRegisteredNims: alreadyRegisteredNims.slice(0, 10),
+      message: `Impor selesai: ${successCount} berhasil diimpor. ` +
+        (duplicateInPayloadCount > 0 ? `${duplicateInPayloadCount} data ganda dalam file disaring. ` : "") +
+        (alreadyRegisteredCount > 0 ? `${alreadyRegisteredCount} data sudah terdaftar di sistem. ` : "") +
+        (invalidCount > 0 ? `${invalidCount} baris tidak lengkap.` : "")
+    });
   } catch (err: any) {
     console.error("Bulk Import Error:", err);
     res.status(500).json({ error: err.message || "Gagal mengimpor data." });
@@ -1740,23 +1890,39 @@ app.post("/api/admin/dosen/import", authenticate, isAdmin, async (req, res) => {
 app.post("/api/admin/mahasiswa", authenticate, isAdmin, async (req, res) => {
   try {
     const { nim, nama, kontak, password, angkatan } = req.body;
-    if (!nim || !nama) throw new Error("NIM dan Nama wajib diisi.");
+    if (!nim || !nama) {
+      return res.status(400).json({ error: "NIM dan Nama wajib diisi." });
+    }
 
-    // Check existing
-    const existing = await prisma.user.findUnique({ where: { username: nim } });
-    if (existing) throw new Error("NIM sudah terdaftar dalam sistem.");
+    const cleanNim = String(nim).trim().replace(/['"\s.-]/g, "");
+    const cleanNama = toTitleCase(String(nama).trim());
+
+    if (!cleanNim) {
+      return res.status(400).json({ error: "Format NIM tidak valid." });
+    }
+
+    // Deteksi Double Data di User dan Mahasiswa
+    const existingUser = await prisma.user.findUnique({ where: { username: cleanNim } });
+    const existingMhs = await prisma.mahasiswa.findUnique({ where: { nim: cleanNim } });
+    
+    if (existingUser || existingMhs) {
+      const ownerName = existingMhs?.nama || "pengguna lain";
+      return res.status(409).json({ 
+        error: `NIM ${cleanNim} sudah terdaftar dalam sistem atas nama "${ownerName}". Data tidak boleh ganda.` 
+      });
+    }
 
     const hashedPassword = await bcrypt.hash(password || "mhs123", 10);
     
-    let finalAngkatan = angkatan;
-    if (!finalAngkatan && /^\d+$/.test(nim) && nim.length >= 2) {
-      finalAngkatan = "20" + nim.substring(0, 2);
+    let finalAngkatan = angkatan ? String(angkatan).trim() : "";
+    if (!finalAngkatan && /^\d+$/.test(cleanNim) && cleanNim.length >= 2) {
+      finalAngkatan = "20" + cleanNim.substring(0, 2);
     }
     
     const student = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
-          username: nim,
+          username: cleanNim,
           password: hashedPassword,
           role: "STUDENT"
         }
@@ -1764,16 +1930,17 @@ app.post("/api/admin/mahasiswa", authenticate, isAdmin, async (req, res) => {
       return tx.mahasiswa.create({
         data: {
           userId: user.id,
-          nim,
-          nama,
-          kontak,
-          angkatan: finalAngkatan || ""
+          nim: cleanNim,
+          nama: cleanNama,
+          kontak: kontak ? String(kontak).trim() : null,
+          angkatan: finalAngkatan || null
         }
       });
     });
     res.json(student);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error("Create mahasiswa error:", err);
+    res.status(400).json({ error: err.message || "Gagal mendaftarkan mahasiswa." });
   }
 });
 
@@ -1837,19 +2004,42 @@ app.put("/api/admin/mahasiswa/:id", authenticate, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { nim, nama, kontak, password, angkatan } = req.body;
+
+    if (!nama || !nim) {
+      return res.status(400).json({ error: "Nama dan NIM wajib diisi." });
+    }
+
+    const cleanNim = String(nim).trim().replace(/['"\s.-]/g, "");
+    const cleanNama = toTitleCase(String(nama).trim());
+
+    if (!cleanNim) {
+      return res.status(400).json({ error: "Format NIM tidak valid." });
+    }
     
     const student = await prisma.$transaction(async (tx) => {
       const current = await tx.mahasiswa.findUnique({ where: { id } });
       if (!current) throw new Error("Mahasiswa tidak ditemukan.");
       
-      if (nim && nim !== current.nim) {
-        const existing = await tx.user.findUnique({ where: { username: nim } });
-        if (existing) throw new Error("NIM sudah terdaftar.");
+      // Jika NIM berubah, cek apakah sudah digunakan oleh mahasiswa lain atau user lain (Deteksi Double Data)
+      if (cleanNim !== current.nim) {
+        const existingMhs = await tx.mahasiswa.findFirst({ 
+          where: { nim: cleanNim, NOT: { id } } 
+        });
+        const existingUser = await tx.user.findFirst({ 
+          where: { username: cleanNim, NOT: { id: current.userId } } 
+        });
+
+        if (existingMhs || existingUser) {
+          const ownerName = existingMhs?.nama || "pengguna lain";
+          throw new Error(`NIM ${cleanNim} sudah digunakan oleh ${ownerName}. Tidak dapat mengubah menjadi data ganda.`);
+        }
       }
       
       let updateDataUser: any = {};
-      if (nim) updateDataUser.username = nim;
-      if (password) updateDataUser.password = await bcrypt.hash(password, 10);
+      if (cleanNim !== current.nim) updateDataUser.username = cleanNim;
+      if (password && String(password).trim().length > 0) {
+        updateDataUser.password = await bcrypt.hash(String(password).trim(), 10);
+      }
       
       if (Object.keys(updateDataUser).length > 0) {
         await tx.user.update({
@@ -1858,25 +2048,26 @@ app.put("/api/admin/mahasiswa/:id", authenticate, isAdmin, async (req, res) => {
         });
       }
 
-      let finalAngkatan = angkatan;
-      if (!finalAngkatan && nim && /^\d+$/.test(nim) && nim.length >= 2) {
-        finalAngkatan = "20" + nim.substring(0, 2);
+      let finalAngkatan = angkatan ? String(angkatan).trim() : "";
+      if (!finalAngkatan && cleanNim && /^\d+$/.test(cleanNim) && cleanNim.length >= 2) {
+        finalAngkatan = "20" + cleanNim.substring(0, 2);
       }
 
       return tx.mahasiswa.update({
         where: { id },
         data: { 
-          nim, 
-          nama, 
-          kontak,
-          angkatan: finalAngkatan || undefined
+          nim: cleanNim, 
+          nama: cleanNama, 
+          kontak: kontak !== undefined ? (kontak ? String(kontak).trim() : null) : current.kontak,
+          angkatan: finalAngkatan || current.angkatan
         }
       });
     });
     
     res.json(student);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error("Update mahasiswa error:", err);
+    res.status(400).json({ error: err.message || "Gagal memperbarui data mahasiswa." });
   }
 });
 
@@ -2209,10 +2400,21 @@ app.put("/api/dosen/profile", authenticate, async (req: any, res) => {
   if (req.user.role !== 'DOSEN') return res.status(403).json({ error: "Access denied." });
   const { nama, keahlian, bio, moto, pendidikan, publikasi, kontak, foto } = req.body;
   try {
-    const currentDosen = await prisma.dosen.findUnique({ where: { nip: req.user.nim } });
+    const currentDosen = await prisma.dosen.findFirst({
+      where: {
+        OR: [
+          { userId: req.user.id },
+          { nip: req.user.nim }
+        ]
+      }
+    });
+
+    if (!currentDosen) {
+      return res.status(404).json({ error: "Profil dosen tidak ditemukan." });
+    }
     
     // Hapus file foto lama jika ada dan berbeda dengan yang baru
-    if (currentDosen?.foto && currentDosen.foto !== foto && currentDosen.foto.startsWith('/uploads/')) {
+    if (currentDosen.foto && currentDosen.foto !== foto && currentDosen.foto.startsWith('/uploads/')) {
       try {
         const oldPath = path.join(process.cwd(), currentDosen.foto);
         if (fs.existsSync(oldPath)) {
@@ -2224,26 +2426,31 @@ app.put("/api/dosen/profile", authenticate, async (req: any, res) => {
     }
 
     const updatedDosen = await prisma.dosen.update({
-      where: { nip: req.user.nim },
+      where: { id: currentDosen.id },
       data: { 
-        nama, 
-        keahlian, 
-        bio, 
-        moto, 
-        kontak, 
-        foto 
+        nama: nama ? String(nama).trim() : currentDosen.nama, 
+        keahlian: keahlian !== undefined ? keahlian : currentDosen.keahlian, 
+        bio: bio !== undefined ? bio : currentDosen.bio, 
+        moto: moto !== undefined ? moto : currentDosen.moto, 
+        pendidikan: pendidikan !== undefined ? pendidikan : currentDosen.pendidikan,
+        publikasi: publikasi !== undefined ? publikasi : currentDosen.publikasi,
+        kontak: kontak !== undefined ? kontak : currentDosen.kontak, 
+        foto: foto !== undefined ? (foto || null) : currentDosen.foto 
       }
     });
-    if (foto) {
+
+    if (foto !== undefined) {
       await prisma.user.update({
         where: { id: req.user.id },
-        data: { foto }
+        data: { foto: foto || null }
       });
     }
+
+    io.emit("quota_update", await fetchDosenWithActiveQuota());
     res.json(updatedDosen);
   } catch (err: any) {
     console.error("Update Dosen Profile Error:", err);
-    res.status(500).json({ error: "Gagal memperbarui profil dosen." });
+    res.status(500).json({ error: err.message || "Gagal memperbarui profil dosen." });
   }
 });
 

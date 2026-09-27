@@ -52,117 +52,219 @@ export const StudentsTab = ({
                     </p>
                   </div>
                 </div>
-                <form
-                  onSubmit={handleStudentSubmit}
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-                >
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                      {t("dash_admin_student_id")}
-                    </label>
-                    <input
-                      value={studentForm.nim}
-                      onChange={(e) =>
-                        setStudentForm({ ...studentForm, nim: e.target.value })
-                      }
-                      className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
-                      placeholder="18000101"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                      {t("label_nama_lengkap")}
-                    </label>
-                    <input
-                      value={studentForm.nama}
-                      onChange={(e) =>
-                        setStudentForm({ ...studentForm, nama: e.target.value })
-                      }
-                      className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
-                      placeholder="Budi Santoso"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                      {t("label_no_hp")}
-                    </label>
-                    <input
-                      value={studentForm.kontak}
-                      onChange={(e) =>
-                        setStudentForm({
-                          ...studentForm,
-                          kontak: e.target.value,
-                        })
-                      }
-                      className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
-                      placeholder="0812..."
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                      {t("login_password")}
-                    </label>
-                    <input
-                      type="password"
-                      value={studentForm.password}
-                      onChange={(e) =>
-                        setStudentForm({
-                          ...studentForm,
-                          password: e.target.value,
-                        })
-                      }
-                      className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
-                      placeholder="••••••••"
-                      required={!studentForm.id}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                      {t("dash_admin_batch_label")}
-                    </label>
-                    <input
-                      value={studentForm.angkatan}
-                      onChange={(e) =>
-                        setStudentForm({ ...studentForm, angkatan: e.target.value })
-                      }
-                      className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
-                      placeholder="Contoh: 2021"
-                      required
-                    />
-                  </div>
-                  <div className="md:col-span-2 lg:col-span-4 flex justify-end gap-3 mt-4">
-                    {studentForm.id && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setStudentForm({
-                            id: "",
-                            nim: "",
-                            nama: "",
-                            kontak: "",
-                            password: "",
-                            angkatan: "",
-                          })
-                        }
-                        className="px-8 py-4 bg-teal-50 text-teal-600 rounded-[1.25rem] font-black text-xs uppercase tracking-widest hover:bg-teal-100 transition-all"
-                      >
-                        {t("btn_cancel")}
-                      </button>
-                    )}
+                {studentForm.id && (
+                  <div className="mb-6 p-4 bg-teal-50/80 border border-teal-200 rounded-2xl flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <span className="w-2.5 h-2.5 rounded-full bg-teal-500 animate-pulse shrink-0" />
+                      <span className="text-xs font-bold text-teal-900 truncate">
+                        Sedang Mengedit: <span className="font-extrabold">{studentForm.nama || "Mahasiswa"}</span> (NIM: {studentForm.nim})
+                      </span>
+                    </div>
                     <button
-                      type="submit"
-                      className="px-10 py-4 bg-teal-500 text-white rounded-[1.25rem] font-black text-xs uppercase tracking-widest shadow-xl shadow-teal-500/10 hover:bg-teal-950 transition-all group flex items-center gap-3"
+                      type="button"
+                      onClick={() =>
+                        setStudentForm({
+                          id: "",
+                          nim: "",
+                          nama: "",
+                          kontak: "",
+                          password: "",
+                          angkatan: "",
+                        })
+                      }
+                      className="shrink-0 text-[10px] font-black uppercase text-rose-500 hover:text-rose-700 bg-white px-3 py-1.5 rounded-xl border border-rose-100 shadow-sm transition-all cursor-pointer hover:bg-rose-50"
                     >
-                      <Save className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />{" "}
-                      {studentForm.id
-                        ? t("btn_save_changes")
-                        : t("btn_register_student")}
+                      ✕ Batal Edit
                     </button>
                   </div>
-                </form>
+                )}
+
+                {(() => {
+                  const cleanInputNim = (studentForm.nim || "").trim().replace(/['"\s.-]/g, "");
+                  const duplicateStudent = cleanInputNim
+                    ? students.find((s: any) => (s.nim || "").replace(/['"\s.-]/g, "") === cleanInputNim && s.id !== studentForm.id)
+                    : null;
+
+                  return (
+                    <form
+                      onSubmit={(e) => {
+                        if (duplicateStudent) {
+                          e.preventDefault();
+                          return;
+                        }
+                        handleStudentSubmit(e);
+                      }}
+                      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center ml-1">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">
+                            {t("dash_admin_student_id")} *
+                          </label>
+                          {cleanInputNim.length >= 4 && !duplicateStudent && (
+                            <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
+                              ✓ NIM Tersedia
+                            </span>
+                          )}
+                        </div>
+                        <input
+                          value={studentForm.nim}
+                          onChange={(e) => {
+                            const newNim = e.target.value;
+                            let autoAngkatan = studentForm.angkatan;
+                            const cleanDigits = newNim.replace(/['"\s.-]/g, "");
+                            if (!autoAngkatan && /^\d{2}/.test(cleanDigits)) {
+                              autoAngkatan = "20" + cleanDigits.substring(0, 2);
+                            }
+                            setStudentForm({ 
+                              ...studentForm, 
+                              nim: newNim,
+                              angkatan: autoAngkatan
+                            });
+                          }}
+                          className={cn(
+                            "w-full p-4 bg-teal-50 border rounded-2xl text-teal-950 text-sm font-bold focus:outline-none transition-all shadow-inner",
+                            duplicateStudent 
+                              ? "border-rose-400 bg-rose-50/50 text-rose-950 focus:ring-4 focus:ring-rose-500/10 focus:border-rose-500" 
+                              : "border-teal-100 focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400"
+                          )}
+                          placeholder="24050974001"
+                          required
+                        />
+
+                        {duplicateStudent && (
+                          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 space-y-1.5 animate-in fade-in duration-200">
+                            <div className="flex items-center gap-1.5 font-black text-rose-700 text-[11px]">
+                              <span>⚠️</span>
+                              <span>Data Ganda (Double Data) Terdeteksi!</span>
+                            </div>
+                            <p className="text-[10px] text-rose-900 leading-tight">
+                              NIM ini sudah terdaftar atas nama: <span className="font-extrabold">{duplicateStudent.nama}</span>
+                              {duplicateStudent.angkatan ? ` (Angkatan ${duplicateStudent.angkatan})` : ""}.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setStudentForm({
+                                  id: duplicateStudent.id,
+                                  nim: duplicateStudent.nim,
+                                  nama: duplicateStudent.nama,
+                                  kontak: duplicateStudent.kontak || "",
+                                  password: "",
+                                  angkatan: duplicateStudent.angkatan || "",
+                                });
+                                window.scrollTo({ top: 0, behavior: "smooth" });
+                              }}
+                              className="w-full mt-1 py-1.5 px-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                            >
+                              <Edit className="w-3 h-3" /> Edit Data Mahasiswa Ini
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                          {t("label_nama_lengkap")} *
+                        </label>
+                        <input
+                          value={studentForm.nama}
+                          onChange={(e) =>
+                            setStudentForm({ ...studentForm, nama: e.target.value })
+                          }
+                          className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
+                          placeholder="Budi Santoso"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                          {t("label_no_hp")}
+                        </label>
+                        <input
+                          value={studentForm.kontak}
+                          onChange={(e) =>
+                            setStudentForm({
+                              ...studentForm,
+                              kontak: e.target.value,
+                            })
+                          }
+                          className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
+                          placeholder="08123xxxx"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                          {t("login_password")} {studentForm.id && "(Kosongi jika tidak diubah)"}
+                        </label>
+                        <input
+                          type="password"
+                          value={studentForm.password}
+                          onChange={(e) =>
+                            setStudentForm({
+                              ...studentForm,
+                              password: e.target.value,
+                            })
+                          }
+                          className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
+                          placeholder={studentForm.id ? "Password baru..." : "••••••••"}
+                          required={!studentForm.id}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                          {t("dash_admin_batch_label")} *
+                        </label>
+                        <input
+                          value={studentForm.angkatan}
+                          onChange={(e) =>
+                            setStudentForm({ ...studentForm, angkatan: e.target.value })
+                          }
+                          className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
+                          placeholder="Contoh: 2024"
+                          required
+                        />
+                      </div>
+                      <div className="md:col-span-2 lg:col-span-4 flex justify-end gap-3 mt-4">
+                        {studentForm.id && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setStudentForm({
+                                id: "",
+                                nim: "",
+                                nama: "",
+                                kontak: "",
+                                password: "",
+                                angkatan: "",
+                              })
+                            }
+                            className="px-8 py-4 bg-teal-50 text-teal-600 rounded-[1.25rem] font-black text-xs uppercase tracking-widest hover:bg-teal-100 transition-all cursor-pointer"
+                          >
+                            {t("btn_cancel")}
+                          </button>
+                        )}
+                        <button
+                          type="submit"
+                          disabled={!!duplicateStudent}
+                          className={cn(
+                            "px-10 py-4 rounded-[1.25rem] font-black text-xs uppercase tracking-widest shadow-xl transition-all group flex items-center gap-3 cursor-pointer",
+                            duplicateStudent
+                              ? "bg-slate-300 text-slate-500 cursor-not-allowed shadow-none"
+                              : "bg-teal-500 text-white shadow-teal-500/10 hover:bg-teal-950"
+                          )}
+                        >
+                          <Save className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />{" "}
+                          {duplicateStudent
+                            ? "NIM Ganda Terdeteksi"
+                            : studentForm.id
+                            ? t("btn_save_changes")
+                            : t("btn_register_student")}
+                        </button>
+                      </div>
+                    </form>
+                  );
+                })()}
               </div>
 
               <div className="bg-white border border-teal-50 rounded-[3rem] overflow-hidden shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]">
@@ -197,6 +299,46 @@ export const StudentsTab = ({
                     >
                       <Download className="w-4 h-4 group-hover:-translate-y-1 transition-transform text-teal-500" />
                       {t("btn_template_excel")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!students || students.length === 0) {
+                          alert("Belum ada data mahasiswa untuk diekspor.");
+                          return;
+                        }
+                        const exportData = students.map((s: any, idx: number) => ({
+                          "No": idx + 1,
+                          "NIM": s.nim || "-",
+                          "Nama": s.nama || "-",
+                          "Angkatan": s.angkatan || "-",
+                          "Kontak / No WA": s.kontak || "-",
+                          "Status Bimbingan": s.statusBimbingan || "PENDING",
+                          "Dosen Pembimbing": s.dosen?.nama || "-",
+                          "NIP Dosen": s.dosen?.nip || "-",
+                          "Rencana Judul / Topik": s.rencanaJudul || "-"
+                        }));
+                        const ws = XLSX.utils.json_to_sheet(exportData);
+                        ws["!cols"] = [
+                          { wch: 6 },
+                          { wch: 18 },
+                          { wch: 30 },
+                          { wch: 12 },
+                          { wch: 18 },
+                          { wch: 18 },
+                          { wch: 30 },
+                          { wch: 20 },
+                          { wch: 40 }
+                        ];
+                        const wb = XLSX.utils.book_new();
+                        XLSX.utils.book_append_sheet(wb, ws, "Data Mahasiswa");
+                        const dateStr = new Date().toISOString().split("T")[0];
+                        XLSX.writeFile(wb, `Data_Mahasiswa_WarDosPem_${dateStr}.xlsx`);
+                      }}
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-emerald-50 border-2 border-emerald-200 rounded-2xl text-[10px] font-black text-emerald-800 hover:bg-emerald-100 hover:border-emerald-300 transition-all uppercase tracking-widest shadow-sm group"
+                    >
+                      <Download className="w-4 h-4 group-hover:-translate-y-1 transition-transform text-emerald-600" />
+                      Export Data (Excel)
                     </button>
                     <label
                       htmlFor="import-csv-input"

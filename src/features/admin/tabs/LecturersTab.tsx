@@ -44,6 +44,7 @@ export const LecturersTab = ({
     setEditModal((prev) => ({ ...prev, uploading: true, error: null }));
     try {
       const formData = new FormData();
+      formData.append("photo", file);
       formData.append("file", file);
       const res = await fetch("/api/upload", {
         method: "POST",
@@ -175,17 +176,44 @@ export const LecturersTab = ({
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
-                        {t("label_nip")}
-                      </label>
-                      <input
-                        value={dosenForm.nip}
-                        onChange={(e) =>
-                          setDosenForm({ ...dosenForm, nip: e.target.value })
-                        }
-                        className="w-full p-4 bg-teal-50 border border-teal-100 rounded-2xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400 transition-all shadow-inner"
-                        required
-                      />
+                      {(() => {
+                        const cleanSidebarNip = (dosenForm.nip || "").trim();
+                        const dupDosen = cleanSidebarNip ? reports.find((d: any) => (d.nip || "").trim() === cleanSidebarNip && d.id !== dosenForm.id) : null;
+                        return (
+                          <>
+                            <div className="flex justify-between items-center ml-1">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50">
+                                {t("label_nip")} *
+                              </label>
+                              {cleanSidebarNip && !dupDosen && (
+                                <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
+                                  ✓ NIP Tersedia
+                                </span>
+                              )}
+                            </div>
+                            <input
+                              value={dosenForm.nip}
+                              onChange={(e) =>
+                                setDosenForm({ ...dosenForm, nip: e.target.value })
+                              }
+                              className={cn(
+                                "w-full p-4 bg-teal-50 border rounded-2xl text-teal-950 text-sm font-bold focus:outline-none transition-all shadow-inner",
+                                dupDosen ? "border-rose-400 bg-rose-50/50 text-rose-950 focus:border-rose-500" : "border-teal-100 focus:ring-4 focus:ring-teal-500/10 focus:border-teal-400"
+                              )}
+                              placeholder="198501012010121001"
+                              required
+                            />
+                            {dupDosen && (
+                              <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 space-y-1 animate-in fade-in duration-200">
+                                <span className="font-extrabold text-[10px] text-rose-700">⚠️ NIP Sudah Digunakan!</span>
+                                <p className="text-[10px] text-rose-900 leading-tight">
+                                  NIP ini terdaftar untuk dosen: <span className="font-bold">{dupDosen.nama}</span>.
+                                </p>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
@@ -503,7 +531,7 @@ export const LecturersTab = ({
                         <div className="flex flex-wrap gap-2 transition-opacity justify-end w-full sm:w-auto mt-4 sm:mt-0 relative z-20">
                           <button
                             type="button"
-                            title="Edit Dosen Ini"
+                            title="Edit Cepat Dosen Ini"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -517,6 +545,9 @@ export const LecturersTab = ({
                                   foto: dosen.foto || "",
                                   keahlian: dosen.keahlian || "",
                                   bio: dosen.bio || "",
+                                  moto: dosen.moto || "",
+                                  pendidikan: dosen.pendidikan || "",
+                                  publikasi: dosen.publikasi || "",
                                   kontak: dosen.kontak || "",
                                   password: "",
                                 },
@@ -534,6 +565,34 @@ export const LecturersTab = ({
                           >
                             <Edit className="w-3.5 h-3.5 group-hover/btn:rotate-12 transition-transform" />
                             <span>Edit</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            title="Edit di Form Utama Sidebar"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setDosenForm({
+                                id: dosen.id,
+                                nama: dosen.nama || "",
+                                nip: dosen.nip || "",
+                                kuotaMax: dosen.kuotaMax ?? 3,
+                                foto: dosen.foto || "",
+                                keahlian: dosen.keahlian || "",
+                                bio: dosen.bio || "",
+                                moto: dosen.moto || "",
+                                pendidikan: dosen.pendidikan || "",
+                                publikasi: dosen.publikasi || "",
+                                kontak: dosen.kontak || "",
+                                password: "",
+                              });
+                              const el = document.getElementById("form-dosen-card");
+                              if (el) el.scrollIntoView({ behavior: "smooth" });
+                            }}
+                            className="px-3 py-2 rounded-xl bg-slate-50 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all border border-slate-200 flex items-center gap-1 cursor-pointer"
+                          >
+                            <span>Form</span>
                           </button>
                         </div>
                       </motion.div>
@@ -782,6 +841,63 @@ export const LecturersTab = ({
                             />
                           </div>
 
+                          {/* Motto Dosen */}
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                              Motto Pengajaran / Kutipan
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Contoh: Mendidik dengan hati, membangun masa depan dengan teknologi."
+                              value={editModal.dosen.moto || ""}
+                              onChange={(e) =>
+                                setEditModal((prev) => ({
+                                  ...prev,
+                                  dosen: { ...prev.dosen, moto: e.target.value },
+                                }))
+                              }
+                              className="w-full p-3.5 bg-teal-50 border border-teal-100 rounded-xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-teal-400 shadow-inner"
+                            />
+                          </div>
+
+                          {/* Riwayat Pendidikan */}
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                              Riwayat Pendidikan
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Contoh: S1 Pendidikan TI - UNESA; S2 Teknik Informatika - ITS"
+                              value={editModal.dosen.pendidikan || ""}
+                              onChange={(e) =>
+                                setEditModal((prev) => ({
+                                  ...prev,
+                                  dosen: { ...prev.dosen, pendidikan: e.target.value },
+                                }))
+                              }
+                              className="w-full p-3.5 bg-teal-50 border border-teal-100 rounded-xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-teal-400 shadow-inner"
+                            />
+                          </div>
+
+                          {/* Karya & Publikasi */}
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
+                              Publikasi & Karya Utama
+                            </label>
+                            <textarea
+                              rows={2}
+                              placeholder="Contoh: Pengembangan Sistem E-Learning Berbasis Gamifikasi (2023)"
+                              value={editModal.dosen.publikasi || ""}
+                              onChange={(e) =>
+                                setEditModal((prev) => ({
+                                  ...prev,
+                                  dosen: { ...prev.dosen, publikasi: e.target.value },
+                                }))
+                              }
+                              className="w-full p-3.5 bg-teal-50 border border-teal-100 rounded-xl text-teal-950 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-teal-400 shadow-inner"
+                            />
+                          </div>
+
                           {/* Password Baru Akun Dosen */}
                           <div className="space-y-1.5">
                             <label className="text-[10px] font-black uppercase tracking-widest text-teal-800/50 ml-1">
@@ -811,23 +927,34 @@ export const LecturersTab = ({
                             >
                               Batal
                             </button>
-                            <button
-                              type="submit"
-                              disabled={editModal.loading || editModal.uploading}
-                              className="px-6 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-teal-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                            >
-                              {editModal.loading ? (
-                                <>
-                                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                  <span>Menyimpan...</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Save className="w-4 h-4" />
-                                  <span>Simpan Perubahan</span>
-                                </>
-                              )}
-                            </button>
+                            {(() => {
+                              const cleanNip = String(editModal.dosen.nip || "").trim();
+                              const isDuplicateNip = cleanNip ? reports.some((d: any) => (d.nip || "").trim() === cleanNip && d.id !== editModal.dosen.id) : false;
+                              return (
+                                <button
+                                  type="submit"
+                                  disabled={editModal.loading || editModal.uploading || isDuplicateNip}
+                                  className={cn(
+                                    "px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50",
+                                    isDuplicateNip ? "bg-rose-500 text-white cursor-not-allowed" : "bg-teal-500 hover:bg-teal-600 text-white shadow-teal-500/20"
+                                  )}
+                                >
+                                  {isDuplicateNip ? "NIP Ganda Terdeteksi" : (
+                                    editModal.loading ? (
+                                      <>
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        <span>Menyimpan...</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Save className="w-4 h-4" />
+                                        <span>Simpan Perubahan</span>
+                                      </>
+                                    )
+                                  )}
+                                </button>
+                              );
+                            })()}
                           </div>
                         </form>
                       </motion.div>
